@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Flame, Moon, Sun, Volume2, VolumeX, Music2, RotateCcw, BarChart3, Trophy, CalendarDays, Lock } from 'lucide-react';
+import { Flame, Moon, Sun, Volume2, VolumeX, Music2, RotateCcw, BarChart3, Trophy, CalendarDays, Lock, LogIn, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/nav';
 import { useProgress } from '../lib/progressStore';
 import { displayedStreak } from '../lib/streak';
@@ -12,8 +12,11 @@ import { useLevelUp } from '../lib/useLevelUp';
 import { useBackgroundMusic } from '../lib/useBackgroundMusic';
 import { isSoundEnabled, playMilestone, setSoundEnabled } from '../lib/sound';
 import { getLevelInfo } from '../lib/xp';
+import { useAuth } from '../lib/authStore';
+import { signOut } from '../lib/auth';
 import { SidebarLevelCard } from './dashboard/SidebarLevelCard';
 import { LevelUpDialog } from './LevelUpDialog';
+import { AccountNavItem } from './AccountNavItem';
 import { IconButton } from './ui/IconButton';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
@@ -58,6 +61,8 @@ export function Layout() {
   // grid were built to fill the available width like the Dashboard's own cards do.
   const isWideLayout = location.pathname === '/' || location.pathname === '/vocabulary' || location.pathname === '/kanji';
   const secondaryNavItems = useSecondaryNavItems();
+  const auth = useAuth();
+  const navigate = useNavigate();
   useStudyTimer();
 
   useEffect(() => {
@@ -120,6 +125,9 @@ export function Layout() {
             ))}
           </nav>
         </ScrollArea>
+        <div className="px-3 pb-1">
+          <AccountNavItem />
+        </div>
         <div className="px-3 pb-3">
           <SidebarLevelCard levelInfo={levelInfo} />
         </div>
@@ -181,6 +189,11 @@ export function Layout() {
               onClick={toggleDark}
               size={16}
             />
+            {auth.status === 'signed-in' ? (
+              <IconButton icon={LogOut} label="Sign out" onClick={() => signOut()} size={16} />
+            ) : auth.status === 'signed-out' ? (
+              <IconButton icon={LogIn} label="Sign in" onClick={() => navigate('/login')} size={16} />
+            ) : null}
           </div>
         </header>
 

@@ -11,11 +11,18 @@ import { KanjiDetail } from './pages/kanji/KanjiDetail';
 import { ReadingList } from './pages/reading/ReadingList';
 import { ReadingDetail } from './pages/reading/ReadingDetail';
 import { ListeningHome } from './pages/listening/ListeningHome';
+import { Login } from './pages/auth/Login';
+import { Register } from './pages/auth/Register';
+import { useProgressSync } from './lib/progressSync';
 
 function App() {
+  useProgressSync();
+
   return (
     <TooltipProvider>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/grammar" element={<GrammarList />} />

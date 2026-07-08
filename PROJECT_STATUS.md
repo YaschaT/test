@@ -6,9 +6,67 @@ removed from the sidebar/mobile header, now just the logo mark + "Kotobox". This
 change: the internal `localStorage` key prefix (`kotoba-do:...`) was deliberately left unchanged so no
 existing user progress was reset — renaming that prefix would have invalidated everyone's saved data.
 
-Last updated after **VocabularyCard reference-match rebuild + a second Listening redesign pass**
+Last updated after **optional accounts (sign up / log in, Supabase-backed, cross-device progress sync)**
 (see below). Still awaiting user direction on the remaining `/impeccable critique` findings before any
 further work, including Speaking (Phase 8).
+
+Deployment: this repo is pushed to GitHub (`YaschaT/test`) over SSH and connected to Vercel for
+auto-deploy-on-push. **Auto-push after verification is now the standing default** — every verified change
+gets committed and pushed without waiting to be asked, so the live Vercel URL stays current.
+
+## Optional accounts (`/impeccable craft` — sign up / log in)
+
+Shaped and confirmed with the user first: accounts are **optional**, not a gate — guest/local mode keeps
+working exactly as before; signing in is an added entry point, not a wall. Backed by Supabase (the user's
+choice over Firebase/custom, after a hosting-approach question).
+
+**New library layer:**
+- `src/lib/supabase.ts` — creates the client only when `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` are
+  present (`isSupabaseConfigured`); everything downstream degrades honestly (a real "Accounts are almost
+  ready" banner, disabled submit) rather than failing silently or faking success when they're not set yet.
+- `src/lib/auth.ts` — `registerWithEmail`/`signInWithEmail`/`signOut`/`sendPasswordReset`, throwing a clear
+  `AuthNotConfiguredError` if called before the keys exist.
+- `src/lib/authStore.ts` — a module-level `useSyncExternalStore` store (same pattern as `progressStore.ts`)
+  resolving the real Supabase session once at load, then staying live via `onAuthStateChange`.
+- `src/lib/progressSync.ts` + two new `progressStore.ts` exports (`subscribeProgress`, `replaceProgress`) —
+  real cross-device sync, not just a one-time import: `syncProgressAfterSignIn(userId)` pulls the account's
+  cloud progress onto this device if it has any, or seeds the cloud from this device's current (guest)
+  progress if not — which naturally covers both "returning login, get my data" and "fresh sign-up, migrate
+  my guest progress in" with one function. `useProgressSync()` (mounted once in `App.tsx`) pushes local
+  progress changes to the cloud, debounced 2s, for as long as the user stays signed in.
+
+**New UI:**
+- `AuthMascotSplash` — the requested "mascot wakes up and greets you" loading moment: the existing fox
+  `Mascot` component crossfades from its `sleepy` to `happy` mood (two stacked layers, opacity-only
+  crossfade — no path-morphing needed) with a small settle-bounce, over the same dark starfield atmosphere
+  as `GrammarHero`/`ListeningHero`. This is a deliberate one-off exception to the product register's
+  "no page-load choreography" default — reduced-motion users see the correct final frame instantly (base,
+  non-animated CSS states live outside the `no-preference` media block) instead of a static pause, and the
+  choreography only plays once per browser session (`sessionStorage` flag), not every time someone toggles
+  between the Log in/Register tabs.
+- `AuthShell` — shared full-page shell for `/login` and `/register`: same starfield backdrop, a
+  `SegmentedTabs` toggle wired to real route navigation (not local tab state, so the URL/back button/direct
+  `/register` links all work), and a "Continue without an account" link back to guest mode.
+- `LoginForm`/`RegisterForm` — real validation on blur (not every keystroke), inline error messages wired
+  via `aria-describedby`, a real loading spinner mid-submit, a real server-error banner mapped to
+  plain-language copy (`authValidation.ts`'s `friendlyAuthError`), and a real "check your email" state for
+  when Supabase's email-confirmation setting means sign-up doesn't grant an immediate session.
+- `GoogleButton` — genuinely disabled with a "Soon" label, not a dead button pretending to work; enable
+  once Google OAuth is configured on the Supabase project's Auth providers.
+- `AccountNavItem` — sidebar entry: "Sign in" when signed out, or the real email + a working sign-out button
+  when signed in. Mirrored as a compact icon in the mobile header.
+
+**Deliberately not built:** a full bidirectional merge engine for simultaneous multi-device edits (the sync
+here is last-login/last-change-wins, which is honest and sufficient for a single-user progress tracker —
+building CRDT-style conflict resolution wasn't asked for and would be substantial unrequested scope).
+
+**Verification:** `npx tsc -b`, `npx eslint .`, `npm run build`, `npm test -- --run` (11/11) all pass clean.
+Browser-checked: the splash's crossfade (confirmed by stalling its dismiss timer and screenshotting the
+settled "happy, paw raised" frame mid-animation), toggling Login⟷Register doesn't replay the splash, blur
+validation shows real inline errors, the unconfigured-Supabase banner and disabled submit/Google button
+render correctly, and the whole flow at 375px (mobile) and desktop widths with no overflow. The Supabase
+project itself (table + RLS policies) is not yet created — that's the user's next step; the code degrades
+honestly until then.
 
 ## VocabularyCard reference-match + Listening v2 (`/impeccable` + `/frontend-design`)
 

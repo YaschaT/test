@@ -89,6 +89,16 @@ export function getProgressSnapshot(): ProgressState {
   return state;
 }
 
+/** Notifies on every local progress change — used by progressSync.ts to push updates while signed in. */
+export function subscribeProgress(listener: () => void): () => void {
+  return subscribe(listener);
+}
+
+/** Replaces the whole state wholesale — used only to hydrate from a remote snapshot after sign-in. */
+export function replaceProgress(next: ProgressState): void {
+  setState(() => next);
+}
+
 export function setLevel(level: JlptLevel) {
   setState((s) => ({ ...s, level }));
 }
