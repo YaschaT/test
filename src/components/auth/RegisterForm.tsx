@@ -42,8 +42,8 @@ export function RegisterForm() {
 
     setSubmitting(true);
     try {
-      const user = await registerWithEmail(email, password);
-      if (user) {
+      const { user, hasSession } = await registerWithEmail(email, password);
+      if (hasSession && user) {
         await syncProgressAfterSignIn(user.id);
         navigate('/');
       } else {

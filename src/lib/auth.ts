@@ -13,10 +13,16 @@ function requireSupabase() {
   return supabase;
 }
 
-export async function registerWithEmail(email: string, password: string): Promise<User | null> {
+export interface RegisterResult {
+  user: User | null;
+  /** False when the project requires email confirmation — Supabase still returns a `user` in that case, so callers must check this, not just `user`, to know whether the visitor is actually signed in yet. */
+  hasSession: boolean;
+}
+
+export async function registerWithEmail(email: string, password: string): Promise<RegisterResult> {
   const { data, error } = await requireSupabase().auth.signUp({ email, password });
   if (error) throw error;
-  return data.user;
+  return { user: data.user, hasSession: Boolean(data.session) };
 }
 
 export async function signInWithEmail(email: string, password: string): Promise<User | null> {
