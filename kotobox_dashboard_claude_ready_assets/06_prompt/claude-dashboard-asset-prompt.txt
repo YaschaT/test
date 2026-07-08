@@ -1,0 +1,37 @@
+Continue from the current codebase. Do not restart.
+
+Use ONLY the assets in this folder for the Dashboard overview redesign.
+
+Important asset rules:
+- Use `00_reference/dashboard-overview-reference.png` as the visual source of truth for layout, spacing, hierarchy, and mood.
+- Use the transparent mascot PNGs in `01_mascots_png_transparent/` for the mascot. Do not invent a different mascot.
+- Use SVG icons from `02_svg_icons/` where possible.
+- Use PNG exports from `03_png_exports/` only if importing SVGs is inconvenient.
+- Use `04_backgrounds/night-landscape.svg` for the subtle dashboard/hero background.
+- Use exact PNG crops from `05_exact_png_crops/` only as visual references for spacing and style, not as full UI replacements.
+- Open `assets-preview.html` to inspect all assets.
+
+Dashboard UX goals:
+- Keep strong readability.
+- Use consistent spacing between cards.
+- Keep one clear primary CTA.
+- Use dark navy base, indigo/purple primary actions, and warm orange only for streak/reward.
+- Do not overuse glow.
+- Do not reset localStorage.
+- Do not break existing routes.
+
+Implementation:
+- Rebuild the Dashboard to match the reference direction.
+- Keep existing real progress/streak/review data where available.
+- Create reusable components such as StatCard, DashboardSectionCard, StudyPlanCard, PathStep, AchievementCard.
+- Keep mobile responsive.
+
+Quality checks:
+- run `npx tsc -b`
+- run `npx eslint .`
+- run `npm run build`
+- check dashboard desktop
+- check dashboard mobile
+- check console errors
+- update PROJECT_STATUS.md
+- stop and wait for approval before changing other screens

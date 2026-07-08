@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#030716" flood-opacity="0.38"/></filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10" result="blur"/><feColorMatrix in="blur" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .45 0"/><feBlend in2="SourceGraphic" mode="screen"/></filter>
+    <linearGradient id="grad" x1="104" y1="96" x2="408" y2="416" gradientUnits="userSpaceOnUse"><stop stop-color="#F6C24B"/><stop offset="1" stop-color="#E79B2C"/></linearGradient>
+    <radialGradient id="highlight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(178 136) rotate(45) scale(280)"><stop stop-color="#FFF" stop-opacity=".42"/><stop offset=".45" stop-color="#FFF" stop-opacity=".07"/><stop offset="1" stop-color="#FFF" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g>
+    <rect x="72" y="72" width="368" height="368" rx="104" fill="url(#grad)" filter="url(#shadow)"/>
+    <rect x="100" y="100" width="312" height="312" rx="82" fill="#0C1430" fill-opacity=".14" stroke="#FFF" stroke-opacity=".16" stroke-width="7"/>
+    <rect x="72" y="72" width="368" height="368" rx="104" fill="url(#highlight)"/>
+    <g filter="url(#glow)"><path d="M256 148L282 222H360L296 268L320 344L256 298L192 344L216 268L152 222H230L256 148Z" fill="#FFF"/><circle cx="356" cy="176" r="30" fill="#FFF" fill-opacity=".16" stroke="#FFF" stroke-width="10"/><path d="M356 160V192M340 176H372" stroke="#FFF" stroke-width="10" stroke-linecap="round"/></g>
+  </g>
+</svg>

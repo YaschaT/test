@@ -1,0 +1,18 @@
+<svg width="760" height="220" viewBox="0 0 760 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#030716" flood-opacity="0.38"/></filter>
+    <linearGradient id="grad" x1="24" y1="18" x2="122" y2="128" gradientUnits="userSpaceOnUse"><stop stop-color="#6B83FF"/><stop offset="1" stop-color="#344BE4"/></linearGradient>
+    <radialGradient id="highlight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(68 42) rotate(45) scale(88)"><stop stop-color="#FFF" stop-opacity=".42"/><stop offset=".45" stop-color="#FFF" stop-opacity=".07"/><stop offset="1" stop-color="#FFF" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="16" y="20" width="120" height="120" rx="34" fill="url(#grad)"/>
+    <rect x="25" y="29" width="102" height="102" rx="28" fill="#0C1430" fill-opacity=".14" stroke="#FFF" stroke-opacity=".16" stroke-width="2.5"/>
+    <rect x="16" y="20" width="120" height="120" rx="34" fill="url(#highlight)"/>
+    <path d="M52 56H100" stroke="#FFF" stroke-width="10" stroke-linecap="round"/>
+    <path d="M60 56V110" stroke="#FFF" stroke-width="9" stroke-linecap="round"/>
+    <path d="M92 56V110" stroke="#FFF" stroke-width="9" stroke-linecap="round"/>
+    <path d="M48 74H104" stroke="#FFF" stroke-width="7" stroke-linecap="round" opacity=".95"/>
+  </g>
+  <text x="164" y="88" fill="#EAF0FF" font-size="64" font-weight="700" font-family="Inter, Nunito, Arial, sans-serif">Kotobox</text>
+  <text x="166" y="126" fill="#8FA2D6" font-size="26" font-weight="500" font-family="Inter, Nunito, Arial, sans-serif">Japanese learning app icon / wordmark</text>
+</svg>

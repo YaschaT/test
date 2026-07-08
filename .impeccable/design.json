@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-06T19:00:00.000Z",
+  "title": "Design System: Kotobox",
+  "extensions": {
+    "colorMeta": {
+      "twilight-indigo": {
+        "role": "primary",
+        "displayName": "Twilight Indigo",
+        "canonical": "#3a54d6",
+        "tonalRamp": ["#26326c", "#2a3987", "#2f42ac", "#3a54d6", "#4c6ef0", "#6f8ffc", "#9db6ff", "#c6d6ff", "#e2eaff", "#f2f6ff"]
+      },
+      "twilight-indigo-light": {
+        "role": "primary",
+        "displayName": "Twilight Indigo Light",
+        "canonical": "#4c6ef0",
+        "tonalRamp": ["#26326c", "#2f42ac", "#3a54d6", "#4c6ef0", "#6f8ffc", "#9db6ff", "#c6d6ff", "#e2eaff"]
+      },
+      "lantern-violet": {
+        "role": "secondary",
+        "displayName": "Lantern Violet",
+        "canonical": "#6460e5",
+        "tonalRamp": ["#201f5c", "#302e86", "#4442ac", "#5050d5", "#6460e5", "#8480ea", "#a5a3f0", "#c8c6f7"]
+      },
+      "ember-coral": {
+        "role": "tertiary",
+        "displayName": "Ember Coral",
+        "canonical": "#e8735c",
+        "tonalRamp": ["#7a2c1c", "#a13d28", "#c94f34", "#d15c46", "#e8735c", "#ee9782", "#f4bcac", "#fae0d8"]
+      },
+      "state-new": {
+        "role": "semantic",
+        "displayName": "New (Blue)",
+        "canonical": "#3b82f6",
+        "tonalRamp": ["#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe"]
+      },
+      "state-practice": {
+        "role": "semantic",
+        "displayName": "Practice (Violet)",
+        "canonical": "#8b5cf6",
+        "tonalRamp": ["#4c1d95", "#5b21b6", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"]
+      },
+      "state-review": {
+        "role": "semantic",
+        "displayName": "Review (Amber)",
+        "canonical": "#f59e0b",
+        "tonalRamp": ["#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d", "#fde68a"]
+      },
+      "state-mastered": {
+        "role": "semantic",
+        "displayName": "Mastered (Emerald)",
+        "canonical": "#10b981",
+        "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0"]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "Surface Slate",
+        "canonical": "#0f172a",
+        "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#64748b", "#94a3b8", "#cbd5e1", "#f1f5f9"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Baloo 2)", "purpose": "h1-h3, page titles, the Dashboard greeting." },
+      "body": { "displayName": "Body (Nunito)", "purpose": "Body copy, labels, buttons, all non-heading text." },
+      "japanese": { "displayName": "Japanese (Hiragino Sans / Noto Sans JP)", "purpose": "Every Japanese-language string, via the .jp-text utility." }
+    },
+    "shadows": [
+      { "name": "glow-new-rest", "value": "0 0 0 1px rgba(59,130,246,0.08), 0 6px 20px -8px rgba(59,130,246,0.35)", "purpose": "Quiet always-on tint marking a 'New' word/kanji card." },
+      { "name": "glow-new-hover", "value": "0 0 0 1px rgba(59,130,246,0.25), 0 10px 28px -6px rgba(59,130,246,0.55)", "purpose": "Hover/focus intensification of the New glow." },
+      { "name": "glow-practice-rest", "value": "0 0 0 1px rgba(139,92,246,0.1), 0 6px 20px -8px rgba(139,92,246,0.4)", "purpose": "Quiet always-on tint marking a 'Practice' card." },
+      { "name": "glow-review-rest", "value": "0 0 0 1px rgba(245,158,11,0.1), 0 6px 20px -8px rgba(245,158,11,0.4)", "purpose": "Quiet always-on tint marking a 'Review due' card." },
+      { "name": "glow-mastered-rest", "value": "0 0 0 1px rgba(16,185,129,0.1), 0 6px 20px -8px rgba(16,185,129,0.4)", "purpose": "Quiet always-on tint marking a 'Mastered' card." },
+      { "name": "cta-ledge", "value": "0 4px 0 0 #3d3aa8, inset 0 1.5px 0 rgba(255,255,255,0.35)", "purpose": "The primary button's solid pressed-ledge, removed entirely on :active." },
+      { "name": "celebration-overlay", "value": "background: rgba(2,6,23,0.7); backdrop-filter: blur(4px)", "purpose": "The Level-Up dialog's overlay — the one moment the system goes darker/heavier than its normal flat language." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default transition easing app-wide (Tailwind's default transition-all)." },
+      { "name": "press-depth", "value": "transform 150ms; translate-y on hover(-2px)/active(+4px)", "purpose": "The primary button's tactile lift-then-flatten interaction." },
+      { "name": "sliding-indicator", "value": "all 200ms ease-out", "purpose": "SegmentedTabs' pill indicator gliding to the active option's measured position." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button (CTA)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action per screen — Lantern Violet gradient with a solid pressed ledge.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polygon points=\"5 3 19 12 5 21 5 3\"/></svg>Start Study Session</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 1.8rem; padding: 10px 20px; font-size: 14px; font-weight: 700; color: #ffffff; background-image: linear-gradient(to bottom, #6460e5, #5050d5); box-shadow: 0 4px 0 0 #3d3aa8, inset 0 1.5px 0 rgba(255,255,255,0.35); border: none; cursor: pointer; transition: transform 150ms, filter 150ms, box-shadow 150ms; } .ds-btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); } .ds-btn-primary:active { transform: translateY(4px); box-shadow: none; } .ds-btn-primary:focus-visible { outline: 2px solid #4c6ef0; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The default flat container — hairline border, no shadow at rest.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Today's Path</h3><p class=\"ds-card-body\">Grammar · 15 min remaining</p></div>",
+      "css": ".ds-card { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 1.8rem; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); } .ds-card-title { margin: 0 0 8px; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 16px; color: #f1f5f9; } .ds-card-body { margin: 0; font-size: 14px; color: #94a3b8; }"
+    },
+    {
+      "name": "Learning State Badge (New)",
+      "kind": "chip",
+      "refersTo": "badge-new",
+      "description": "A semantic pill — color is locked to meaning (blue=new, violet=practice, amber=review, emerald=mastered).",
+      "html": "<span class=\"ds-badge-new\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 3v18M3 12h18\"/></svg>New</span>",
+      "css": ".ds-badge-new { display: inline-flex; align-items: center; gap: 4px; border-radius: 9999px; padding: 2px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(59,130,246,0.15); color: #93c5fd; }"
+    },
+    {
+      "name": "Segmented Tab (level filter)",
+      "kind": "custom",
+      "refersTo": "segmented-tabs",
+      "description": "A bordered track with a sliding indigo pill indicator — the app's signature filter/toggle control.",
+      "html": "<div class=\"ds-seg-track\"><span class=\"ds-seg-indicator\"></span><button class=\"ds-seg-item ds-seg-active\">All</button><button class=\"ds-seg-item\">N5</button><button class=\"ds-seg-item\">N4</button></div>",
+      "css": ".ds-seg-track { position: relative; display: inline-flex; border-radius: 1rem; border: 1px solid #1e293b; background: #0f172a; padding: 4px; } .ds-seg-indicator { position: absolute; top: 4px; left: 4px; width: 48px; height: calc(100% - 8px); border-radius: 0.8rem; background: #3a54d6; box-shadow: 0 0 0 1px rgba(58,84,214,0.3), 0 0 16px -2px rgba(58,84,214,0.7); transition: all 200ms ease-out; } .ds-seg-item { position: relative; z-index: 1; padding: 6px 16px; border: none; background: transparent; font-size: 14px; font-weight: 600; color: #94a3b8; cursor: pointer; } .ds-seg-active { color: #ffffff; }"
+    },
+    {
+      "name": "Ring Stat",
+      "kind": "custom",
+      "refersTo": "ring-stat",
+      "description": "A circular SVG progress ring showing a real, bounded ratio (streak vs. best, minutes vs. goal) with a centered icon — never decorative or fixed-arc.",
+      "html": "<div class=\"ds-ring\"><svg viewBox=\"0 0 56 56\" width=\"56\" height=\"56\" style=\"transform: rotate(-90deg)\"><circle cx=\"28\" cy=\"28\" r=\"25.5\" stroke=\"currentColor\" stroke-width=\"5\" fill=\"none\" opacity=\"0.12\"/><circle cx=\"28\" cy=\"28\" r=\"25.5\" stroke=\"#e8735c\" stroke-width=\"5\" fill=\"none\" stroke-linecap=\"round\" stroke-dasharray=\"120 160\"/></svg><span class=\"ds-ring-icon\">🔥</span></div>",
+      "css": ".ds-ring { position: relative; width: 56px; height: 56px; color: #1e293b; } .ds-ring-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Night Lantern",
+    "overview": "Kotobox is a small, steady light held up in a dark, star-lit room — the mascot lantern-in-hand, guiding a learner through one calm study session toward a real destination: genuine JLPT readiness. Every night-sky hero panel, every glowing ring and card border, is that same lantern-light: present, warm, low-key. It never shouts for attention, because the destination (being exam-ready) is the point, not the light itself. This system explicitly rejects the \"carnival\" reading of gamification: loud confetti-everywhere, neon progress bars, mascots that upstage the content, flat gray/white corporate dashboard chrome, and any direct visual cloning of a single competitor. Streaks, XP, levels, and badges exist here, but they are supporting instruments — quiet indicators of real progress, not the show.",
+    "keyCharacteristics": [
+      "Dark, night-sky atmosphere as the default stage; light mode is a fully-supported second reading of the same system, not an afterthought.",
+      "Color communicates meaning, never decoration — a small, closed vocabulary reused everywhere rather than expanding per screen.",
+      "Depth comes from soft colored glow, not gray elevation shadows.",
+      "The mascot is present at key moments but is a companion in the scene, not a mascot-first interface."
+    ],
+    "rules": [
+      { "name": "The Closed Vocabulary Rule", "body": "No new named colors get introduced for a single screen. If a new UI element needs color, it draws from the existing set or it doesn't get color at all.", "section": "colors" },
+      { "name": "The One Button Rule", "body": "Lantern Violet appears on at most one button per screen — the single primary action.", "section": "colors" },
+      { "name": "The Same Color, Same Meaning Rule", "body": "The four learning-state colors are locked to their meanings everywhere they appear: card border, glow, badge, and progress-bar fill all agree.", "section": "colors" },
+      { "name": "The Fluid-Headline Rule", "body": "Only headline-level text uses clamp() fluid sizing. Helper/label text stays at fixed Tailwind steps.", "section": "typography" },
+      { "name": "The Glow-Not-Gray Rule", "body": "If an element needs to feel lifted or important, reach for a colored glow tied to its semantic meaning before reaching for a gray drop shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Lantern Violet to exactly one button per screen — the single primary action.",
+      "Do let the four learning-state colors mean the same thing everywhere: card border, glow, badge, and progress-bar fill all agree.",
+      "Do use colored glow, not gray drop shadow, whenever a card needs to feel emphasized or stateful.",
+      "Do render every animation with a prefers-reduced-motion: reduce fallback.",
+      "Do keep every displayed number real — derived from actual stored progress, never a placeholder.",
+      "Do reserve the mascot for specific moments rather than putting it on every surface."
+    ],
+    "donts": [
+      "Don't ship 'carnival' gamification — confetti, sound, or motion that overshadows the actual studying.",
+      "Don't clone Duolingo's specific visual identity directly.",
+      "Don't default to flat gray/white corporate SaaS dashboard chrome.",
+      "Don't use background-clip: text gradient headlines, side-stripe colored borders, or glassmorphism as a default decorative treatment.",
+      "Don't introduce a new named color for a single screen.",
+      "Don't use a gray elevation shadow where a semantic colored glow would communicate more.",
+      "Don't add dead buttons, fake data, or placeholder features without an honest lock/disabled treatment."
+    ]
+  }
+}

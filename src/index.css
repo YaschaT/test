@@ -1,0 +1,392 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme {
+  --font-sans: 'Nunito', system-ui, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --font-display: 'Baloo 2', 'Nunito', system-ui, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --font-jp: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+
+  --color-brand-50: #f2f6ff;
+  --color-brand-100: #e2eaff;
+  --color-brand-200: #c6d6ff;
+  --color-brand-300: #9db6ff;
+  --color-brand-400: #6f8ffc;
+  --color-brand-500: #4c6ef0;
+  --color-brand-600: #3a54d6;
+  --color-brand-700: #2f42ac;
+  --color-brand-800: #2a3987;
+  --color-brand-900: #26326c;
+
+  --color-accent-500: #e8735c;
+  --color-accent-600: #d15c46;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  font-family: var(--font-sans);
+}
+
+ruby rt {
+  font-size: 0.55em;
+  color: var(--color-brand-600);
+  user-select: none;
+}
+.dark ruby rt {
+  color: var(--color-brand-300);
+}
+
+.jp-text {
+  font-family: var(--font-jp);
+}
+
+/* Fluid typography for the Dashboard's most prominent text — scales continuously with viewport width
+   (clamp(min, preferred, max)) instead of jumping at fixed breakpoints, so text keeps pace with the
+   Dashboard's now-fluid card sizing rather than looking small inside cards that have grown to fill extra
+   screen space. Kept to a small, named set (per working-agreement: reusable classes over ad-hoc sizes)
+   and only applied to headline-level text — helper/label text stays at normal fixed Tailwind sizes since
+   scaling every line tends to look inconsistent rather than premium. */
+.text-fluid-hero-title {
+  font-size: clamp(1.75rem, 1.1rem + 1.15vw, 2.75rem);
+}
+.text-fluid-hero-sub {
+  font-size: clamp(0.875rem, 0.75rem + 0.25vw, 1.0625rem);
+}
+.text-fluid-stat-value {
+  font-size: clamp(1.25rem, 0.8rem + 1.2vw, 2.5rem);
+}
+.text-fluid-section-title {
+  font-size: clamp(1rem, 0.82rem + 0.35vw, 1.375rem);
+}
+.text-fluid-milestone {
+  font-size: clamp(0.8125rem, 0.7rem + 0.3vw, 1.0625rem);
+}
+
+/* Native range-input thumbs render tiny and plain (esp. on Windows/Firefox) — a bigger white disc with a
+   colored ring reads as a deliberate, premium control rather than a default browser widget. */
+.plan-slider {
+  height: 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+.plan-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 9999px;
+}
+.plan-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 9999px;
+}
+.plan-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: white;
+  border: 5px solid var(--color-brand-600);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  margin-top: -7px;
+  cursor: pointer;
+}
+.plan-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: white;
+  border: 5px solid var(--color-brand-600);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+/* Grammar constellation's night-sky background — a tiling scatter of soft dots via layered
+   radial-gradients rather than a fixed illustration, so it stays correct at any panel height as the
+   grammar set grows. Static, so it isn't gated behind prefers-reduced-motion. */
+.star-field {
+  background-image:
+    radial-gradient(1px 1px at 8% 15%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 32% 45%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 58% 20%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 76% 55%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 92% 12%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 14% 78%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 44% 88%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 68% 92%, rgba(255, 255, 255, 0.5), transparent);
+  background-repeat: repeat;
+  background-size: 320px 220px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* Micro-interactions — entirely disabled under prefers-reduced-motion rather than just shortened,
+   per the accessibility requirement to respect that preference fully. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes celebrate-in {
+    from {
+      opacity: 0;
+      transform: scale(0.92) translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.18);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-4px);
+    }
+    40% {
+      transform: translateX(4px);
+    }
+    60% {
+      transform: translateX(-3px);
+    }
+    80% {
+      transform: translateX(3px);
+    }
+  }
+
+  .animate-celebrate {
+    animation: celebrate-in 0.35s ease-out;
+  }
+  .animate-pop {
+    animation: pop 0.4s ease-out;
+  }
+  .animate-shake {
+    animation: shake 0.35s ease-in-out;
+  }
+
+  /* Marks the grammar constellation's "up next" star: a brief two-cycle breathing ring that settles
+     back into the same static glow the button already carries via inline style, so there's no visible
+     jump when the animation ends. Bounded (not infinite) — see PROJECT_STATUS.md's quieter-pass notes on
+     why an always-on pulse was removed from this exact page. */
+  @keyframes star-glow-settle {
+    0%,
+    100% {
+      box-shadow:
+        0 3px 8px -2px rgba(58, 84, 214, 0.53),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.35),
+        0 0 0 0 rgba(58, 84, 214, 0.45);
+    }
+    50% {
+      box-shadow:
+        0 3px 8px -2px rgba(58, 84, 214, 0.53),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.35),
+        0 0 0 10px rgba(58, 84, 214, 0);
+    }
+  }
+  .animate-star-glow-settle {
+    animation: star-glow-settle 1.4s ease-out 2;
+  }
+
+  /* Listening's sound-ripple signature — only ever rendered while TTS audio is genuinely playing (see
+     SoundRipple.tsx), so this "infinite" loop is bounded by a real, temporary state that always ends on
+     its own the moment playback stops, not a decorative always-on animation. */
+  @keyframes sound-ripple {
+    0% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+  .animate-sound-ripple {
+    animation: sound-ripple 1.4s ease-out infinite;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-16px) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(420px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+  .animate-confetti-fall {
+    animation-name: confetti-fall;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+  }
+}
+
+/* Safety net for every other hover/press transform transition used across the app (card lift, button
+   press-scale, etc.) — makes them instant instead of auditing each utility class individually. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@theme inline {
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* shadcn's own theme tokens, recolored to Kotobox's actual palette (brand blue/violet, slate surfaces)
+   instead of the library's default neutral grays — every new shadcn-based primitive (Dialog, Select,
+   Tooltip, etc.) reads these, so this is what keeps them from looking like a generic bolted-on UI kit.
+   Values are hand-picked to match the hex colors already used throughout the app (--color-brand-*, the
+   slate-50/900/950 surfaces from Card.tsx and Layout.tsx, the #6460e5 CTA gradient) rather than derived
+   from the shadcn preset. */
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #3a54d6;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f2f6ff;
+  --accent-foreground: #3a54d6;
+  --destructive: #ef4444;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #4c6ef0;
+  --chart-1: #6f8ffc;
+  --chart-2: #e8735c;
+  --chart-3: #8b7cf6;
+  --chart-4: #10b981;
+  --chart-5: #f59e0b;
+  --radius: 1rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #3a54d6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #4c6ef0;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
+  --card: #0f172a;
+  --card-foreground: #f1f5f9;
+  --popover: #0f172a;
+  --popover-foreground: #f1f5f9;
+  --primary: #3a54d6;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+  --destructive: #f87171;
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: #6f8ffc;
+  --chart-1: #6f8ffc;
+  --chart-2: #e8735c;
+  --chart-3: #8b7cf6;
+  --chart-4: #10b981;
+  --chart-5: #f59e0b;
+  --sidebar: #0f172a;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #3a54d6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: #6f8ffc;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

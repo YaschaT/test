@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#030716" flood-opacity="0.38"/>
+    </filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.25  0 0 0 0 0.42  0 0 0 0 1  0 0 0 0.55 0"/>
+      <feBlend in2="SourceGraphic" mode="screen"/>
+    </filter>
+    <linearGradient id="shine" x1="128" y1="70" x2="384" y2="442" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".42"/>
+      <stop offset=".35" stop-color="#FFFFFF" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    
+    <linearGradient id="badgeGrad" x1="132" y1="92" x2="384" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5F7CFF"/>
+      <stop offset="1" stop-color="#3148CF"/>
+    </linearGradient>
+    <radialGradient id="badgeGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(184 125) rotate(52) scale(240 212)">
+      <stop stop-color="#FFFFFF" stop-opacity=".5"/>
+      <stop offset=".42" stop-color="#FFFFFF" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    
+  </defs>
+  <g>
+        <path d="M256 54C302 94 356 110 416 112V246C416 342 353 417 256 462C159 417 96 342 96 246V112C156 110 210 94 256 54Z" fill="url(#badgeGrad)" filter="url(#softShadow)"/>
+        <path d="M256 85C294 117 338 130 386 132V246C386 322 335 382 256 420C177 382 126 322 126 246V132C174 130 218 117 256 85Z" fill="#0D1730" fill-opacity=".18" stroke="#FFFFFF" stroke-opacity=".18" stroke-width="8"/>
+        <path d="M256 54C302 94 356 110 416 112V246C416 342 353 417 256 462C159 417 96 342 96 246V112C156 110 210 94 256 54Z" fill="url(#badgeGlow)"/>
+        <g filter="url(#glow)">
+<path d="M158 166C158 153 168 144 181 146C214 151 235 162 256 182C277 162 298 151 331 146C344 144 354 153 354 166V334C354 346 346 354 335 356C303 361 282 371 256 392C230 371 209 361 177 356C166 354 158 346 158 334V166Z" fill="#FFFFFF" fill-opacity=".92"/>
+<path d="M256 182V392" stroke="#2F56FF" stroke-width="16" stroke-linecap="round"/>
+<path d="M190 194C210 198 229 206 242 218M190 244C210 248 227 255 242 266M322 194C302 198 283 206 270 218M322 244C302 248 285 255 270 266" stroke="#2F56FF" stroke-width="13" stroke-linecap="round"/>
+</g>
+      <path d="M122 92L134 118L160 130L134 142L122 168L110 142L84 130L110 118L122 92Z" fill="#FFFFFF" opacity=".8"/>
+      <path d="M396 326L405 345L424 354L405 363L396 382L387 363L368 354L387 345L396 326Z" fill="#FFFFFF" opacity=".5"/>
+    </g>
+</svg>

@@ -1,0 +1,43 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#030716" flood-opacity="0.38"/>
+    </filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.25  0 0 0 0 0.42  0 0 0 0 1  0 0 0 0.55 0"/>
+      <feBlend in2="SourceGraphic" mode="screen"/>
+    </filter>
+    <linearGradient id="shine" x1="128" y1="70" x2="384" y2="442" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".42"/>
+      <stop offset=".35" stop-color="#FFFFFF" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    
+    <linearGradient id="badgeGrad" x1="132" y1="92" x2="384" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD36B"/>
+      <stop offset="1" stop-color="#F7941D"/>
+    </linearGradient>
+    <radialGradient id="badgeGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(184 125) rotate(52) scale(240 212)">
+      <stop stop-color="#FFFFFF" stop-opacity=".5"/>
+      <stop offset=".42" stop-color="#FFFFFF" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    
+  </defs>
+  <g>
+        <circle cx="256" cy="238" r="142" fill="url(#badgeGrad)" filter="url(#softShadow)"/>
+        <circle cx="256" cy="238" r="113" fill="#0D1730" fill-opacity=".18" stroke="#FFFFFF" stroke-opacity=".18" stroke-width="8"/>
+        <circle cx="256" cy="238" r="142" fill="url(#badgeGlow)"/>
+        <path d="M190 350L164 454L256 408L348 454L322 350" fill="url(#badgeGrad)" opacity=".85"/>
+        <path d="M190 350L164 454L256 408L348 454L322 350" stroke="#FFFFFF" stroke-opacity=".18" stroke-width="8" stroke-linejoin="round"/>
+        <g filter="url(#glow)">
+<path d="M150 262C150 198 195 150 256 150C317 150 362 198 362 262" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round"/>
+<rect x="124" y="258" width="70" height="104" rx="30" fill="#FFFFFF"/>
+<rect x="318" y="258" width="70" height="104" rx="30" fill="#FFFFFF"/>
+<path d="M210 370C238 392 278 392 306 370" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round"/>
+</g>
+      <path d="M122 92L134 118L160 130L134 142L122 168L110 142L84 130L110 118L122 92Z" fill="#FFFFFF" opacity=".8"/>
+      <path d="M396 326L405 345L424 354L405 363L396 382L387 363L368 354L387 345L396 326Z" fill="#FFFFFF" opacity=".5"/>
+    </g>
+</svg>

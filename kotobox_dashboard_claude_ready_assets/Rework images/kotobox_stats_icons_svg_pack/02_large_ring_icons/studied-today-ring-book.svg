@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" fill="none">
+  <defs>
+    <linearGradient id="ring" x1="17" y1="12" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A884FF"/>
+      <stop offset="1" stop-color="#6E54F7"/>
+    </linearGradient>
+    <linearGradient id="book" x1="28" y1="24" x2="45" y2="47" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#BE8BFF"/>
+      <stop offset="1" stop-color="#7B5CFF"/>
+    </linearGradient>
+  </defs>
+  <circle cx="36" cy="36" r="24" stroke="#2E3764" stroke-width="8"/>
+  <path d="M36 12a24 24 0 0 1 22.1 14.7A24 24 0 1 1 36 12z" stroke="url(#ring)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M36 26c-3.7-2.8-9-2.9-12-.8v13.6c3.4-1.5 8.1-1.2 12 1.6m0-14.4c3.7-2.8 9-2.9 12-.8v13.6c-3.4-1.5-8.1-1.2-12 1.6m0-14.4v14.4" stroke="url(#book)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
