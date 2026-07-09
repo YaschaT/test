@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Loader2, MailCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { PrimaryButton } from '../PrimaryButton';
+import { AuthSubmitButton } from './AuthSubmitButton';
 import { FormField } from './FormField';
 import { GoogleButton } from './GoogleButton';
 import { registerWithEmail, isSupabaseConfigured } from '../../lib/auth';
@@ -10,8 +9,12 @@ import { syncProgressAfterSignIn } from '../../lib/progressSync';
 
 type Field = 'email' | 'password' | 'confirmPassword';
 
-export function RegisterForm() {
-  const navigate = useNavigate();
+interface RegisterFormProps {
+  /** Called only when registration grants an immediate session (no email confirmation pending) — AuthShell owns the gate exit transition + route change from there. */
+  onAuthenticated: () => void;
+}
+
+export function RegisterForm({ onAuthenticated }: RegisterFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -45,13 +48,13 @@ export function RegisterForm() {
       const { user, hasSession } = await registerWithEmail(email, password);
       if (hasSession && user) {
         await syncProgressAfterSignIn(user.id);
-        navigate('/');
+        onAuthenticated();
       } else {
         setAwaitingConfirmation(true);
+        setSubmitting(false);
       }
     } catch (err) {
       setServerError(friendlyAuthError(err));
-    } finally {
       setSubmitting(false);
     }
   }
@@ -59,13 +62,13 @@ export function RegisterForm() {
   if (awaitingConfirmation) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <span className="flex items-center justify-center w-12 h-12 rounded-full bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-300">
+        <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#e34a33]/15 text-[#ff8a5c]">
           <MailCheck size={22} aria-hidden="true" />
         </span>
-        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Check your email</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          We sent a confirmation link to <span className="font-medium text-slate-700 dark:text-slate-200">{email}</span>. Confirm
-          it, then log in to pick up right where you left off.
+        <p className="text-sm font-semibold text-white">Check your email</p>
+        <p className="text-sm text-white/55">
+          We sent a confirmation link to <span className="font-medium text-white/80">{email}</span>. Confirm it, then log in
+          to pick up right where you left off.
         </p>
       </div>
     );
@@ -74,12 +77,12 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
       {!isSupabaseConfigured && (
-        <p role="status" className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 rounded-lg px-3 py-2">
+        <p role="status" className="text-xs font-medium text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
           Accounts are almost ready — check back soon.
         </p>
       )}
       {serverError && (
-        <p role="alert" className="text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-lg px-3 py-2">
+        <p role="alert" className="text-sm font-medium text-red-300 bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2">
           {serverError}
         </p>
       )}
@@ -113,12 +116,12 @@ export function RegisterForm() {
         onBlur={() => markTouched('confirmPassword')}
         error={errors.confirmPassword}
       />
-      <PrimaryButton type="submit" disabled={submitting || !isSupabaseConfigured} className="w-full justify-center">
+      <AuthSubmitButton type="submit" disabled={submitting || !isSupabaseConfigured}>
         {submitting ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : 'Create account'}
-      </PrimaryButton>
+      </AuthSubmitButton>
       <div className="relative py-1 text-center">
-        <span className="relative bg-white dark:bg-slate-900 px-2 text-xs text-slate-400">or</span>
-        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+        <span className="relative bg-[#0e0e14] px-2 text-xs text-white/35">or</span>
+        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-white/10" aria-hidden="true" />
       </div>
       <GoogleButton />
     </form>

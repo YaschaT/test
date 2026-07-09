@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { PrimaryButton } from '../PrimaryButton';
+import { AuthSubmitButton } from './AuthSubmitButton';
 import { FormField } from './FormField';
 import { GoogleButton } from './GoogleButton';
 import { signInWithEmail, sendPasswordReset, isSupabaseConfigured } from '../../lib/auth';
@@ -10,8 +9,12 @@ import { syncProgressAfterSignIn } from '../../lib/progressSync';
 
 type Field = 'email' | 'password';
 
-export function LoginForm() {
-  const navigate = useNavigate();
+interface LoginFormProps {
+  /** Called only once real sign-in succeeds — AuthShell owns what happens next (the gate exit transition, then the route change), not this form. */
+  onAuthenticated: () => void;
+}
+
+export function LoginForm({ onAuthenticated }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [touched, setTouched] = useState<Record<Field, boolean>>({ email: false, password: false });
@@ -41,10 +44,9 @@ export function LoginForm() {
     try {
       const user = await signInWithEmail(email, password);
       if (user) await syncProgressAfterSignIn(user.id);
-      navigate('/');
+      onAuthenticated();
     } catch (err) {
       setServerError(friendlyAuthError(err));
-    } finally {
       setSubmitting(false);
     }
   }
@@ -69,12 +71,12 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
       {!isSupabaseConfigured && (
-        <p role="status" className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 rounded-lg px-3 py-2">
+        <p role="status" className="text-xs font-medium text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
           Accounts are almost ready — check back soon.
         </p>
       )}
       {serverError && (
-        <p role="alert" className="text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-lg px-3 py-2">
+        <p role="alert" className="text-sm font-medium text-red-300 bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2">
           {serverError}
         </p>
       )}
@@ -101,25 +103,25 @@ export function LoginForm() {
         />
         <div className="flex justify-end">
           {resetState === 'sent' ? (
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Check your email for a reset link.</span>
+            <span className="text-xs font-medium text-emerald-400">Check your email for a reset link.</span>
           ) : (
             <button
               type="button"
               onClick={handleForgotPassword}
               disabled={resetState === 'sending' || !isSupabaseConfigured}
-              className="text-xs font-medium text-brand-600 dark:text-brand-300 hover:underline disabled:opacity-50"
+              className="text-xs font-medium text-[#ff8a5c] hover:text-[#ffab85] hover:underline disabled:opacity-50"
             >
               {resetState === 'sending' ? 'Sending…' : 'Forgot password?'}
             </button>
           )}
         </div>
       </div>
-      <PrimaryButton type="submit" disabled={submitting || !isSupabaseConfigured} className="w-full justify-center">
+      <AuthSubmitButton type="submit" disabled={submitting || !isSupabaseConfigured}>
         {submitting ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : 'Log in'}
-      </PrimaryButton>
+      </AuthSubmitButton>
       <div className="relative py-1 text-center">
-        <span className="relative bg-white dark:bg-slate-900 px-2 text-xs text-slate-400">or</span>
-        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+        <span className="relative bg-[#0e0e14] px-2 text-xs text-white/35">or</span>
+        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-white/10" aria-hidden="true" />
       </div>
       <GoogleButton />
     </form>

@@ -1,0 +1,74 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "fraunces",
+        "reason": "User confirmed Fraunces is intentional for the redesigned auth page",
+        "createdAt": "2026-07-08T21:02:58.606Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fff1e8",
+        "reason": "User confirmed torii vermillion glow palette for auth redesign",
+        "createdAt": "2026-07-08T21:04:36.374Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#ff8a5c",
+        "reason": "User confirmed torii vermillion glow palette for auth redesign",
+        "createdAt": "2026-07-08T21:04:36.494Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#e34a33",
+        "reason": "User confirmed torii vermillion glow palette for auth redesign",
+        "createdAt": "2026-07-08T21:04:36.638Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c73f2b",
+        "reason": "User confirmed torii vermillion/ink palette for auth redesign",
+        "createdAt": "2026-07-08T21:05:43.448Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#9c2f1f",
+        "reason": "User confirmed torii vermillion/ink palette for auth redesign",
+        "createdAt": "2026-07-08T21:05:43.561Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#8a2a1c",
+        "reason": "User confirmed torii vermillion/ink palette for auth redesign",
+        "createdAt": "2026-07-08T21:05:43.775Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#a8331f",
+        "reason": "User confirmed torii vermillion/ink palette for auth redesign",
+        "createdAt": "2026-07-08T21:05:43.946Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#0a0a0f",
+        "reason": "User confirmed torii vermillion/ink palette for auth redesign",
+        "createdAt": "2026-07-08T21:05:44.092Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#14141c",
+        "reason": "User confirmed torii vermillion/ink palette for auth redesign",
+        "createdAt": "2026-07-08T21:05:44.228Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f5f4f2",
+        "reason": "User confirmed torii vermillion/ink palette for auth redesign",
+        "createdAt": "2026-07-08T21:05:44.359Z"
+      }
+    ]
+  }
+}

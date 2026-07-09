@@ -6,13 +6,70 @@ removed from the sidebar/mobile header, now just the logo mark + "Kotobox". This
 change: the internal `localStorage` key prefix (`kotoba-do:...`) was deliberately left unchanged so no
 existing user progress was reset — renaming that prefix would have invalidated everyone's saved data.
 
-Last updated after **optional accounts (sign up / log in, Supabase-backed, cross-device progress sync)**
-(see below). Still awaiting user direction on the remaining `/impeccable critique` findings before any
-further work, including Speaking (Phase 8).
+Last updated after **a full creative redesign of the login/register page** (torii-gate scene, see below).
+Still awaiting user direction on the remaining `/impeccable critique` findings before any further work,
+including Speaking (Phase 8).
 
 Deployment: this repo is pushed to GitHub (`YaschaT/test`) over SSH and connected to Vercel for
 auto-deploy-on-push. **Auto-push after verification is now the standing default** — every verified change
-gets committed and pushed without waiting to be asked, so the live Vercel URL stays current.
+gets committed and pushed without waiting to be asked, so the live Vercel URL stays current. Supabase
+project is wired up (real URL + publishable key in `.env` and Vercel env vars); the `user_progress` table +
+RLS policies still need to be created by the user via the SQL given earlier before sync is fully live.
+
+## Login/Register redesign — torii-gate scene (`/impeccable` + `/frontend-design`)
+
+Explicit ask: throw out the auth page's previous visual style entirely (it had matched the rest of the
+app's navy/starfield identity) and design something bold, modern, and "artsy" for 2026, using the existing
+fox mascot for the animation and making it visually clear that signing in leads into the Dashboard.
+
+Shaped and confirmed with the user before building (per `/impeccable craft`'s gate): a deliberate one-page
+departure from the app's usual identity, tied to real subject material — the Kotobox logo's own "道"
+(path/way) meaning, made literal.
+
+**Design system for this page only** (not applied elsewhere):
+- **Color** — ink-black canvas (`#0a0a0f`), a torii-vermillion signature accent (`#e34a33` / glow
+  `#ff8a5c`, real Shinto shrine-gate colors, not arbitrary), the app's existing indigo demoted to a small
+  secondary touch (segmented-tab indicator only). Registered as intentional design-system additions via
+  `/impeccable hooks ignore-value` rather than silently drifting from `DESIGN.md`.
+- **Type** — introduced "Fraunces" (expressive high-contrast display serif) for the one big headline,
+  paired against the app's existing Nunito for actual form labels/inputs — a serif+sans contrast pairing,
+  deliberately not another rounded Baloo-2-style bubble font.
+- **Shape** — sharper, more editorial corners on inputs/buttons (`rounded-md`) instead of the app's usual
+  candy-rounded pills, via new page-scoped components (`AuthSubmitButton`, restyled `FormField`/
+  `GoogleButton`) rather than touching the app-wide `PrimaryButton` used on every other screen.
+
+**`TorriiGateScene`** (new, `src/components/auth/`) — the signature: an illustrated torii gate (SVG) with
+a warm vermillion glow behind its opening and the existing fox `Mascot` standing at the threshold. Takes a
+`phase` prop:
+- `'greeting'` — the resting scene, shown on arrival and left in place as the permanent left-column
+  illustration (not a temporary splash that disappears): gentle breathing glow, mascot greets once on mount.
+- `'entering'` — the exit choreography: the mascot shrinks/fades into the gate opening while a full-viewport
+  vermillion flood overlay grows to fill the screen, then `AuthShell` navigates to the Dashboard. This is
+  the concrete answer to "make it clear we're heading into a dashboard" — a physical, connected transition
+  rather than an abrupt cut or a literal (and generic-SaaS-feeling) dashboard-preview screenshot.
+
+**`AuthShell`** (rewritten) — owns the whole view lifecycle as one small state machine: `'splash'` (the
+once-per-browser-session full-screen entrance, gated by the same `sessionStorage` flag as before) →
+`'split'` (the normal asymmetric two-column layout: gate scene + oversized Fraunces headline on one side,
+the actual form on the other, stacking on mobile) → `'exiting'` (the full-screen gate-entering transition
+on successful sign-in, held for 750ms before the real `navigate('/')` call). `LoginForm`/`RegisterForm` no
+longer navigate themselves — they call an `onAuthenticated` callback so `AuthShell` can play the exit
+transition first.
+
+Added a large, near-invisible (3.5% opacity) ghost "道" character behind the gate scene, plus a subtle
+SVG fractal-noise film-grain texture over the whole page (`.torii-grain` in `index.css`) — both static,
+not motion-gated — for a bit of the "artsy, not flat" texture the brief asked for.
+
+**Verification:** `npx tsc -b`, `npx eslint .`, `npm run build`, `npm test -- --run` (11/11) all pass clean,
+no console errors. Browser-checked both pages at mobile (375px), a mid desktop width (1100px, where the
+split layout and hairline divider render correctly — note: the screenshot tool itself visually crops very
+wide custom viewports like 1440px even though the underlying DOM/CSS grid measures correctly at that width,
+confirmed via `preview_inspect`; this looks like a tool-capture quirk, not a real layout bug), and the exact
+Fraunces headline wrapping on both the Login and Register copy. The exit-transition view was confirmed by
+directly dispatching the `AuthShell` component's internal view-state (via its React fiber) rather than a
+full real sign-in, since completing real email confirmation for a test account isn't possible from this
+environment — the state machine itself is simple (one `useState`, one `setTimeout`) and low-risk, but this
+is a real gap in true end-to-end coverage worth knowing about.
 
 ## Optional accounts (`/impeccable craft` — sign up / log in)
 
