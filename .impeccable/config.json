@@ -68,6 +68,24 @@
         "value": "#f5f4f2",
         "reason": "User confirmed torii vermillion/ink palette for auth redesign",
         "createdAt": "2026-07-08T21:05:44.359Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "geist",
+        "reason": "User's landing template explicitly specifies Geist",
+        "createdAt": "2026-07-09T20:02:50.434Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "inter",
+        "reason": "User's Lithos-template hero explicitly specifies Inter",
+        "createdAt": "2026-07-12T18:35:52.276Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "playfair display",
+        "reason": "User's Lithos-template hero explicitly specifies Playfair Display italic",
+        "createdAt": "2026-07-12T18:35:52.518Z"
       }
     ]
   }

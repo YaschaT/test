@@ -64,7 +64,7 @@ export function AuthShell({ mode }: AuthShellProps) {
 
   function handleAuthenticated() {
     setView('exiting');
-    setTimeout(() => navigate('/'), EXIT_DURATION_MS);
+    setTimeout(() => navigate('/dashboard'), EXIT_DURATION_MS);
   }
 
   if (view === 'splash') {
@@ -139,7 +139,7 @@ export function AuthShell({ mode }: AuthShellProps) {
 
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="w-full mt-6 text-center text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
           >
             Continue without an account

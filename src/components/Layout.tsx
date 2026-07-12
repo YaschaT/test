@@ -39,8 +39,8 @@ function useSecondaryNavItems() {
   const navigate = useNavigate();
   return [
     { key: 'review', label: 'Review', icon: RotateCcw, onClick: () => navigate('/vocabulary') },
-    { key: 'achievements', label: 'Achievements', icon: Trophy, onClick: () => navigate('/#achievements-section') },
-    { key: 'study-plan', label: 'Study Plan', icon: CalendarDays, onClick: () => navigate('/#study-plan-section') },
+    { key: 'achievements', label: 'Achievements', icon: Trophy, onClick: () => navigate('/dashboard#achievements-section') },
+    { key: 'study-plan', label: 'Study Plan', icon: CalendarDays, onClick: () => navigate('/dashboard#study-plan-section') },
     { key: 'progress', label: 'Progress', icon: BarChart3, disabled: true },
   ];
 }
@@ -59,7 +59,7 @@ export function Layout() {
   // the narrower reading-focused `max-w-5xl` used by detail pages (Grammar/Kanji/Reading detail, review
   // sessions, etc.) — a fixed-width column left a lot of dead space either side once the stats panel/card
   // grid were built to fill the available width like the Dashboard's own cards do.
-  const isWideLayout = location.pathname === '/' || location.pathname === '/vocabulary' || location.pathname === '/kanji';
+  const isWideLayout = location.pathname === '/dashboard' || location.pathname === '/vocabulary' || location.pathname === '/kanji';
   const secondaryNavItems = useSecondaryNavItems();
   const auth = useAuth();
   const navigate = useNavigate();

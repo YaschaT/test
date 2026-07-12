@@ -6,9 +6,109 @@ removed from the sidebar/mobile header, now just the logo mark + "Kotobox". This
 change: the internal `localStorage` key prefix (`kotoba-do:...`) was deliberately left unchanged so no
 existing user progress was reset — renaming that prefix would have invalidated everyone's saved data.
 
-Last updated after **a full creative redesign of the login/register page** (torii-gate scene, see below).
-Still awaiting user direction on the remaining `/impeccable critique` findings before any further work,
-including Speaking (Phase 8).
+Last updated after **the landing hero v3: lantern-spotlight reveal** (see below), which replaced the
+depth-pass hero the user reviewed and superseded. Still awaiting user direction on the remaining
+`/impeccable critique` findings before any further work, including Speaking (Phase 8).
+
+## Landing hero v3 — lantern-spotlight reveal (user's "Lithos" template, adapted)
+
+The user supplied a highly specific hero template written for a geology brand ("Lithos": rock-strata
+images, orange CTA, "Start Digging"). Its **mechanic and layout** were ported exactly; its **content** was
+not (their own standing rules — bird mascot identity, no random orange CTA, Japanese night atmosphere —
+outrank template fidelity):
+- **`SpotlightLayers`** (new): a lantern of light trails the cursor (lerp 0.1, per the template) and
+  reveals a second scene through a soft radial mask with the template's exact falloff stops. Implemented
+  as a CSS `mask-image` with custom properties written from a rAF loop — visually identical to the
+  template's canvas-`toDataURL`-per-frame approach but GPU-composited, with zero React re-renders during
+  pointer movement. Falls back to (and parks at, on touch devices) a center position below the headline;
+  radius is `min(260px, 42vw)` so phones aren't flooded by a desktop-sized spotlight.
+- **`LanternScene`** (new): what the light uncovers — the same `JapaneseScene` geometry (so base and
+  reveal stay pixel-registered) washed warm, plus a constellation of real N5 words (水, 友達, 日本語,
+  ありがとう…) glowing in the sky and the bird mascot waiting by the torii. Sweeping the light literally
+  uncovers the words you'll learn — the template's gimmick, given a reason to exist.
+- **Hero layout per template spec**: centered two-line headline — Playfair Display italic "Your path
+  appears" over tight Inter "one word at a time" (exact sizes/tracking/letter-spacing/stagger delays),
+  bottom-corner paragraphs, `100dvh`, z-layers 10/30/50, Ken Burns zoom on the base scene, blur-rise/
+  fade-up load choreography (CSS classes scoped inside the `prefers-reduced-motion: no-preference` block
+  so reduced-motion users can never be stranded on the `opacity: 0` start state). "Move the light." copy
+  is hidden below `sm` — it makes no sense without a cursor.
+- **Nav per template**: frosted center pill (real section anchors, no fake "active" state), Playfair
+  wordmark, white Sign Up → `/register`. Deviation: mobile shows Log in + Sign Up directly instead of the
+  template's hamburger — fewer moving parts, every control one tap deep.
+- **Kept**: all 8 sections below the hero (their most recent standing structural decision), TiltCard
+  previews, honest pricing, all CTA routing. **Removed**: the depth-pass hero's floating card cluster and
+  hero GSAP timeline/parallax (parallax would have de-registered the duplicated base/reveal scenes);
+  GSAP now only drives the below-hero scroll reveals. Inter + Playfair Display added to the font link
+  (template-specified; NOT the template's global `* { Inter }` rule, which would have overwritten the
+  app's own fonts).
+
+**Verification:** `tsc`/`eslint`/`build`/`test` (11/11) all clean. In-browser: spotlight verified
+following the cursor (screenshot before/after hover + `--spot-x/y` custom-property readout), initial
+parked glow correct, mobile 375px clean (readable headline, smaller spotlight parked below it, no
+horizontal overflow), zero console errors, all 8 sections laid out below (6.8k px document). Known
+tooling quirk, documented so nobody chases it later: the Browser pane's screenshot capture returns blank
+white frames at scrolled positions on this long page even though DOM geometry, computed styles,
+element-from-point hit tests, and the a11y tree all confirm correct dark rendering — the same pane also
+misrendered wide-viewport captures earlier; treat its scrolled screenshots as unreliable here.
+
+## Public landing page at `/` (+ depth upgrade pass)
+
+**Route restructure:** `/` is now the public marketing page; the Dashboard moved to `/dashboard`. All other
+routes unchanged (`/login`, `/register`, `/vocabulary`, `/kanji`, `/grammar`, `/reading`, `/listening`,
+detail/review routes). Touched for the move: `App.tsx` (routes + lazy-loaded landing), `lib/nav.ts`
+(Dashboard path), `Layout.tsx` (wide-layout check + sidebar anchor links now `/dashboard#...`),
+`AuthShell.tsx` (post-login exit transition and "Continue without an account" → `/dashboard`). Dashboard's
+own hash-scrolling was already path-agnostic, so anchors kept working.
+
+**Files:** `src/pages/landing/LandingPage.tsx` (assembly + all GSAP orchestration in one gsap.context,
+wrapped in gsap.matchMedia so prefers-reduced-motion gets a fully static page) plus
+`src/components/landing/`: LandingNav, LandingHero, JapaneseScene, SakuraParticles, TiltCard, FeatureCard,
+ProblemSection, SolutionSection, ProductPreview, JourneySection, MotivationSection, PricingSection,
+FinalCTA, LandingFooter, landingCta.ts. **GSAP installed with user permission** (scroll reveals fire once
+via ScrollTrigger, hero entrance timeline, parallax scrub, depth-multiplied floating); **Three.js
+deliberately not used** (CSS/SVG layering gives the depth without ~150KB of WebGL). The landing page is
+code-split via React.lazy, so GSAP and the whole page live in their own chunk (~55KB gz) and the app
+bundle stayed flat (~235KB gz).
+
+**Nine sections, all real-data honest:** cinematic hero; problem (3 glass cards); solution (6 benefit-led
+cards — every claim is a shipped feature); product preview (4 hand-built SVG/CSS miniatures of real screens
+— crisp at any DPI, can't 404); N5→N4 journey (numbered milestone path — a genuine sequence — with kana
+waypoints, map-reading mascot, origami-crane accent); motivation (6 real mechanics: streak, reviews due,
+XP/levels, achievements, weekly goal, today's plan); honest pricing (Free lists only shipped features
+including live account sync; Plus/Pro clearly "Planned" with genuinely disabled "Coming later" buttons and
+a no-payments-exist footnote — deliberately did NOT promise "current free features stay free forever",
+that's the user's business call, not mine to write); final CTA; footer. CTAs: Start learning free →
+`/register`, Log in → `/login`, View demo → smooth-scrolls to the preview section (no separate demo build
+exists, so no fake one is claimed), "Open your dashboard"/"continue without an account" → `/dashboard` for
+returning guest-mode learners. Zero dead buttons; the only disabled ones are the two labeled "Coming
+later".
+
+**Depth/3D upgrade pass** (user's follow-up: "do not make it a basic 2D illustration page"; their fuller
+brief was never actually pasted — the message contained a literal unfilled `[PASTE THE FULL BRIEF...]`
+placeholder twice, so its inline requirements were treated as the brief, per their confirmation flow):
+- `TiltCard` (new): pointer-tracked 3D tilt via ref + rAF (no re-renders), mouse-only, skips
+  prefers-reduced-motion; the four product-preview frames rest at alternating ±4° perspective poses and
+  lean toward the cursor. Verified working in-browser (tracked to rotateX 2.45/rotateY 2.8 on synthetic
+  pointer, reset to resting pose on leave — note React delegates onPointerLeave via `pointerout`).
+- Hero rebuilt as a floating study-card cluster: kanji card (水), +20 XP chip, and the "Today's plan" glass
+  card posed at different static 3D angles around the mascot, each with a `data-float` depth multiplier
+  GSAP turns into different drift amplitudes/phases; ground glow seats the mascot in the scene.
+- `JapaneseScene` deepened: aurora glows, moon halo, hazy far ridge (atmospheric perspective), horizon haze
+  band, stronger torii backlight, cinematic vignette.
+- Ghost 道 kanji plane behind the journey section; visible chochin lantern silhouettes now source the
+  motivation section's warm glows; film-grain (`torii-grain`) over the whole page; Geist (user-approved
+  earlier for the landing) carries landing body/UI text while headings stay Baloo 2.
+- The user's separate single-screen video-hero direction (Foldcraft template + CloudFront video) was
+  explicitly dropped by them in favor of this 9-section version; Geist is the surviving piece of it.
+
+**Verification:** `npx tsc -b`, `npx eslint .`, `npm run build` all clean. Browser-checked at 1100/1280px
+and 375px — no horizontal overflow at either, headline-first + early-CTA order on mobile, tilt interaction
+verified with synthetic pointer events, every link audited (all route to real destinations), zero console
+errors on a fresh load. Known cosmetic tool-quirk only: the preview screenshot tool misrenders very wide
+custom viewports (~1280+); DOM measurements confirm the layout is correct there.
+
+(The depth-pass hero described above was reviewed by the user and superseded by the lantern-spotlight
+hero v3 — see the section at the top. The below-hero sections it describes are unchanged and still live.)
 
 Deployment: this repo is pushed to GitHub (`YaschaT/test`) over SSH and connected to Vercel for
 auto-deploy-on-push. **Auto-push after verification is now the standing default** — every verified change
