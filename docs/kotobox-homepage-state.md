@@ -5,15 +5,57 @@ to prepare for a complete redesign. Restore point: git tag `pre-homepage-redesig
 `158c40b`) holds the last commit that still contains the old homepage.
 
 **Update (2026-07-16, later session):** the design and content specification for the new
-homepage is now complete in [kotobox-homepage-brief.md](./kotobox-homepage-brief.md) —
-direction **"Living Ink"**: warm washi-paper ground, near-black ink typography
-(Newsreader / Hanken Grotesk / Shippori Mincho B1), one vermilion accent, and a single
-signature object (the kanji 語 drawn → scattered → assembled → folded into the wordmark across
-the scroll). Deliberately no WebGL (2.5D paper stage: CSS perspective + SVG strokes + GSAP);
-`gsap` must be re-added (route-chunk only) at implementation time. The brief contains final
-copy, tokens, section-by-section specs, motion/reduced-motion rules, performance budgets, an
-implementation order, and acceptance criteria — implement from it verbatim; it has not been
-built yet. The placeholder below is still what `/` serves today.
+homepage was completed in [kotobox-homepage-brief.md](./kotobox-homepage-brief.md) —
+direction **"Living Ink"**.
+
+**Update (2026-07-16, implementation session): the homepage is BUILT and live at `/`.**
+The sections below this one describe the teardown-era state and are kept as history.
+
+## Implemented homepage (current state)
+
+- **Route:** `/` lazy-loads `src/pages/home/HomePage.tsx` (Suspense fallback: plain paper div).
+  The temporary `HomePlaceholder` was deleted. HomePage chunk: **52.3 kB gz JS** (GSAP included;
+  budget was ≤95) + 4.75 kB gz CSS.
+- **Files:** `src/components/home/` — `home.css` (the isolated design system, all tokens scoped
+  under `[data-surface="paper"]`, never `:root`), `HomeNav`, ten section components
+  (`HeroSection` … `FinalSection`), `primitives.tsx`, and `stage/` (`goStrokes.ts` — the
+  hand-traced 14-stroke 語 path data; `GoGlyph.tsx` — the signature glyph in all its states).
+- **Signature system:** 語 draws (7 strokes, CSS-only) in the hero → three displaced strokes
+  drift through §3's torn-paper scrap field → completed stroke-by-stroke in §4's sticky
+  Assembly stage (word tiles → glyph → dovetailed sentence modules 私は|水を|飲みます → vermilion
+  listening thread + waveform, GSAP scrub + snap) → travels §5's pinned horizontal session strip
+  as an ink seal → folds into the wordmark in §10 (once, on enter).
+- **Real product UI:** five screenshots in `public/assets/home/` (AVIF + WebP, 1600×1000,
+  ~300 kB total per format) captured from the running app with genuinely seeded localStorage
+  progress (6-day streak, 21/74 words, mixed SRS states, Level 6). §5 also reproduces the real
+  duration picker. **Re-capture when the app UI changes**: pipeline is a puppeteer-core +
+  sharp script (seeds `kotoba-do:progress-v1`, shoots /dashboard, /vocabulary, /kanji/k-mizu,
+  /grammar, /listening at 1440×900@2x) — it lived in the session scratchpad; rebuild from this
+  description or from git history of this note if needed.
+- **Fonts:** Newsreader + Hanken Grotesk (Latin) and Shippori Mincho B1 (subset via `text=` to
+  the ~15 JP glyphs on the page) added to index.html. App fonts untouched.
+- **Motion:** all GSAP work sits inside `gsap.matchMedia('(prefers-reduced-motion: no-preference)')`
+  (desktop-width-gated for stage/pan); static markup is always the finished state. Reduced
+  motion verified via emulation: hero static-complete, session strip vertical, no pinning, no
+  overflow. Tier B reveals come in three variants (mask/rise/settle) — no single repeated fade.
+- **Design-lint:** the Living Ink palette/fonts/radii are registered in `.impeccable/config.json`
+  (ignore-values + ignore-file for `home.css`), per the approved brief.
+- **Verified:** `npm run build` / `lint` / `test` all green; `/login`, `/register`,
+  `/dashboard` and all learning modules intact (the capture run exercised them); zero console
+  errors; no horizontal overflow at 375/1280; nav overlay is a focus-trapped dialog with ESC.
+
+### Unresolved / follow-ups
+
+- **Lighthouse numbers not yet measured on a throttled mid-mobile** (brief targets LCP < 2.0s,
+  CLS < 0.05, INP < 200ms). Fundamentals are in place (text LCP, dimensioned lazy images,
+  subset fonts) but the formal audit is outstanding.
+- **§4 stage in exotic viewports:** with scrubbed `gsap.from` tweens, a mid-page hard refresh
+  or an extremely tall viewport can briefly show tiles in their pre-assembled state until the
+  first scroll event; normal scrolling self-corrects. Cosmetic; revisit with
+  `ScrollTrigger.refresh()`-time seeking if it ever bothers anyone.
+- **Dutch homepage translation** out of scope for v1 (EN only; the EN+NL pairing is visible in
+  product captures).
+- The pre-existing app-bundle size warning (~814 kB) is unrelated to the homepage and unchanged.
 
 ## Current homepage route
 

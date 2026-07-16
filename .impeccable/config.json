@@ -1,7 +1,9 @@
 {
   "detector": {
     "ignoreRules": [],
-    "ignoreFiles": [],
+    "ignoreFiles": [
+      "src/components/home/home.css"
+    ],
     "ignoreValues": [
       {
         "rule": "design-system-font",
@@ -71,21 +73,81 @@
       },
       {
         "rule": "design-system-font",
-        "value": "geist",
-        "reason": "User's landing template explicitly specifies Geist",
-        "createdAt": "2026-07-09T20:02:50.434Z"
+        "value": "newsreader",
+        "reason": "Approved homepage brief (Living Ink direction): display face, homepage scope only",
+        "createdAt": "2026-07-16T00:00:00.000Z"
       },
       {
         "rule": "design-system-font",
-        "value": "inter",
-        "reason": "User's Lithos-template hero explicitly specifies Inter",
-        "createdAt": "2026-07-12T18:35:52.276Z"
+        "value": "hanken grotesk",
+        "reason": "Approved homepage brief (Living Ink direction): text/UI face, homepage scope only",
+        "createdAt": "2026-07-16T00:00:00.000Z"
       },
       {
         "rule": "design-system-font",
-        "value": "playfair display",
-        "reason": "User's Lithos-template hero explicitly specifies Playfair Display italic",
-        "createdAt": "2026-07-12T18:35:52.518Z"
+        "value": "shippori mincho b1",
+        "reason": "Approved homepage brief (Living Ink direction): Japanese display face, subset-loaded",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f6f1e7",
+        "reason": "Approved homepage brief (Living Ink): washi paper ground",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#ece5d4",
+        "reason": "Approved homepage brief (Living Ink): deep paper plates",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#191713",
+        "reason": "Approved homepage brief (Living Ink): ink",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#3e3a33",
+        "reason": "Approved homepage brief (Living Ink): ink-soft body text",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#6e675c",
+        "reason": "Approved homepage brief (Living Ink): graphite muted text",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c73e1d",
+        "reason": "Approved homepage brief (Living Ink): shu vermilion accent",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#a02e12",
+        "reason": "Approved homepage brief (Living Ink): text-safe vermilion",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#565b40",
+        "reason": "Approved homepage brief (Living Ink): moss secondary accent",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "2px",
+        "reason": "Approved homepage brief (Living Ink): cut-paper corner radius, homepage scope only",
+        "createdAt": "2026-07-16T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "6px",
+        "reason": "Approved homepage brief (Living Ink): product-screenshot plate radius",
+        "createdAt": "2026-07-16T00:00:00.000Z"
       }
     ]
   }
