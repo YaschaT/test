@@ -6,11 +6,15 @@ removed from the sidebar/mobile header, now just the logo mark + "Kotobox". This
 change: the internal `localStorage` key prefix (`kotoba-do:...`) was deliberately left unchanged so no
 existing user progress was reset — renaming that prefix would have invalidated everyone's saved data.
 
-Last updated after **the landing hero v3: lantern-spotlight reveal** (see below), which replaced the
-depth-pass hero the user reviewed and superseded. Still awaiting user direction on the remaining
-`/impeccable critique` findings before any further work, including Speaking (Phase 8).
+Last updated after **the public homepage teardown (2026-07-16)**: the entire landing page at `/`
+(lantern-spotlight hero and all sections below) was deleted to make room for a complete redesign.
+`/` now serves a minimal placeholder with login/register links. Full teardown record (what was
+removed vs. preserved, architecture notes, risks): `docs/kotobox-homepage-state.md`. The approved
+design direction will land in `docs/kotobox-homepage-brief.md` next session — do not build a new
+homepage before that. Restore point: git tag `pre-homepage-redesign`. The two landing sections
+below are kept as history but describe **deleted** code.
 
-## Landing hero v3 — lantern-spotlight reveal (user's "Lithos" template, adapted)
+## [REMOVED] Landing hero v3 — lantern-spotlight reveal (user's "Lithos" template, adapted)
 
 The user supplied a highly specific hero template written for a geology brand ("Lithos": rock-strata
 images, orange CTA, "Start Digging"). Its **mechanic and layout** were ported exactly; its **content** was
@@ -51,7 +55,7 @@ white frames at scrolled positions on this long page even though DOM geometry, c
 element-from-point hit tests, and the a11y tree all confirm correct dark rendering — the same pane also
 misrendered wide-viewport captures earlier; treat its scrolled screenshots as unreliable here.
 
-## Public landing page at `/` (+ depth upgrade pass)
+## [REMOVED] Public landing page at `/` (+ depth upgrade pass)
 
 **Route restructure:** `/` is now the public marketing page; the Dashboard moved to `/dashboard`. All other
 routes unchanged (`/login`, `/register`, `/vocabulary`, `/kanji`, `/grammar`, `/reading`, `/listening`,
