@@ -4,6 +4,17 @@ Written 2026-07-16, after removing the old public homepage ("landing hero v3: la
 to prepare for a complete redesign. Restore point: git tag `pre-homepage-redesign` (commit
 `158c40b`) holds the last commit that still contains the old homepage.
 
+**Update (2026-07-16, later session):** the design and content specification for the new
+homepage is now complete in [kotobox-homepage-brief.md](./kotobox-homepage-brief.md) —
+direction **"Living Ink"**: warm washi-paper ground, near-black ink typography
+(Newsreader / Hanken Grotesk / Shippori Mincho B1), one vermilion accent, and a single
+signature object (the kanji 語 drawn → scattered → assembled → folded into the wordmark across
+the scroll). Deliberately no WebGL (2.5D paper stage: CSS perspective + SVG strokes + GSAP);
+`gsap` must be re-added (route-chunk only) at implementation time. The brief contains final
+copy, tokens, section-by-section specs, motion/reduced-motion rules, performance budgets, an
+implementation order, and acceptance criteria — implement from it verbatim; it has not been
+built yet. The placeholder below is still what `/` serves today.
+
 ## Current homepage route
 
 - `/` renders `src/pages/HomePlaceholder.tsx` — a deliberately unstyled placeholder with the
