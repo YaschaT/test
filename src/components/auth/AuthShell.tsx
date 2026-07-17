@@ -1,151 +1,95 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { SegmentedTabs } from '../SegmentedTabs';
-import { Logo } from '../Logo';
-import { AuthMascotSplash } from './AuthMascotSplash';
-import { TorriiGateScene } from './TorriiGateScene';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
+import './auth.css';
 
 type AuthMode = 'login' | 'register';
-type ViewState = 'splash' | 'split' | 'exiting';
 
 interface AuthShellProps {
   mode: AuthMode;
 }
 
-const SPLASH_SEEN_KEY = 'kotoba-do:auth-splash-seen';
-const EXIT_DURATION_MS = 750;
-
-const COPY: Record<AuthMode, { headline: string; sub: string }> = {
+const COPY: Record<AuthMode, { eyebrow: string; heading: string; sub: string }> = {
   login: {
-    headline: 'Continue your path.',
-    sub: 'Sign in to pick up your progress on every device.',
+    eyebrow: 'Log in',
+    heading: 'Welcome back',
+    sub: 'Continue your Japanese learning journey.',
   },
   register: {
-    headline: 'Begin your path.',
-    sub: 'Create an account to keep your progress safe everywhere.',
+    eyebrow: 'Create account',
+    heading: 'Start your Japanese journey',
+    sub: 'Create your account and build a learning path that fits your day.',
   },
 };
 
-function hasSeenSplash(): boolean {
-  try {
-    return window.sessionStorage.getItem(SPLASH_SEEN_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function markSplashSeen(): void {
-  try {
-    window.sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
-  } catch {
-    // Storage unavailable — the splash will just replay next time, harmless.
-  }
-}
-
 /**
- * The redesigned auth surface: an asymmetric split between an illustrated torii-gate scene (the fox
- * mascot's stage — see TorriiGateScene) and the actual form, on a dark ink canvas with a torii-vermillion
- * signature accent — a deliberate departure from the rest of the app's navy/starfield identity, per the
- * confirmed brief. Owns the whole view lifecycle: the once-per-session entrance splash, the normal
- * split layout, and the exit choreography (mascot walks through the gate, light floods in) that plays
- * right before landing on the Dashboard, so the two screens feel physically connected.
+ * The auth surface as a direct continuation of the "Living Ink" homepage: warm paper, Newsreader
+ * display type, restrained vermilion, hairline rules (auth.css). An asymmetric editorial split —
+ * the form is the primary column, the stone-garden artwork (genuine alpha PNG/WebP in
+ * public/assets/auth/) balances it on the right and drops below the actions on small screens.
+ * All auth behavior lives in LoginForm / RegisterForm; this shell only owns layout and the
+ * post-auth navigation.
  */
 export function AuthShell({ mode }: AuthShellProps) {
-  const [view, setView] = useState<ViewState>(() => (hasSeenSplash() ? 'split' : 'splash'));
   const navigate = useNavigate();
   const copy = COPY[mode];
 
-  function handleSplashDone() {
-    markSplashSeen();
-    setView('split');
-  }
-
-  function handleAuthenticated() {
-    setView('exiting');
-    setTimeout(() => navigate('/dashboard'), EXIT_DURATION_MS);
-  }
-
-  if (view === 'splash') {
-    return <AuthMascotSplash onDone={handleSplashDone} />;
-  }
-
-  if (view === 'exiting') {
-    return (
-      <div className="fixed inset-0 z-50 bg-[#0a0a0f]">
-        <TorriiGateScene phase="entering" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#0a0a0f] lg:grid lg:grid-cols-2 torii-grain">
-      <div className="relative flex flex-col items-center justify-center px-8 pt-12 pb-8 lg:pb-12 lg:border-r lg:border-white/8 overflow-hidden torii-scene-settle">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute select-none text-white"
-          style={{
-            fontFamily: "'Hiragino Sans', 'Noto Sans JP', sans-serif",
-            fontSize: 'min(48vw, 30rem)',
-            fontWeight: 700,
-            opacity: 0.035,
-            lineHeight: 1,
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          道
-        </span>
-        <div className="relative w-52 h-60 sm:w-64 sm:h-72 lg:w-80 lg:h-[22rem] mb-5 lg:mb-10">
-          <TorriiGateScene phase="greeting" />
-        </div>
-        <h1
-          className="relative text-center text-white text-[2.1rem] sm:text-5xl lg:text-6xl leading-[1.03] text-balance"
-          style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, letterSpacing: '-0.02em' }}
-        >
-          {copy.headline}
-        </h1>
-        <p className="relative mt-3 text-center text-white/50 text-sm lg:text-base max-w-xs">{copy.sub}</p>
-      </div>
+    <div className="au-surface">
+      <header className="au-topbar">
+        <Link to="/" className="au-wordmark">
+          Kotobox
+        </Link>
+        <Link to="/" className="au-back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to home
+        </Link>
+      </header>
 
-      <div className="flex flex-col items-center justify-center px-4 pb-12 lg:py-16">
-        <div className="w-full max-w-sm torii-form-panel-in">
-          <div className="flex items-center gap-2 mb-6 justify-center">
-            <Logo size={26} />
-            <span className="text-lg font-semibold text-white" style={{ fontFamily: "'Fraunces', serif" }}>
-              Kotobox
-            </span>
-          </div>
-
-          <SegmentedTabs
-            value={mode}
-            onChange={(next) => navigate(next === 'register' ? '/register' : '/login')}
-            groupLabel="Log in or register"
-            variant="glass"
-            className="w-full mb-6 [&>*]:flex-1"
-            options={[
-              { value: 'login', label: 'Log in' },
-              { value: 'register', label: 'Register' },
-            ]}
-          />
+      <main className="au-main">
+        <section className="au-form-col au-anim" aria-labelledby="au-heading">
+          <p className="au-eyebrow">{copy.eyebrow}</p>
+          <h1 id="au-heading" className="au-h1">
+            {copy.heading}
+          </h1>
+          <p className="au-lede">{copy.sub}</p>
 
           {mode === 'login' ? (
-            <LoginForm onAuthenticated={handleAuthenticated} />
+            <LoginForm onAuthenticated={() => navigate('/dashboard')} />
           ) : (
-            <RegisterForm onAuthenticated={handleAuthenticated} />
+            <RegisterForm onAuthenticated={() => navigate('/dashboard')} />
           )}
 
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="w-full mt-6 text-center text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
-          >
+          <p className="au-alt">
+            {mode === 'login' ? (
+              <>
+                New to Kotobox?{' '}
+                <Link to="/register" className="au-link">
+                  Create an account
+                </Link>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <Link to="/login" className="au-link">
+                  Log in
+                </Link>
+              </>
+            )}
+          </p>
+          <button type="button" onClick={() => navigate('/dashboard')} className="au-quiet">
             Continue without an account
           </button>
+        </section>
+
+        <div className="au-art-col au-anim" style={{ '--d': '120ms' } as React.CSSProperties} aria-hidden="true">
+          <picture>
+            <source srcSet="/assets/auth/kotobox-auth-hero.webp" type="image/webp" />
+            <img src="/assets/auth/kotobox-auth-hero.png" alt="" width={1536} height={1024} decoding="async" />
+          </picture>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

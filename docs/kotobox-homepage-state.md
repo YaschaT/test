@@ -44,6 +44,32 @@ The sections below this one describe the teardown-era state and are kept as hist
   `/dashboard` and all learning modules intact (the capture run exercised them); zero console
   errors; no horizontal overflow at 375/1280; nav overlay is a focus-trapped dialog with ESC.
 
+## Auth redesign (2026-07-17)
+
+`/login` and `/register` were rebuilt as a direct continuation of Living Ink, replacing the
+dark-ink torii identity:
+
+- **Files:** `src/components/auth/` — `auth.css` (Living Ink token values duplicated on purpose,
+  scoped under `.au-surface`, prefix `au-`; the auth chunk deliberately does not import
+  `home.css`), rewritten `AuthShell` (topbar wordmark + back-to-home, asymmetric form/artwork
+  grid, no splash/exit choreography — auth success now navigates straight to `/dashboard`),
+  restyled `FormField` (adds `hint` + `revealable` show/hide-password), `AuthSubmitButton`
+  (hp-btn language). Deleted: `AuthMascotSplash`, `TorriiGateScene`, `GoogleButton` (was a
+  disabled placeholder), and all `torii-*` CSS in `src/index.css`. Auth Suspense fallbacks in
+  `App.tsx` are paper now.
+- **Artwork:** `public/assets/auth/kotobox-auth-hero.png` (genuine alpha channel — verified: 63%
+  fully transparent, corners alpha 0) + a generated 374 kB WebP served first via `<picture>`;
+  the 2.8 MB PNG is only the non-WebP fallback. Desktop: right column, dropped below the form's
+  optical center; mobile: below the form actions at ≤400px width.
+- **Functionality preserved:** all of `lib/auth.ts` / `authValidation.ts` / `progressSync`
+  untouched — blur validation, friendly errors, password reset, register's email-confirmation
+  branch, "Continue without an account". Google sign-in UI removed until OAuth actually works.
+- **Verified:** build/lint/tests green; empty-submit validation, wrong-credentials error path,
+  reveal toggle (aria-pressed + label swap), autocomplete attrs, no horizontal overflow at 375,
+  no console errors beyond deliberate failed Supabase calls in the sandboxed browser.
+- **Note:** no terms/privacy pages exist yet, so registration has no acknowledgement line —
+  add one when those pages exist.
+
 ## Design-director audit pass (2026-07-17)
 
 A full audit against the brief (clarity, originality, storytelling, conversion, motion,

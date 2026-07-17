@@ -5,18 +5,13 @@ interface AuthSubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 /**
- * The redesign's primary action — deliberately its own component rather than reusing the app-wide
- * `PrimaryButton` (candy-rounded indigo pill used everywhere else). This page's whole point is a different
- * typographic/visual voice, so its one CTA gets sharper corners and the torii vermillion signature color
- * instead of the app's usual indigo, without touching `PrimaryButton` and rippling that change everywhere.
+ * The auth surface's primary action — the homepage's button language (ink block, 2px radius,
+ * vermilion on hover; see .hp-btn--primary in home.css), not the app's candy-rounded indigo
+ * `PrimaryButton`. Styles live in auth.css (.au-btn).
  */
 export function AuthSubmitButton({ children, className = '', type = 'button', ...props }: AuthSubmitButtonProps) {
   return (
-    <button
-      type={type}
-      {...props}
-      className={`w-full h-11 rounded-md font-semibold text-white bg-[#e34a33] hover:bg-[#ee5a41] active:bg-[#c73f2b] disabled:opacity-40 disabled:pointer-events-none transition-colors flex items-center justify-center gap-2 ${className}`}
-    >
+    <button type={type} {...props} className={`au-btn au-btn--primary ${className}`}>
       {children}
     </button>
   );

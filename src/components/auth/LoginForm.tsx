@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AuthSubmitButton } from './AuthSubmitButton';
 import { FormField } from './FormField';
-import { GoogleButton } from './GoogleButton';
 import { signInWithEmail, sendPasswordReset, isSupabaseConfigured } from '../../lib/auth';
 import { validateEmail, validatePassword, friendlyAuthError } from '../../lib/authValidation';
 import { syncProgressAfterSignIn } from '../../lib/progressSync';
@@ -10,7 +9,7 @@ import { syncProgressAfterSignIn } from '../../lib/progressSync';
 type Field = 'email' | 'password';
 
 interface LoginFormProps {
-  /** Called only once real sign-in succeeds — AuthShell owns what happens next (the gate exit transition, then the route change), not this form. */
+  /** Called only once real sign-in succeeds — AuthShell owns what happens next (the route change), not this form. */
   onAuthenticated: () => void;
 }
 
@@ -69,14 +68,14 @@ export function LoginForm({ onAuthenticated }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate>
       {!isSupabaseConfigured && (
-        <p role="status" className="text-xs font-medium text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
+        <p role="status" className="au-notice au-notice--info">
           Accounts are almost ready — check back soon.
         </p>
       )}
       {serverError && (
-        <p role="alert" className="text-sm font-medium text-red-300 bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2">
+        <p role="alert" className="au-notice">
           {serverError}
         </p>
       )}
@@ -90,40 +89,35 @@ export function LoginForm({ onAuthenticated }: LoginFormProps) {
         onBlur={() => markTouched('email')}
         error={errors.email}
       />
-      <div className="space-y-1.5">
-        <FormField
-          id="login-password"
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={setPassword}
-          onBlur={() => markTouched('password')}
-          error={errors.password}
-        />
-        <div className="flex justify-end">
-          {resetState === 'sent' ? (
-            <span className="text-xs font-medium text-emerald-400">Check your email for a reset link.</span>
-          ) : (
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              disabled={resetState === 'sending' || !isSupabaseConfigured}
-              className="text-xs font-medium text-[#ff8a5c] hover:text-[#ffab85] hover:underline disabled:opacity-50"
-            >
-              {resetState === 'sending' ? 'Sending…' : 'Forgot password?'}
-            </button>
-          )}
-        </div>
+      <FormField
+        id="login-password"
+        label="Password"
+        revealable
+        autoComplete="current-password"
+        value={password}
+        onChange={setPassword}
+        onBlur={() => markTouched('password')}
+        error={errors.password}
+      />
+      <div className="au-reset-row">
+        {resetState === 'sent' ? (
+          <span role="status" className="au-reset-sent">
+            Check your email for a reset link.
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={resetState === 'sending' || !isSupabaseConfigured}
+            className="au-link-sm"
+          >
+            {resetState === 'sending' ? 'Sending…' : 'Forgot password?'}
+          </button>
+        )}
       </div>
       <AuthSubmitButton type="submit" disabled={submitting || !isSupabaseConfigured}>
         {submitting ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : 'Log in'}
       </AuthSubmitButton>
-      <div className="relative py-1 text-center">
-        <span className="relative bg-[#0e0e14] px-2 text-xs text-white/35">or</span>
-        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-white/10" aria-hidden="true" />
-      </div>
-      <GoogleButton />
     </form>
   );
 }

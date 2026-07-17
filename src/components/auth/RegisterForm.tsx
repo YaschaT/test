@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Loader2, MailCheck } from 'lucide-react';
 import { AuthSubmitButton } from './AuthSubmitButton';
 import { FormField } from './FormField';
-import { GoogleButton } from './GoogleButton';
 import { registerWithEmail, isSupabaseConfigured } from '../../lib/auth';
 import { validateEmail, validatePassword, validateConfirmPassword, friendlyAuthError } from '../../lib/authValidation';
 import { syncProgressAfterSignIn } from '../../lib/progressSync';
@@ -10,7 +9,7 @@ import { syncProgressAfterSignIn } from '../../lib/progressSync';
 type Field = 'email' | 'password' | 'confirmPassword';
 
 interface RegisterFormProps {
-  /** Called only when registration grants an immediate session (no email confirmation pending) — AuthShell owns the gate exit transition + route change from there. */
+  /** Called only when registration grants an immediate session (no email confirmation pending) — AuthShell owns the route change from there. */
   onAuthenticated: () => void;
 }
 
@@ -61,28 +60,28 @@ export function RegisterForm({ onAuthenticated }: RegisterFormProps) {
 
   if (awaitingConfirmation) {
     return (
-      <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#e34a33]/15 text-[#ff8a5c]">
-          <MailCheck size={22} aria-hidden="true" />
+      <div className="au-confirm">
+        <span className="au-confirm-badge">
+          <MailCheck size={20} aria-hidden="true" />
         </span>
-        <p className="text-sm font-semibold text-white">Check your email</p>
-        <p className="text-sm text-white/55">
-          We sent a confirmation link to <span className="font-medium text-white/80">{email}</span>. Confirm it, then log in
-          to pick up right where you left off.
+        <h2>Check your email</h2>
+        <p>
+          We sent a confirmation link to <strong>{email}</strong>. Confirm it, then log in to pick up right where you
+          left off.
         </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate>
       {!isSupabaseConfigured && (
-        <p role="status" className="text-xs font-medium text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
+        <p role="status" className="au-notice au-notice--info">
           Accounts are almost ready — check back soon.
         </p>
       )}
       {serverError && (
-        <p role="alert" className="text-sm font-medium text-red-300 bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2">
+        <p role="alert" className="au-notice">
           {serverError}
         </p>
       )}
@@ -99,7 +98,8 @@ export function RegisterForm({ onAuthenticated }: RegisterFormProps) {
       <FormField
         id="register-password"
         label="Password"
-        type="password"
+        hint="At least 8 characters."
+        revealable
         autoComplete="new-password"
         value={password}
         onChange={setPassword}
@@ -109,7 +109,7 @@ export function RegisterForm({ onAuthenticated }: RegisterFormProps) {
       <FormField
         id="register-confirm-password"
         label="Confirm password"
-        type="password"
+        revealable
         autoComplete="new-password"
         value={confirmPassword}
         onChange={setConfirmPassword}
@@ -117,13 +117,8 @@ export function RegisterForm({ onAuthenticated }: RegisterFormProps) {
         error={errors.confirmPassword}
       />
       <AuthSubmitButton type="submit" disabled={submitting || !isSupabaseConfigured}>
-        {submitting ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : 'Create account'}
+        {submitting ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : 'Create your account'}
       </AuthSubmitButton>
-      <div className="relative py-1 text-center">
-        <span className="relative bg-[#0e0e14] px-2 text-xs text-white/35">or</span>
-        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-white/10" aria-hidden="true" />
-      </div>
-      <GoogleButton />
     </form>
   );
 }

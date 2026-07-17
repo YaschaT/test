@@ -127,22 +127,6 @@ ruby rt {
   background-size: 320px 220px;
 }
 
-/* Auth redesign's editorial film-grain texture — a subtle SVG fractal-noise tile, giving the ink canvas
-   some tactile depth instead of a flat color fill. Static (not motion), so it isn't gated behind
-   prefers-reduced-motion. */
-.torii-grain {
-  position: relative;
-}
-.torii-grain::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
 h1,
 h2,
 h3 {
@@ -271,91 +255,6 @@ html {
     animation-fill-mode: forwards;
   }
 
-  /* The torii-gate auth scene (Login/Register) — the one deliberate page-load choreography on this
-     surface, an explicit exception to the product register's "no page-load choreography" default. Base
-     (non-animated) states live outside this block so prefers-reduced-motion users see the correct final
-     frame instantly instead of a static pause. */
-  @keyframes torii-glow-breathe {
-    0%,
-    100% {
-      opacity: 0.55;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.85;
-      transform: scale(1.06);
-    }
-  }
-  @keyframes torii-mascot-greet-in {
-    from {
-      opacity: 0;
-      transform: translateY(18px) scale(0.92);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  @keyframes torii-scene-settle {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  @keyframes torii-mascot-enter-gate {
-    0% {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
-    60% {
-      transform: translateY(-14px) scale(0.55);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-22px) scale(0.1);
-      opacity: 0;
-    }
-  }
-  @keyframes torii-flood-light {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
-  }
-  @keyframes torii-panel-in {
-    from {
-      opacity: 0;
-      transform: translateX(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-  .torii-glow {
-    animation: torii-glow-breathe 4.5s ease-in-out infinite;
-  }
-  .torii-mascot-greet {
-    animation: torii-mascot-greet-in 900ms cubic-bezier(0.25, 1, 0.5, 1) both;
-  }
-  .torii-scene-settle {
-    animation: torii-scene-settle 900ms cubic-bezier(0.25, 1, 0.5, 1) both;
-  }
-  .torii-mascot-entering {
-    animation: torii-mascot-enter-gate 700ms cubic-bezier(0.6, 0, 0.9, 0.2) both;
-  }
-  .torii-flood {
-    animation: torii-flood-light 650ms ease-in both;
-  }
-  .torii-form-panel-in {
-    animation: torii-panel-in 500ms cubic-bezier(0.25, 1, 0.5, 1) both;
-  }
 }
 
 /* Safety net for every other hover/press transform transition used across the app (card lift, button

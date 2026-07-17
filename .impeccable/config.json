@@ -2,7 +2,8 @@
   "detector": {
     "ignoreRules": [],
     "ignoreFiles": [
-      "src/components/home/home.css"
+      "src/components/home/home.css",
+      "src/components/auth/auth.css"
     ],
     "ignoreValues": [
       {

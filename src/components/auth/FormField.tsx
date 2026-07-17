@@ -1,40 +1,64 @@
+import { useState } from 'react';
 import type { InputHTMLAttributes } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface FormFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'onChange'> {
   id: string;
   label: string;
+  /** Always-visible helper line between label and input (e.g. password requirements). */
+  hint?: string;
   error?: string;
+  /** Password fields: renders the show/hide control and manages the text/password toggle. */
+  revealable?: boolean;
   onChange: (value: string) => void;
 }
 
 /**
- * Labeled input for the redesigned auth scene — always dark (this page doesn't follow the app's light/dark
- * toggle, same convention as the hero panels elsewhere), with sharper, more editorial corners and a
- * vermillion focus ring instead of the app's usual candy-rounded/indigo-focus inputs, to carry the new
- * typographic voice through every control on the page. Validated on blur by the caller, not on every
- * keystroke, per interaction-design.md; error wired via aria-describedby.
+ * Labeled input for the Living Ink auth surface (auth.css) — visible uppercase label, hairline
+ * border, vermilion focus, error wired via aria-describedby. Validated on blur by the caller,
+ * not on every keystroke, per interaction-design.md.
  */
-export function FormField({ id, label, error, onChange, className = '', ...props }: FormFieldProps) {
+export function FormField({ id, label, hint, error, revealable, type, onChange, className = '', ...props }: FormFieldProps) {
+  const [revealed, setRevealed] = useState(false);
   const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+  const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ') || undefined;
+  const inputType = revealable ? (revealed ? 'text' : 'password') : type;
+
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-xs font-semibold uppercase tracking-wide text-white/50">
+    <div className="au-field">
+      <label htmlFor={id} className="au-label">
         {label}
       </label>
-      <input
-        id={id}
-        onChange={(e) => onChange(e.target.value)}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : undefined}
-        className={`w-full h-11 px-3.5 rounded-md bg-white/[0.04] border text-[15px] text-white placeholder:text-white/30 outline-none transition-colors ${
-          error
-            ? 'border-red-400/70 focus:border-red-400 focus:ring-2 focus:ring-red-400/30'
-            : 'border-white/15 focus:border-[#e34a33] focus:ring-2 focus:ring-[#e34a33]/30'
-        } ${className}`}
-        {...props}
-      />
+      {hint && (
+        <p id={hintId} className="au-hint">
+          {hint}
+        </p>
+      )}
+      <div className="au-input-wrap">
+        <input
+          id={id}
+          type={inputType}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={Boolean(error)}
+          aria-describedby={describedBy}
+          className={`au-input${error ? ' has-error' : ''}${revealable ? ' has-reveal' : ''} ${className}`}
+          {...props}
+        />
+        {revealable && (
+          <button
+            type="button"
+            className="au-reveal"
+            aria-label={revealed ? 'Hide password' : 'Show password'}
+            aria-pressed={revealed}
+            onClick={() => setRevealed((r) => !r)}
+          >
+            {revealed ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+          </button>
+        )}
+      </div>
       {error && (
-        <p id={errorId} role="alert" className="text-xs font-medium text-red-400 animate-shake">
+        <p id={errorId} role="alert" className="au-field-error animate-shake">
           {error}
         </p>
       )}

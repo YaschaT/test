@@ -45,11 +45,11 @@ function App() {
             </Suspense>
           }
         />
-        {/* Auth fallback matches the auth shell's ink canvas so there's no white flash. */}
+        {/* Auth fallback matches the auth shell's paper canvas so there's no flash. */}
         <Route
           path="/login"
           element={
-            <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f]" aria-hidden="true" />}>
+            <Suspense fallback={<div className="min-h-screen bg-[#f6f1e7]" aria-hidden="true" />}>
               <Login />
             </Suspense>
           }
@@ -57,7 +57,7 @@ function App() {
         <Route
           path="/register"
           element={
-            <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f]" aria-hidden="true" />}>
+            <Suspense fallback={<div className="min-h-screen bg-[#f6f1e7]" aria-hidden="true" />}>
               <Register />
             </Suspense>
           }
