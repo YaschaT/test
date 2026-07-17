@@ -81,7 +81,9 @@ export function ProblemSection() {
             language learning: <em>what now?</em>
           </p>
         </div>
-        <div className="hp-scrapfield" aria-hidden="true">
+        {/* tabIndex -1: the field scrolls horizontally on tablet/mobile, and browsers make
+            scrollable regions keyboard-focusable — but this is aria-hidden decoration. */}
+        <div className="hp-scrapfield" aria-hidden="true" tabIndex={-1}>
           <div className="hp-scrapfield-inner">
             {SCRAPS.map((s, i) => (
               <div key={i} className="hp-scrap" data-hp-drift={s.drift} style={s.style}>

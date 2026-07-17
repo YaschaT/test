@@ -12,9 +12,9 @@ export function PhilosophySection() {
             Memory has a schedule. Kotobox keeps it.
           </h2>
           <p data-hp-reveal="rise" style={{ marginTop: 36 }}>
-            Every word, kanji and grammar point you study enters one spaced-repetition system. Rate
-            yourself honestly — again, hard, good, easy — and it schedules the next encounter right
-            before you’d forget.
+            Every word and character you study enters one spaced-repetition system. Rate yourself
+            honestly — again, hard, good, easy — and it schedules the next encounter right before
+            you’d forget.
           </p>
           <p data-hp-reveal="rise">
             Nothing here is called <em className="hp-mastered">mastered</em> until you’ve held it

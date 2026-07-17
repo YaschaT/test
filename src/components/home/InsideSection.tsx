@@ -45,7 +45,7 @@ const SHOTS = [
     width: 1600,
     height: 1000,
     alt: 'The listening trainer with a large play button, select and dictation modes, voice options and playback speed controls.',
-    caption: 'Listening — choose select or dictation, set the speed, and train your ear on what you just learned.',
+    caption: 'Listening — choose select or dictation, set the speed, and train your ear on the same sentences you study.',
   },
 ];
 

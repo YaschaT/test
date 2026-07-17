@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PrimaryCta } from './primitives';
@@ -66,31 +65,6 @@ export function FinalSection() {
             Explore the platform ↑
           </a>
         </div>
-
-        <footer className="hp-footer">
-          <div className="hp-footer-row">
-            <span className="hp-footer-tag">
-              <strong style={{ color: 'var(--ink)' }}>Kotobox</strong> — JLPT N5→N4, in one piece.
-            </span>
-            <ul className="hp-footer-links">
-              <li>
-                <Link to="/login" className="hp-link">
-                  Log in
-                </Link>
-              </li>
-              <li>
-                <Link to="/register" className="hp-link">
-                  Create account
-                </Link>
-              </li>
-              <li>
-                <a href="#system" className="hp-link">
-                  The system
-                </a>
-              </li>
-            </ul>
-          </div>
-        </footer>
       </div>
     </section>
   );

@@ -522,7 +522,8 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--graphite);
+  /* ink-soft, not graphite: small text on the darker paper-deep plates needs the extra contrast */
+  color: var(--ink-soft);
   margin-bottom: 6px;
 }
 .hp-scrap-stroke {
@@ -720,8 +721,10 @@ ol.hp-chapters {
 
 /* ----------------------------------------------------------------- session */
 
+/* Offset right — the page alternates where sections open (§3/§4 left, §5 right, §6 left, §8
+   right) so consecutive sections never repeat the same composition. */
 .hp-session-head {
-  grid-column: 2 / span 8;
+  grid-column: 5 / span 8;
   margin-bottom: clamp(40px, 5vw, 72px);
 }
 .hp-session-viewport {
@@ -776,7 +779,7 @@ ol.hp-chapters {
 }
 .hp-step p {
   margin: 0;
-  font-size: 0.9875rem;
+  font-size: 1rem;
 }
 .hp-durations {
   display: flex;
@@ -803,7 +806,7 @@ ol.hp-chapters {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--graphite);
+  color: var(--ink-soft);
 }
 
 /* ------------------------------------------------------------------ inside */
@@ -895,7 +898,7 @@ ol.hp-chapters {
 /* -------------------------------------------------------------- motivation */
 
 .hp-motivation-copy {
-  grid-column: 2 / span 6;
+  grid-column: 6 / span 6;
   margin-bottom: clamp(40px, 5vw, 64px);
 }
 .hp-instruments {
@@ -1027,6 +1030,9 @@ ol.hp-chapters {
   color: var(--graphite);
   font-size: 0.9375rem;
   margin-right: auto;
+}
+.hp-footer-tag strong {
+  color: var(--ink);
 }
 .hp-footer-links {
   display: flex;
@@ -1207,9 +1213,6 @@ ol.hp-chapters {
   .hp-shots-more {
     display: inline-flex;
     margin-top: 8px;
-  }
-  .hp-shots.is-expanded ~ .hp-shots-more {
-    display: none;
   }
   .hp-tableau {
     height: 210px;

@@ -33,12 +33,12 @@ const CHAPTERS = [
   {
     kicker: 'Grammar',
     title: 'Patterns that click together.',
-    body: 'A guided path of grammar points, one unlocking the next. Each pattern comes apart into pieces you can see — and snaps into sentences you can build.',
+    body: 'A guided path of grammar points, one unlocking the next. Each pattern comes apart into pieces you can see — and clicks together into sentences you can read.',
   },
   {
     kicker: 'Listening',
     title: 'The thread through everything.',
-    body: 'Hear the words and sentences you’ve just learned, at your speed. Type what you hear, or pick what you heard — both count toward the same memory.',
+    body: 'Hear the same words and sentences you study, at your speed. Type what you hear, or pick what you heard — both count toward your progress.',
   },
 ];
 
@@ -166,9 +166,10 @@ export function SystemSection() {
               Everything you learn becomes part of one world.
             </h2>
             <p className="hp-lede" data-hp-reveal="rise" style={{ marginTop: 24 }}>
-              Kotobox isn’t five tools taped together. Words, characters, grammar and listening
-              feed one spaced-repetition memory and one daily plan — learn a word once, and every
-              part of the system knows.
+              Kotobox isn’t five tools taped together. Words and characters feed one
+              spaced-repetition memory, grammar builds along one guided path, listening trains
+              your ear on the very sentences you study — and one daily plan decides where your
+              minutes go.
             </p>
           </header>
         </div>

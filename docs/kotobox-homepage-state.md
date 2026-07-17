@@ -44,18 +44,44 @@ The sections below this one describe the teardown-era state and are kept as hist
   `/dashboard` and all learning modules intact (the capture run exercised them); zero console
   errors; no horizontal overflow at 375/1280; nav overlay is a focus-trapped dialog with ESC.
 
+## Design-director audit pass (2026-07-17)
+
+A full audit against the brief (clarity, originality, storytelling, conversion, motion,
+responsive, accessibility, engineering) was applied directly:
+
+- **Copy honesty:** the SRS covers vocabulary + kanji only (`SrsItemType`), grammar is a
+  completed-path model, and listening draws on all vocab/grammar example sentences (not
+  progress-filtered) and records quiz results/XP, not SRS. The §4 lede, §4 grammar/listening
+  chapters, §7 philosophy opener and §6 listening caption were rewritten to claim exactly that
+  and no more.
+- **Composition rhythm:** §5 and §8 headers now open from the right, so consecutive sections
+  never repeat the same left-opening layout (L → L(stage) → R → L → ink plate → R → center).
+- **Accessibility:** footer moved outside `<main>` (real contentinfo landmark); removed an
+  aria-label that violated WCAG 2.5.3 Label-in-Name when the nav CTA shows its short mobile
+  label (Lighthouse a11y now 100 with zero failing audits); small labels on paper-deep plates
+  bumped from graphite to ink-soft for AA contrast; decorative scrollable scrap field given
+  tabindex="-1"; fixed the hero eyebrow's no-op transform (inline box).
+- **Performance:** route-level code splitting for the whole app — every page (auth + learning
+  modules) is now a lazy chunk with suspense fallbacks (paper for `/`, ink for auth, in-shell
+  null for app pages). Shared bundle: 814 → 574 kB min (235 → 171 kB gz); the old chunk-size
+  warning is gone. Homepage font stylesheets load async (print→all swap + noscript fallback).
+  All app routes re-verified working after the split.
+- **Measured (Lighthouse 12, prod build, simulated mobile 4G):** Accessibility **100**;
+  Performance ~**0.79** with **LCP ≈ 3.2 s**, FCP ≈ 2.6 s, CLS ≈ 0, TBT ≈ 370 ms (run-to-run
+  variance 3.2–5.1 s on a loaded dev machine; pre-split it measured 4.1 s+).
+
 ### Unresolved / follow-ups
 
-- **Lighthouse numbers not yet measured on a throttled mid-mobile** (brief targets LCP < 2.0s,
-  CLS < 0.05, INP < 200ms). Fundamentals are in place (text LCP, dimensioned lazy images,
-  subset fonts) but the formal audit is outstanding.
-- **§4 stage in exotic viewports:** with scrubbed `gsap.from` tweens, a mid-page hard refresh
-  or an extremely tall viewport can briefly show tiles in their pre-assembled state until the
-  first scroll event; normal scrolling self-corrects. Cosmetic; revisit with
-  `ScrollTrigger.refresh()`-time seeking if it ever bothers anyone.
+- **LCP target (< 2.0 s simulated mobile) is not reachable client-side-only.** The critical
+  path is HTML → index chunk (171 kB gz) → lazy HomePage chunk; no further splitting shortens
+  that chain. The real fix is prerendering `/` to static HTML at deploy (Vercel prerender or
+  vite-ssg) so the hero paints before any JS — recommended next infrastructure step. Deferring
+  the Supabase client out of the shared chunk (~30 kB gz) would also help but touches
+  auth/sync timing, so it was deliberately not done in a homepage pass.
+- **§4 stage in exotic viewports:** a mid-page hard refresh can briefly show tiles
+  pre-assembly until the first scroll event; normal scrolling self-corrects. Cosmetic.
 - **Dutch homepage translation** out of scope for v1 (EN only; the EN+NL pairing is visible in
   product captures).
-- The pre-existing app-bundle size warning (~814 kB) is unrelated to the homepage and unchanged.
 
 ## Current homepage route
 

@@ -11,7 +11,8 @@ export function HeroSection() {
     <section className="hp-hero" aria-labelledby="hp-hero-title">
       <div className="hp-container hp-grid">
         <div className="hp-hero-copy">
-          <span className="hp-hero-anim" style={{ '--d': '0ms' } as React.CSSProperties}>
+          {/* display:block so the rise transform actually applies (inline boxes ignore it) */}
+          <span className="hp-hero-anim" style={{ '--d': '0ms', display: 'block' } as React.CSSProperties}>
             <Eyebrow>JLPT N5 → N4</Eyebrow>
           </span>
           <h1 className="hp-h1" id="hp-hero-title">

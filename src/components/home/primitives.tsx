@@ -15,12 +15,10 @@ export function Eyebrow({ children, id }: { children: ReactNode; id?: string }) 
  * in-page anchor to the system section. `compact` is the nav variant.
  */
 export function PrimaryCta({ compact }: { compact?: boolean }) {
+  // No aria-label: the visible span (long or short per viewport) IS the accessible name — an
+  // explicit label would violate WCAG 2.5.3 when the short "Start free" text shows.
   return (
-    <Link
-      to="/register"
-      className={`hp-btn hp-btn--primary${compact ? ' hp-btn--compact' : ''}`}
-      aria-label={compact ? 'Start learning for free' : undefined}
-    >
+    <Link to="/register" className={`hp-btn hp-btn--primary${compact ? ' hp-btn--compact' : ''}`}>
       {compact ? (
         <>
           <span className="hp-cta-long">Start learning for free</span>

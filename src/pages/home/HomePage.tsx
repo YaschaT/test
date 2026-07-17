@@ -11,6 +11,7 @@ import { PhilosophySection } from '../../components/home/PhilosophySection';
 import { MotivationSection } from '../../components/home/MotivationSection';
 import { AccessSection } from '../../components/home/AccessSection';
 import { FinalSection } from '../../components/home/FinalSection';
+import { HomeFooter } from '../../components/home/HomeFooter';
 import '../../components/home/home.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -104,6 +105,7 @@ export function HomePage() {
         <AccessSection />
         <FinalSection />
       </main>
+      <HomeFooter />
     </div>
   );
 }

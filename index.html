@@ -12,15 +12,27 @@
       rel="stylesheet"
     />
     <!-- Homepage ("Living Ink") faces. Shippori Mincho B1 is subset via text= to exactly the JP
-         glyphs used on the marketing page — the full family is multiple MB and must never load. -->
+         glyphs used on the marketing page — the full family is multiple MB and must never load.
+         Loaded async (print→all swap on load) so they never block first paint; font-display:swap
+         already governs the fallback-then-swap rendering either way. -->
     <link
       href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Hanken+Grotesk:wght@400;500;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
     <link
       href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700&text=%E8%AA%9E%E6%B0%B4%E5%8F%8B%E9%81%94%E9%A3%9F%E3%81%B9%E3%82%8B%E7%A7%81%E3%81%AF%E3%82%92%E9%A3%B2%E3%81%BF%E3%81%BE%E3%81%99%E3%81%8C&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Hanken+Grotesk:wght@400;500;700&family=Shippori+Mincho+B1:wght@500;700&text=%E8%AA%9E%E6%B0%B4%E5%8F%8B%E9%81%94%E9%A3%9F%E3%81%B9%E3%82%8B%E7%A7%81%E3%81%AF%E3%82%92%E9%A3%B2%E3%81%BF%E3%81%BE%E3%81%99%E3%81%8C&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
