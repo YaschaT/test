@@ -57,7 +57,7 @@ chrome.action.onClicked.addListener(async (tab) => {
 
 function flashBadge(tabId, text) {
   chrome.action.setBadgeText({ tabId, text });
-  chrome.action.setBadgeBackgroundColor({ tabId, color: "#b3261e" });
+  chrome.action.setBadgeBackgroundColor({ tabId, color: "#e8735c" }); // ember-coral
   setTimeout(() => chrome.action.setBadgeText({ tabId, text: "" }), 2500);
 }
 
