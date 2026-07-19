@@ -28,7 +28,13 @@ const KNOWN_MESSAGES: Record<string, string> = {
 export function friendlyAuthError(error: unknown): string {
   if (error instanceof AuthNotConfiguredError) return error.message;
   if (error instanceof Error) {
-    const known = KNOWN_MESSAGES[error.message.toLowerCase()];
+    const message = error.message.toLowerCase();
+    // Browsers surface any unreachable-server failure (offline, DNS, CORS) as a bare
+    // "Failed to fetch" TypeError — never show that raw string to a visitor.
+    if (message.includes('failed to fetch') || message.includes('load failed') || message.includes('networkerror')) {
+      return 'We can’t reach the account service right now. Check your internet connection and try again in a moment.';
+    }
+    const known = KNOWN_MESSAGES[message];
     if (known) return known;
     if (error.message) return error.message;
   }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AuthSubmitButton } from './AuthSubmitButton';
 import { FormField } from './FormField';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { signInWithEmail, sendPasswordReset, isSupabaseConfigured } from '../../lib/auth';
 import { validateEmail, validatePassword, friendlyAuthError } from '../../lib/authValidation';
 import { syncProgressAfterSignIn } from '../../lib/progressSync';
@@ -118,6 +119,7 @@ export function LoginForm({ onAuthenticated }: LoginFormProps) {
       <AuthSubmitButton type="submit" disabled={submitting || !isSupabaseConfigured}>
         {submitting ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : 'Log in'}
       </AuthSubmitButton>
+      <GoogleSignInButton disabled={!isSupabaseConfigured} onError={setServerError} />
     </form>
   );
 }

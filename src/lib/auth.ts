@@ -25,6 +25,19 @@ export async function registerWithEmail(email: string, password: string): Promis
   return { user: data.user, hasSession: Boolean(data.session) };
 }
 
+/**
+ * Kicks off the Google OAuth redirect. This function "succeeds" by leaving the page — Google
+ * authenticates the visitor, then Supabase sends them back to /auth/callback, which owns the
+ * session pickup and progress sync. Only throws if the redirect itself can't start.
+ */
+export async function signInWithGoogle(): Promise<void> {
+  const { error } = await requireSupabase().auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}/auth/callback` },
+  });
+  if (error) throw error;
+}
+
 export async function signInWithEmail(email: string, password: string): Promise<User | null> {
   const { data, error } = await requireSupabase().auth.signInWithPassword({ email, password });
   if (error) throw error;

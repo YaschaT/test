@@ -1,0 +1,111 @@
+<!-- ============================================================================
+  Kotobox &mdash; "Confirm signup" / welcome email, Living Ink styling.
+  Paste into: Supabase Dashboard → Authentication → Emails → Confirm signup.
+  Template variables ({{ .Email }}, {{ .ConfirmationURL }}) are filled by Supabase.
+
+  Email-client constraints honored here: table layout, fully inlined styles,
+  no external images/fonts (Georgia stands in for Newsreader; Helvetica for
+  Hanken Grotesk), no CSS variables, bulletproof link-button.
+  ============================================================================ -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #ece5d4;">
+    <!-- Preheader: shows in inbox preview, hidden in the open email -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+      Confirm your email to start your Japanese journey with Kotobox.
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ece5d4; padding: 32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width: 560px; width: 100%; background-color: #f6f1e7; border: 1px solid #d8d0bf;">
+            <!-- Wordmark bar -->
+            <tr>
+              <td style="padding: 28px 40px 24px; border-bottom: 1px solid #d8d0bf;">
+                <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 500; letter-spacing: -0.2px; color: #191713;">Kotobox</span>
+              </td>
+            </tr>
+            <!-- Body -->
+            <tr>
+              <td style="padding: 36px 40px 8px;">
+                <p style="margin: 0 0 14px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #a02e12;">
+                  Welcome
+                </p>
+                <h1 style="margin: 0 0 16px; font-family: Georgia, 'Times New Roman', serif; font-size: 30px; line-height: 1.15; font-weight: 500; letter-spacing: -0.3px; color: #191713;">
+                  Your Japanese journey starts&nbsp;here
+                </h1>
+                <p style="margin: 0 0 24px; font-family: Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #3e3a33;">
+                  Thanks for creating a Kotobox account. One quick step before your progress
+                  starts syncing across devices: confirm that this inbox is yours.
+                </p>
+              </td>
+            </tr>
+            <!-- Confirm button -->
+            <tr>
+              <td style="padding: 0 40px 28px;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background-color: #191713;">
+                      <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 15px 32px; font-family: Helvetica, Arial, sans-serif; font-size: 16px; font-weight: bold; color: #f6f1e7; text-decoration: none;">
+                        Confirm my email
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <!-- Account details -->
+            <tr>
+              <td style="padding: 0 40px 28px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ece5d4; border-left: 3px solid #565b40;">
+                  <tr>
+                    <td style="padding: 14px 18px;">
+                      <p style="margin: 0 0 4px; font-family: Helvetica, Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1.2px; text-transform: uppercase; color: #6e675c;">
+                        Your login email
+                      </p>
+                      <p style="margin: 0; font-family: Helvetica, Arial, sans-serif; font-size: 15px; font-weight: bold; color: #191713;">
+                        {{ .Email }}
+                      </p>
+                      <p style="margin: 10px 0 0; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #6e675c;">
+                        For your security we never send passwords by email &mdash; it's the one you
+                        just chose. Forgot it already? Use &ldquo;Forgot password?&rdquo; on the login page.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <!-- What's waiting -->
+            <tr>
+              <td style="padding: 0 40px 36px;">
+                <p style="margin: 0 0 10px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #3e3a33;">
+                  Waiting for you
+                </p>
+                <p style="margin: 0; font-family: Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.7; color: #3e3a33;">
+                  Vocabulary with spaced review<span style="color: #a02e12;">&nbsp;&middot;&nbsp;</span>kanji,
+                  stroke by stroke<span style="color: #a02e12;">&nbsp;&middot;&nbsp;</span>grammar in plain
+                  language<span style="color: #a02e12;">&nbsp;&middot;&nbsp;</span>reading and listening
+                  practice &mdash; your path from JLPT N5 to N4.
+                </p>
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td style="padding: 20px 40px 28px; border-top: 1px solid #d8d0bf;">
+                <p style="margin: 0; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #6e675c;">
+                  If you didn't create this account, you can safely ignore this email &mdash;
+                  nothing happens without confirmation.
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin: 20px 0 0; font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #6e675c;">
+            Kotobox &mdash; &#35328;&#33865; one word at a time
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -6,7 +6,23 @@ removed from the sidebar/mobile header, now just the logo mark + "Kotobox". This
 change: the internal `localStorage` key prefix (`kotoba-do:...`) was deliberately left unchanged so no
 existing user progress was reset — renaming that prefix would have invalidated everyone's saved data.
 
-Last updated after **the public homepage teardown (2026-07-16)**: the entire landing page at `/`
+Last updated after **the auth-fetch diagnosis + Google sign-in + welcome email pass (2026-07-19)**:
+the register page's "Failed to fetch" was traced to the Supabase project itself being gone
+(`rrbebdowcgrlryraxkad.supabase.co` returns NXDOMAIN — deleted or expired; nothing wrong in code).
+**Blocked on the user**: follow `docs/kotobox-auth-setup.md` to recreate the project, update `.env` +
+Vercel env vars, re-run the `user_progress` SQL, enable the Google provider, and paste the email
+template. Shipped this session: friendly network-error copy in `friendlyAuthError` (no more raw
+"Failed to fetch"), "Continue with Google" on both auth forms (`GoogleSignInButton`, official G mark,
+paper-hairline secondary styling so the ink primary keeps the lead), `/auth/callback` route
+(`AuthCallback.tsx`: waits for the OAuth session, runs the same `syncProgressAfterSignIn` as the email
+forms, 8s no-session fallback to `/login` — verified in-browser), and a Living Ink welcome/confirm
+email template (`docs/email-templates/welcome-confirm-signup.html`, table layout, inlined styles,
+Georgia/Helvetica as email-safe stand-ins for Newsreader/Hanken Grotesk, all typographic chars as HTML
+entities after a mojibake fix). The welcome email deliberately contains the login email but **never
+the password** — emailing credentials is a security anti-pattern and Supabase doesn't expose them.
+`tsc`/`lint`/`build`/`test` (11/11) clean; register error path + both auth pages verified in-browser.
+
+Previous update — **the public homepage teardown (2026-07-16)**: the entire landing page at `/`
 (lantern-spotlight hero and all sections below) was deleted to make room for a complete redesign.
 `/` now serves a minimal placeholder with login/register links. Full teardown record (what was
 removed vs. preserved, architecture notes, risks): `docs/kotobox-homepage-state.md`. The approved

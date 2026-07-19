@@ -11,6 +11,7 @@ import { useProgressSync } from './lib/progressSync';
 const HomePage = lazy(() => import('./pages/home/HomePage').then((m) => ({ default: m.HomePage })));
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/auth/Register').then((m) => ({ default: m.Register })));
+const AuthCallback = lazy(() => import('./pages/auth/AuthCallback').then((m) => ({ default: m.AuthCallback })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
 const GrammarList = lazy(() => import('./pages/grammar/GrammarList').then((m) => ({ default: m.GrammarList })));
 const GrammarDetail = lazy(() => import('./pages/grammar/GrammarDetail').then((m) => ({ default: m.GrammarDetail })));
@@ -59,6 +60,14 @@ function App() {
           element={
             <Suspense fallback={<div className="min-h-screen bg-[#f6f1e7]" aria-hidden="true" />}>
               <Register />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/auth/callback"
+          element={
+            <Suspense fallback={<div className="min-h-screen bg-[#f6f1e7]" aria-hidden="true" />}>
+              <AuthCallback />
             </Suspense>
           }
         />
