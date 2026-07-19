@@ -94,7 +94,7 @@ export function HomeNav() {
         aria-label="Main"
         className={`hp-nav${condensed ? ' is-condensed' : ''}${hidden && !open ? ' is-hidden' : ''}`}
       >
-        <div className="hp-container hp-nav-row">
+        <div className="hp-container hp-container--wide hp-nav-row">
           <Link to="/" className="hp-wordmark">
             Kotobox
           </Link>
