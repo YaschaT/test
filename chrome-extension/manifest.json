@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Kotobox Lens — Japanese Screenshot Translator",
+  "version": "1.0.0",
+  "description": "Snip any Japanese text on screen and get its reading, meaning, kanji breakdown, and an example sentence.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://api.anthropic.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Kotobox Lens: snip Japanese text (Alt+Shift+K)"
+  },
+  "options_page": "options.html",
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+K"
+      },
+      "description": "Start a Kotobox Lens snip"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

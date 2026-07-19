@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kotobox Lens — Settings</title>
+  <style>
+    /* Kotobox design system (DESIGN.md) dark-mode tokens */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+      background: #020617; color: #f1f5f9;
+      min-height: 100vh; display: grid; place-items: start center;
+      padding: 48px 20px;
+    }
+    .panel {
+      width: 100%; max-width: 460px;
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 1.4rem; padding: 28px;
+    }
+    h1 { font-size: 26px; font-weight: 700; }
+    h1 .dot { color: #e8735c; }
+    .sub { font-size: 13.5px; color: #94a3b8; margin-top: 6px; line-height: 1.55; }
+    .sub a { color: #4c6ef0; }
+    label {
+      display: block; font-size: 11px; font-weight: 700;
+      letter-spacing: .09em; text-transform: uppercase;
+      color: #64748b; margin: 22px 0 7px;
+    }
+    input, select {
+      width: 100%; font: 14px/1.4 inherit; color: #f1f5f9;
+      background: #020617; border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 0.8rem; padding: 10px 12px;
+    }
+    input:focus-visible, select:focus-visible { outline: 2px solid #4c6ef0; outline-offset: 1px; }
+    .row { display: flex; gap: 10px; margin-top: 26px; }
+    button {
+      font: 600 13.5px/1 inherit; cursor: pointer;
+      border-radius: 0.8rem; padding: 11px 18px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08); color: #f1f5f9;
+    }
+    button:hover { background: rgba(255,255,255,0.14); }
+    button:focus-visible { outline: 2px solid #4c6ef0; outline-offset: 1px; }
+    button.primary {
+      background: linear-gradient(#6460e5, #5050d5); border-color: transparent;
+      color: #ffffff; box-shadow: 0 4px 0 0 #3d3aa8;
+    }
+    button.primary:hover { transform: translateY(-1px); }
+    button.primary:active { transform: translateY(2px); box-shadow: 0 2px 0 0 #3d3aa8; }
+    #status { margin-top: 16px; font-size: 13px; line-height: 1.5; min-height: 20px; }
+    #status.ok { color: #10b981; }
+    #status.err { color: #e8735c; }
+    .hint-box {
+      margin-top: 26px; padding: 13px 15px; font-size: 12.5px; line-height: 1.6;
+      color: #94a3b8; background: #020617;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 0.8rem;
+    }
+    kbd {
+      font: inherit; color: #f1f5f9;
+      border: 1px solid rgba(255,255,255,0.14); border-bottom-width: 2px;
+      border-radius: 0.6rem; padding: 0 5px;
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <h1>Kotobox Lens<span class="dot">.</span></h1>
+    <p class="sub">
+      Snip Japanese text anywhere on screen and get its reading, meaning, kanji breakdown,
+      and an example sentence. Powered by your own
+      <a href="https://console.anthropic.com/" target="_blank" rel="noreferrer">Anthropic API key</a>,
+      which is stored only on this device. Each lookup costs a fraction of a cent.
+    </p>
+
+    <label for="apiKey">Anthropic API key</label>
+    <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+
+    <label for="model">Model</label>
+    <select id="model">
+      <option value="claude-opus-4-8">Claude Opus 4.8 · best quality (default)</option>
+      <option value="claude-sonnet-5">Claude Sonnet 5 · fast &amp; smart</option>
+      <option value="claude-haiku-4-5">Claude Haiku 4.5 · fastest &amp; cheapest</option>
+    </select>
+
+    <div class="row">
+      <button id="save" class="primary">Save</button>
+      <button id="test">Test key</button>
+    </div>
+    <p id="status" role="status"></p>
+
+    <div class="hint-box">
+      <strong>How to use:</strong> click the Kotobox Lens icon in the toolbar (or press
+      <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>), then drag a box around any Japanese
+      text (a subtitle, a menu, a tweet, a manga panel). <kbd>Esc</kbd> cancels.
+    </div>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
