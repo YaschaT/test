@@ -61,7 +61,7 @@ export function GrammarDetail() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1180px]">
+    <div className="w-full">
       {phase === 'lesson' ? (
         <div className="grid gap-6 lg:grid-cols-[232px_minmax(0,1fr)] lg:items-start">
           <div className="hidden lg:block lg:sticky lg:top-4">
