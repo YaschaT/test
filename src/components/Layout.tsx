@@ -64,7 +64,7 @@ export function Layout() {
     location.pathname === '/vocabulary' ||
     location.pathname === '/kanji' ||
     location.pathname === '/vocabulary/review' ||
-    location.pathname.startsWith('/grammar/');
+    location.pathname.startsWith('/grammar');
   const secondaryNavItems = useSecondaryNavItems();
   const auth = useAuth();
   const navigate = useNavigate();
