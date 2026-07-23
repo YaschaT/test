@@ -8,6 +8,8 @@ export interface GrammarLessonItem {
   number: number;
   title: string;
   meaningEn: string;
+  /** The sentence pattern (e.g. "Noun / adjective + です"), previewed on the right of each row. */
+  structure: string;
   state: GrammarLessonState;
 }
 
@@ -88,8 +90,13 @@ function GrammarLessonRow({ item, onOpen }: { item: GrammarLessonItem; onOpen: (
           {item.title}
         </span>
 
-        <span className="min-w-0 flex-1 truncate text-sm text-slate-400 dark:text-slate-500">
+        <span className="shrink truncate text-sm text-slate-400 dark:text-slate-500">
           - {item.meaningEn}
+        </span>
+
+        {/* Pattern preview fills the row's right side so it reads as a full lesson, not a hollow line. */}
+        <span className="jp-text ml-auto hidden max-w-[45%] shrink-0 truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500 sm:inline-block dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-400">
+          {item.structure}
         </span>
 
         {isCurrent ? (

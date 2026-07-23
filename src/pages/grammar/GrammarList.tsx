@@ -47,6 +47,7 @@ export function GrammarList() {
           number: index + 1,
           title: point.title,
           meaningEn: capitalize(point.meaning.en),
+          structure: point.structure,
           state: stateFor(index, point.id),
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
