@@ -55,11 +55,16 @@ export function Layout() {
   const levelInfo = getLevelInfo(progress);
   const { newLevel, dismiss: dismissLevelUp } = useLevelUp(levelInfo.level);
   const location = useLocation();
-  // These three list/overview screens share the Dashboard's full-width, glowing-panel treatment rather than
-  // the narrower reading-focused `max-w-5xl` used by detail pages (Grammar/Kanji/Reading detail, review
-  // sessions, etc.) — a fixed-width column left a lot of dead space either side once the stats panel/card
-  // grid were built to fill the available width like the Dashboard's own cards do.
-  const isWideLayout = location.pathname === '/dashboard' || location.pathname === '/vocabulary' || location.pathname === '/kanji';
+  // These screens share the Dashboard's full-width treatment rather than the narrower reading-focused
+  // `max-w-5xl` used by detail pages (Grammar/Kanji/Reading detail, etc.) — a fixed-width column left a
+  // lot of dead space either side once the stats panel/card grid were built to fill the available width.
+  // The vocabulary review workspace joined the list with its two-column stage + session-rail redesign.
+  const isWideLayout =
+    location.pathname === '/dashboard' ||
+    location.pathname === '/vocabulary' ||
+    location.pathname === '/kanji' ||
+    location.pathname === '/vocabulary/review' ||
+    location.pathname.startsWith('/grammar/');
   const secondaryNavItems = useSecondaryNavItems();
   const auth = useAuth();
   const navigate = useNavigate();

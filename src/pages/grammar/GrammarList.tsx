@@ -1,86 +1,91 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GrammarHero } from '../../components/grammar/GrammarHero';
-import { GrammarStatsGrid } from '../../components/grammar/GrammarStatsGrid';
-import { GrammarPathList } from '../../components/grammar/GrammarPathList';
-import { GrammarLessonPreview } from '../../components/grammar/GrammarLessonPreview';
-import { GrammarLearningLayout } from '../../components/grammar/GrammarLearningLayout';
+import { GrammarOverviewHeader } from '../../components/grammar/GrammarOverviewHeader';
+import { GrammarContinueCard } from '../../components/grammar/GrammarContinueCard';
+import {
+  GrammarLessonList,
+  type GrammarLessonItem,
+  type GrammarLessonState,
+} from '../../components/grammar/GrammarLessonList';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
-import { GRAMMAR_POINTS, getGrammarPoint } from '../../data/grammar';
+import { GRAMMAR_POINTS } from '../../data/grammar';
 import { useProgress } from '../../lib/progressStore';
-import type { GrammarPointState } from '../../components/grammar/GrammarStateBadge';
-import type { GrammarPathItem } from '../../components/grammar/GrammarPointCard';
 import type { JlptLevel } from '../../types';
+
+/** How many points beyond the current one are previewable before the path locks. */
+const LOOKAHEAD = 2;
 
 export function GrammarList() {
   const progress = useProgress();
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<JlptLevel | 'all'>('all');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [level, setLevel] = useState<JlptLevel>('N5');
 
-  const currentId = useMemo(
-    () => GRAMMAR_POINTS.find((p) => !progress.completedGrammarIds.includes(p.id))?.id ?? null,
-    [progress.completedGrammarIds],
+  const completedIds = progress.completedGrammarIds;
+
+  // First not-yet-completed point in the full course order — the genuine "continue learning" target and
+  // the anchor for what's unlocked next.
+  const currentIndex = useMemo(
+    () => GRAMMAR_POINTS.findIndex((p) => !completedIds.includes(p.id)),
+    [completedIds],
   );
+  const currentPoint = currentIndex >= 0 ? GRAMMAR_POINTS[currentIndex] : GRAMMAR_POINTS[GRAMMAR_POINTS.length - 1];
 
-  function stateFor(id: string): GrammarPointState {
-    if (progress.completedGrammarIds.includes(id)) return 'completed';
-    return id === currentId ? 'current' : 'locked';
+  function stateFor(index: number, id: string): GrammarLessonState {
+    if (completedIds.includes(id)) return 'completed';
+    if (currentIndex === -1) return 'completed';
+    if (index === currentIndex) return 'current';
+    if (index > currentIndex && index <= currentIndex + LOOKAHEAD) return 'available';
+    return 'locked';
   }
 
-  const items: GrammarPathItem[] = useMemo(
+  const items: GrammarLessonItem[] = useMemo(
     () =>
-      GRAMMAR_POINTS.filter((p) => filter === 'all' || p.level === filter).map((p) => ({
-        id: p.id,
-        title: p.title,
-        meaningEn: p.meaning.en,
-        level: p.level,
-        state: stateFor(p.id),
-      })),
+      GRAMMAR_POINTS.map((p, index) => ({ point: p, index }))
+        .filter(({ point }) => point.level === level)
+        .map(({ point, index }) => ({
+          id: point.id,
+          number: index + 1,
+          title: point.title,
+          meaningEn: capitalize(point.meaning.en),
+          state: stateFor(index, point.id),
+        })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filter, progress.completedGrammarIds, currentId],
+    [level, completedIds, currentIndex],
   );
 
-  const nextPoint = useMemo(() => {
-    const next = GRAMMAR_POINTS.find((p) => !progress.completedGrammarIds.includes(p.id));
-    return next ? { id: next.id, title: next.title } : null;
-  }, [progress.completedGrammarIds]);
+  const totalInLevel = GRAMMAR_POINTS.filter((p) => p.level === level).length;
+  const completedInLevel = GRAMMAR_POINTS.filter(
+    (p) => p.level === level && completedIds.includes(p.id),
+  ).length;
 
-  const effectiveSelectedId = selectedId ?? currentId ?? GRAMMAR_POINTS[0]?.id ?? null;
-  const previewPoint = effectiveSelectedId ? getGrammarPoint(effectiveSelectedId) : null;
-
-  function scrollToPath() {
-    document.getElementById('grammar-path-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function openLesson(id: string) {
+    navigate(`/grammar/${id}`);
   }
 
   return (
-    <div className="space-y-5">
-      <GrammarHero
-        completedCount={progress.completedGrammarIds.length}
-        totalCount={GRAMMAR_POINTS.length}
-        nextPoint={nextPoint}
-        onContinue={(id) => navigate(`/grammar/${id}`)}
-        onReview={scrollToPath}
+    <div className="space-y-6">
+      <GrammarOverviewHeader completedCount={completedIds.length} totalCount={GRAMMAR_POINTS.length} />
+
+      <SegmentedTabs
+        value={level}
+        onChange={setLevel}
+        groupLabel="Grammar level"
+        options={(['N5', 'N4'] as const).map((l) => ({ value: l, label: l }))}
       />
 
-      <GrammarStatsGrid
-        completedCount={progress.completedGrammarIds.length}
-        remainingCount={GRAMMAR_POINTS.length - progress.completedGrammarIds.length}
-        nextTitle={nextPoint?.title ?? null}
+      <GrammarContinueCard point={currentPoint} onContinue={openLesson} />
+
+      <GrammarLessonList
+        levelLabel={level}
+        items={items}
+        completedInLevel={completedInLevel}
+        totalInLevel={totalInLevel}
+        onOpen={openLesson}
       />
-
-      <div id="grammar-path-section" className="scroll-mt-4 space-y-4">
-        <SegmentedTabs
-          value={filter}
-          onChange={setFilter}
-          options={(['all', 'N5', 'N4'] as const).map((l) => ({ value: l, label: l === 'all' ? 'All' : l }))}
-        />
-
-        <GrammarLearningLayout
-          path={<GrammarPathList key={filter} items={items} selectedId={effectiveSelectedId} onSelect={setSelectedId} />}
-          preview={previewPoint && <GrammarLessonPreview point={previewPoint} state={stateFor(previewPoint.id)} />}
-        />
-      </div>
     </div>
   );
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
