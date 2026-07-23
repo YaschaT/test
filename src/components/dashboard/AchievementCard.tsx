@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trophy, Lock, CheckCircle2, ArrowRight } from 'lucide-react';
 import { DashboardCard } from './DashboardCard';
 import { PrimaryButton } from '../PrimaryButton';
+import { ProgressBar } from '../ui/ProgressBar';
 import { computeBadges, pickFeaturedBadge } from '../../lib/badges';
 import type { ProgressState } from '../../lib/progressStore';
 
@@ -40,12 +41,11 @@ export function AchievementCard({ progress }: { progress: ProgressState }) {
           <div className="min-w-0 flex-1">
             <p className="text-fluid-hero-sub font-bold text-slate-900 dark:text-white leading-tight">{featured.label}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">{featured.description}</p>
-            <div className="mt-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600"
-                style={{ width: `${Math.round((featured.current / featured.target) * 100)}%` }}
-              />
-            </div>
+            <ProgressBar
+              value={Math.round((featured.current / featured.target) * 100)}
+              className="mt-2"
+              label={`${featured.label} progress`}
+            />
             <p className="mt-1 text-xs text-slate-400">
               {featured.current} / {featured.target}
             </p>

@@ -1,3 +1,5 @@
+import { ProgressBar } from '../ui/ProgressBar';
+
 interface GrammarOverviewHeaderProps {
   completedCount: number;
   totalCount: number;
@@ -21,12 +23,7 @@ export function GrammarOverviewHeader({ completedCount, totalCount }: GrammarOve
           <span className="text-slate-500 dark:text-slate-400"> of {totalCount} completed</span>
         </p>
         <div className="flex items-center gap-3">
-          <div className="h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-violet-500 transition-[width] duration-500"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+          <ProgressBar value={pct} className="flex-1" label="Course completion" />
           <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 tabular-nums">{pct}%</span>
         </div>
       </div>

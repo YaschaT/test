@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, ListChecks, X } from 'lucide-react';
 import { playCorrect, playWrong } from '../../lib/sound';
+import { ProgressBar } from '../ui/ProgressBar';
 import type { QuizQuestion } from '../../types';
 
 interface GrammarPracticeProps {
@@ -78,12 +79,7 @@ export function GrammarPractice({ questions, onExit, onFinish }: GrammarPractice
           <ArrowLeft size={16} aria-hidden="true" /> Back to lesson
         </button>
         <div className="flex flex-1 items-center gap-3">
-          <div className="h-2 flex-1 rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-violet-500 transition-[width] duration-300"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
+          <ProgressBar value={progressPct} onDark className="flex-1" label="Practice progress" />
           <span className="text-sm font-semibold text-white/70 tabular-nums shrink-0">
             {index + 1} / {total}
           </span>

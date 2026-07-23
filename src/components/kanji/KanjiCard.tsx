@@ -42,7 +42,7 @@ export function KanjiCard({ kanji, state, progress, layout, index }: KanjiCardPr
 
         <div className="flex items-center justify-between gap-3 mt-3">
           <div className="flex-1">
-            <LearningProgressBar percent={progress} barColor={theme.barColor} />
+            <LearningProgressBar percent={progress} />
           </div>
           <LearningStateBadge state={state} />
         </div>

@@ -115,7 +115,7 @@ export function VocabularyCard({ word, state, progress, layout, index }: Vocabul
               <div className="flex items-center justify-end mb-1">
                 <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">{progress}%</span>
               </div>
-              <LearningProgressBar percent={progress} barColor={theme.barColor} />
+              <LearningProgressBar percent={progress} />
             </div>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { ProgressBar } from '../ui/ProgressBar';
 import type { LevelInfo } from '../../lib/xp';
 
 /** Shown at the bottom of the sidebar, above the streak/settings row. XP and level are entirely derived
@@ -25,9 +26,7 @@ export function SidebarLevelCard({ levelInfo }: { levelInfo: LevelInfo }) {
       <div className="relative z-10">
         <p className="text-lg font-bold text-white">Level {levelInfo.level}</p>
         <p className="text-sm text-brand-300">{levelInfo.title}</p>
-        <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
-          <div className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-300" style={{ width: `${pct}%` }} />
-        </div>
+        <ProgressBar value={pct} onDark className="mt-3" label="Level progress" />
         <p className="mt-1.5 text-xs text-brand-300/80">
           {levelInfo.xpIntoLevel} / {levelInfo.xpForNextLevel} XP
         </p>
