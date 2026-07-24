@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Bookmark,
@@ -11,11 +11,11 @@ import {
   Pause,
   Play,
   RotateCcw,
-  Target,
 } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { Celebration } from '../../components/Celebration';
 import { JapaneseText } from '../../components/JapaneseText';
+import { PrimaryButton } from '../../components/PrimaryButton';
 import { RingStat } from '../../components/dashboard/RingStat';
 import { ReadingQuestionPlayer } from '../../components/ReadingQuestionPlayer';
 import { getReading, READINGS } from '../../data/readings';
@@ -24,7 +24,6 @@ import { getGrammarPoint } from '../../data/grammar';
 import { markReadingCompleted, recordQuizResult, useProgress } from '../../lib/progressStore';
 import { isReadingSaved, toggleReadingSaved } from '../../lib/savedReadings';
 import { speakJapaneseBrowser, useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
-import type { ReadingPassage } from '../../types';
 
 interface ReadingPrefs {
   furigana: boolean;
@@ -39,23 +38,13 @@ const DIFFICULTY_STYLES: Record<string, string> = {
   hard: 'text-red-300 bg-red-500/15 ring-red-400/30',
 };
 
-/** Non-punctuation segments across the passage — a real, data-derived "words" count for the About panel. */
-const PUNCT = /^[\s\u3000。、！？「」『』（）()・…～-]+$/;
-function wordCount(passage: ReadingPassage): number {
-  return passage.sentences.reduce(
-    (total, sentence) => total + sentence.segments.filter((seg) => !PUNCT.test(seg.text)).length,
-    0,
-  );
-}
 
 export function ReadingDetail() {
   const { id } = useParams<{ id: string }>();
   const progress = useProgress();
-  const navigate = useNavigate();
   const voiceAvailable = useJapaneseVoiceAvailable();
 
   const [prefs, setPrefs] = useState<ReadingPrefs>({ furigana: true, romaji: false, english: true, dutch: true });
-  const [activeIndex, setActiveIndex] = useState(0);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
   const [saved, setSaved] = useState(() => (id ? isReadingSaved(id) : false));
   const [showMore, setShowMore] = useState(false);
@@ -68,7 +57,6 @@ export function ReadingDetail() {
   // Stop any in-flight speech when leaving the page.
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
-  const words = useMemo(() => (passage ? wordCount(passage) : 0), [passage]);
   const grammarPoints = useMemo(
     () => (passage ? passage.grammarHighlightIds.map(getGrammarPoint).filter((g): g is NonNullable<typeof g> => !!g) : []),
     [passage],
@@ -83,7 +71,6 @@ export function ReadingDetail() {
   const otherPassages = READINGS.filter((r) => r.id !== passage.id);
 
   function playSentence(index: number) {
-    setActiveIndex(index);
     if (!voiceAvailable) return;
     if (playingIndex === index) {
       window.speechSynthesis.cancel();
@@ -119,7 +106,6 @@ export function ReadingDetail() {
   function restart() {
     setResult(null);
     setShowQuiz(false);
-    setActiveIndex(0);
     setPlayingIndex(null);
     window.speechSynthesis?.cancel();
   }
@@ -216,9 +202,6 @@ export function ReadingDetail() {
                 {completedCount} of {totalPassages}
               </p>
               <p className="text-sm text-white/60">passages completed</p>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
-                <div className="h-full rounded-full bg-gradient-to-r from-brand-400 to-violet-400 transition-[width] duration-500" style={{ width: `${progressPct}%` }} />
-              </div>
             </div>
           </div>
         </div>
@@ -231,18 +214,17 @@ export function ReadingDetail() {
           <Card className="overflow-hidden p-2 sm:p-3">
             <ul>
               {passage.sentences.map((sentence, i) => {
-                const isActive = activeIndex === i;
                 const isPlaying = playingIndex === i;
                 return (
                   <li
                     key={i}
                     className={`flex items-start gap-4 rounded-2xl border-b border-slate-100 p-4 last:border-b-0 sm:p-5 dark:border-white/[0.06] ${
-                      isActive ? 'bg-brand-50 ring-1 ring-inset ring-brand-500/40 dark:bg-brand-500/10' : ''
+                      isPlaying ? 'bg-brand-50 ring-1 ring-inset ring-brand-500/40 dark:bg-brand-500/10' : ''
                     }`}
                   >
                     <span
                       className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
-                        isActive
+                        isPlaying
                           ? 'bg-brand-600 text-white'
                           : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                       }`}
@@ -254,7 +236,7 @@ export function ReadingDetail() {
                       <JapaneseText segments={sentence.segments} showFurigana={prefs.furigana} className="text-2xl leading-relaxed text-slate-900 dark:text-white" />
                       {prefs.romaji && <p className="mt-1 text-sm text-brand-600 dark:text-brand-300">{sentence.romaji}</p>}
                       {prefs.english && <p className="mt-2 text-slate-600 dark:text-slate-300">{sentence.en}</p>}
-                      {prefs.dutch && <p className="mt-0.5 text-sm text-slate-400 dark:text-slate-500">{sentence.nl}</p>}
+                      {prefs.dutch && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{sentence.nl}</p>}
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2">
@@ -266,7 +248,7 @@ export function ReadingDetail() {
                         aria-label={isPlaying ? `Stop sentence ${i + 1}` : `Play sentence ${i + 1}`}
                         title={voiceAvailable ? undefined : 'No Japanese voice available on this device'}
                         className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                          isActive
+                          isPlaying
                             ? 'bg-brand-600 text-white hover:brightness-110'
                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                         }`}
@@ -307,7 +289,7 @@ export function ReadingDetail() {
             </div>
           </Card>
 
-          {showQuiz && (
+          {showQuiz ? (
             <div ref={quizRef} className="scroll-mt-4">
               <Card className="p-5 sm:p-6">
                 <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Comprehension questions</h2>
@@ -325,6 +307,20 @@ export function ReadingDetail() {
                 )}
               </Card>
             </div>
+          ) : (
+            <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+                  <ClipboardList size={18} className="text-brand-500" aria-hidden="true" /> Check your understanding
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {passage.questions.length} comprehension question{passage.questions.length === 1 ? '' : 's'} on this passage.
+                </p>
+              </div>
+              <PrimaryButton onClick={openQuiz} className="w-full shrink-0 sm:w-auto">
+                Take the quiz
+              </PrimaryButton>
+            </Card>
           )}
         </div>
 
@@ -337,7 +333,7 @@ export function ReadingDetail() {
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{passage.description.en}</p>
             <dl className="mt-4 grid grid-cols-3 gap-3">
               <AboutStat label="Level" value={passage.level} />
-              <AboutStat label="Words" value={String(words)} />
+              <AboutStat label="Sentences" value={String(passage.sentences.length)} />
               <AboutStat label="Grammar" value={grammarLabel} jp />
             </dl>
           </Card>
@@ -376,45 +372,6 @@ export function ReadingDetail() {
             </div>
           </Card>
 
-          <Card className="p-5">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Quick actions</h2>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <QuickAction
-                icon={<BookOpen size={20} aria-hidden="true" />}
-                tint="violet"
-                label="Practice vocab"
-                sub={`${passage.vocabHighlightIds.length} words`}
-                onClick={() => navigate('/vocabulary')}
-              />
-              <QuickAction
-                icon={<Target size={20} aria-hidden="true" />}
-                tint="brand"
-                label="Grammar focus"
-                sub={grammarPoints[0]?.title ?? 'Review'}
-                jpSub
-                onClick={() => navigate(grammarPoints[0] ? `/grammar/${grammarPoints[0].id}` : '/grammar')}
-              />
-              <QuickAction
-                icon={<ClipboardList size={20} aria-hidden="true" />}
-                tint="emerald"
-                label="Take quiz"
-                sub={`${passage.questions.length} questions`}
-                onClick={openQuiz}
-              />
-            </div>
-          </Card>
-
-          <Card className="flex items-center gap-4 overflow-hidden p-5">
-            <img src="/assets/dashboard/mascots/mascot-level-card.png" alt="" aria-hidden="true" className="h-20 w-auto shrink-0 drop-shadow-md" />
-            <div>
-              <p className="font-bold text-slate-900 dark:text-white">
-                {result ? 'Great job! ✨' : completedCount > 0 ? 'Keep it up! ✨' : 'You’ve got this! ✨'}
-              </p>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                {result ? 'You finished the quiz for this passage.' : 'Read each line, then take the quiz.'}
-              </p>
-            </div>
-          </Card>
         </aside>
       </div>
     </div>
@@ -427,40 +384,6 @@ function AboutStat({ label, value, jp = false }: { label: string; value: string;
       <dt className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</dt>
       <dd className={`mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100 ${jp ? 'jp-text' : ''}`}>{value}</dd>
     </div>
-  );
-}
-
-const QUICK_ACTION_TINTS: Record<string, string> = {
-  violet: 'bg-violet-500/15 text-violet-500 dark:text-violet-300',
-  brand: 'bg-brand-500/15 text-brand-500 dark:text-brand-300',
-  emerald: 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-300',
-};
-
-function QuickAction({
-  icon,
-  tint,
-  label,
-  sub,
-  jpSub = false,
-  onClick,
-}: {
-  icon: ReactNode;
-  tint: string;
-  label: string;
-  sub: string;
-  jpSub?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 p-3 text-center transition-colors hover:border-brand-300 hover:bg-slate-50 dark:border-slate-800 dark:hover:border-brand-600 dark:hover:bg-white/[0.03]"
-    >
-      <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${QUICK_ACTION_TINTS[tint]}`}>{icon}</span>
-      <span className="text-sm font-semibold text-slate-900 dark:text-white">{label}</span>
-      <span className={`text-xs text-slate-400 dark:text-slate-500 ${jpSub ? 'jp-text' : ''}`}>{sub}</span>
-    </button>
   );
 }
 
