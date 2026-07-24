@@ -118,7 +118,7 @@ export function ReadingDetail() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
+    <div className="mx-auto w-full max-w-[1400px] space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3">
         <Link
@@ -193,7 +193,7 @@ export function ReadingDetail() {
 
           {/* Passage progress */}
           <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm lg:w-[300px]">
-            <RingStat progress={totalPassages > 0 ? completedCount / totalPassages : 0} color="#6f8ffc" trackColor="white" size={96} strokeWidth={8} displaySize="84px">
+            <RingStat progress={totalPassages > 0 ? completedCount / totalPassages : 0} color="var(--color-brand-400)" trackColor="white" size={96} strokeWidth={8} displaySize="84px">
               <span className="text-lg font-bold text-white tabular-nums">{progressPct}%</span>
             </RingStat>
             <div className="min-w-0">
@@ -208,9 +208,9 @@ export function ReadingDetail() {
       </section>
 
       {/* Content */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Passage */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           <Card className="overflow-hidden p-2 sm:p-3">
             <ul>
               {passage.sentences.map((sentence, i) => {
@@ -291,7 +291,7 @@ export function ReadingDetail() {
 
           {showQuiz ? (
             <div ref={quizRef} className="scroll-mt-4">
-              <Card className="p-5 sm:p-6">
+              <Card className="p-5">
                 <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Comprehension questions</h2>
                 {result ? (
                   <Celebration
@@ -308,7 +308,7 @@ export function ReadingDetail() {
               </Card>
             </div>
           ) : (
-            <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
                   <ClipboardList size={18} className="text-brand-500" aria-hidden="true" /> Check your understanding
@@ -331,7 +331,7 @@ export function ReadingDetail() {
               <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> About this passage
             </h2>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{passage.description.en}</p>
-            <dl className="mt-4 grid grid-cols-3 gap-3">
+            <dl className="mt-4 grid grid-cols-3 gap-4">
               <AboutStat label="Level" value={passage.level} />
               <AboutStat label="Sentences" value={String(passage.sentences.length)} />
               <AboutStat label="Grammar" value={grammarLabel} jp />
@@ -380,7 +380,7 @@ export function ReadingDetail() {
 
 function AboutStat({ label, value, jp = false }: { label: string; value: string; jp?: boolean }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+    <div>
       <dt className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</dt>
       <dd className={`mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100 ${jp ? 'jp-text' : ''}`}>{value}</dd>
     </div>
