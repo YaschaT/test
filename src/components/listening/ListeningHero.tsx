@@ -17,8 +17,8 @@ export function ListeningHero() {
           <Headphones size={22} className="text-white" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">Listening</h1>
-          <p className="text-sm sm:text-base text-white/60 mt-0.5">
+          <h1 className="text-3xl font-bold text-white">Listening</h1>
+          <p className="text-white/60 mt-1">
             Practice with text-to-speech, using your browser's voice or Google Cloud's natural voice.
           </p>
         </div>

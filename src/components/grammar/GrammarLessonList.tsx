@@ -99,18 +99,11 @@ function GrammarLessonRow({ item, onOpen }: { item: GrammarLessonItem; onOpen: (
           {item.structure}
         </span>
 
-        {isCurrent ? (
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-3.5 py-1.5 text-sm font-semibold text-white shadow-[0_6px_16px_-8px_rgba(58,84,214,0.9)] transition-transform group-hover:scale-[1.02]">
-            Continue
-            <ArrowRight size={15} aria-hidden="true" />
-          </span>
-        ) : (
-          <ChevronRight
-            size={18}
-            aria-hidden="true"
-            className="shrink-0 text-slate-300 dark:text-slate-600 transition-colors group-hover:text-slate-500 dark:group-hover:text-slate-400"
-          />
-        )}
+        <ChevronRight
+          size={18}
+          aria-hidden="true"
+          className="shrink-0 text-slate-300 dark:text-slate-600 transition-colors group-hover:text-slate-500 dark:group-hover:text-slate-400"
+        />
       </div>
     </li>
   );

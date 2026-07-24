@@ -77,23 +77,15 @@ export function ListeningHome() {
           ]}
         />
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-slate-400 mr-1">Speed</span>
-          {SPEEDS.map((sp) => (
-            <button
-              key={sp}
-              type="button"
-              aria-pressed={speed === sp}
-              onClick={() => setSpeed(sp)}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold border transition-colors ${
-                speed === sp
-                  ? 'bg-brand-50 border-brand-200 text-brand-700 dark:bg-brand-900/40 dark:border-brand-800 dark:text-brand-300'
-                  : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              {sp}x
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-400">Speed</span>
+          <SegmentedTabs
+            value={String(speed)}
+            onChange={(v) => setSpeed(Number(v))}
+            size="sm"
+            groupLabel="Playback speed"
+            options={SPEEDS.map((sp) => ({ value: String(sp), label: `${sp}x` }))}
+          />
         </div>
       </div>
 
@@ -241,13 +233,13 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
                 aria-checked={selected === opt}
                 disabled={answered}
                 onClick={() => choose(opt)}
-                className={`w-full text-left rounded-xl border px-4 py-2.5 text-sm font-medium transition-all flex items-center justify-between gap-2 ${
+                className={`w-full text-left rounded-xl border px-4 py-2.5 pointer-coarse:py-3.5 text-sm font-medium transition-all flex items-center justify-between gap-2 ${
                   showCorrect
-                    ? 'border-emerald-400 text-emerald-700 dark:text-emerald-300'
+                    ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                     : showWrong
-                      ? 'border-red-300 text-red-700 dark:text-red-300'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-600 text-slate-800 dark:text-slate-100 active:scale-[0.98]'
-                }`}
+                      ? 'border-red-300 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 animate-shake'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-600 text-slate-800 dark:text-slate-100'
+                } ${answered ? 'cursor-default' : 'cursor-pointer active:scale-[0.98]'}`}
               >
                 {opt}
                 {showCorrect && <CheckCircle2 size={16} />}

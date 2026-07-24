@@ -61,7 +61,7 @@ export function QuizPlayer({ questions, onComplete }: QuizPlayerProps) {
               aria-checked={selected === i}
               disabled={answered}
               onClick={() => selectOption(i)}
-              className={`w-full text-left jp-text rounded-xl border px-4 py-2.5 text-sm font-medium transition-all flex items-center justify-between gap-2 ${
+              className={`w-full text-left jp-text rounded-xl border px-4 py-2.5 pointer-coarse:py-3.5 text-sm font-medium transition-all flex items-center justify-between gap-2 ${
                 showCorrect
                   ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                   : showWrong

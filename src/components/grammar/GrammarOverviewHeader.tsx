@@ -13,8 +13,8 @@ export function GrammarOverviewHeader({ completedCount, totalCount }: GrammarOve
   return (
     <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Grammar</h1>
-        <p className="mt-1.5 text-slate-500 dark:text-slate-400">Master Japanese sentence patterns step by step.</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Grammar</h1>
+        <p className="mt-1 text-slate-500 dark:text-slate-400">Master Japanese sentence patterns step by step.</p>
       </div>
 
       <div className="sm:w-72 shrink-0">

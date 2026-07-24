@@ -13,10 +13,10 @@ export function KanjiHeader({ ctaLabel, ctaHref }: KanjiHeaderProps) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex items-center gap-3">
-        <CategoryIcon skill="kanji" size={48} />
+        <CategoryIcon skill="kanji" size={44} />
         <div>
-          <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white leading-tight">Kanji</h1>
-          <p className="text-base text-slate-500 dark:text-slate-400 mt-1">Master the building blocks of Japanese.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Kanji</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Master the building blocks of Japanese.</p>
         </div>
       </div>
       {ctaLabel ? (
