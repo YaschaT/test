@@ -102,6 +102,8 @@ export interface ReadingPassage {
   id: string;
   level: JlptLevel;
   title: Translatable;
+  /** One-line summary shown in the "About this passage" panel. */
+  description: Translatable;
   difficulty: 'easy' | 'medium' | 'hard';
   sentences: ReadingSentence[];
   vocabHighlightIds: string[];

@@ -11,6 +11,7 @@ export const READINGS: ReadingPassage[] = [
     id: 'r-my-day',
     level: 'N5',
     title: { en: 'My Day', nl: 'Mijn Dag' },
+    description: { en: 'A short passage about daily routines.', nl: 'Een korte tekst over dagelijkse routines.' },
     difficulty: 'easy',
     sentences: [
       rs(
@@ -80,6 +81,7 @@ export const READINGS: ReadingPassage[] = [
     id: 'r-weekend-plans',
     level: 'N5',
     title: { en: 'Weekend Plans', nl: 'Weekendplannen' },
+    description: { en: 'Making plans and saying what you want to do.', nl: 'Plannen maken en zeggen wat je wilt doen.' },
     difficulty: 'easy',
     sentences: [
       rs(
@@ -149,6 +151,7 @@ export const READINGS: ReadingPassage[] = [
     id: 'r-promise',
     level: 'N4',
     title: { en: 'A Promise with a Friend', nl: 'Een belofte aan een vriend(in)' },
+    description: { en: 'Plans, conditions and keeping your word.', nl: 'Plannen, voorwaarden en je woord houden.' },
     difficulty: 'medium',
     sentences: [
       rs(
@@ -218,6 +221,7 @@ export const READINGS: ReadingPassage[] = [
     id: 'r-japan-weather',
     level: 'N4',
     title: { en: 'Japan’s Weather', nl: 'Het weer in Japan' },
+    description: { en: 'The four seasons and describing how things seem.', nl: 'De vier seizoenen en beschrijven hoe iets lijkt.' },
     difficulty: 'hard',
     sentences: [
       rs(
