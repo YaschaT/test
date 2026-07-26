@@ -10,17 +10,19 @@ interface StrokeOrderDiagramProps {
    * - `faint`: all strokes shown faint with no numbers (a trace underlay).
    */
   mode?: 'numbered' | 'faint';
-  /** Show a replay button that draws the strokes one-by-one in order. */
+  /** Show a replay button that draws each stroke along its path, in order. */
   replayable?: boolean;
   /** Underlay mode: no border, grid or background so it can sit behind a drawing canvas. */
   bare?: boolean;
+  /** Auto-play the draw animation once on mount (used by the "See" stage). */
+  autoPlay?: boolean;
 }
 
 function toPath(stroke: Stroke): string {
   return stroke.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
 }
 
-/** Rough polyline length so the draw animation runs at a roughly even speed per stroke. */
+/** Rough polyline length so each stroke's draw takes time proportional to how long it is. */
 function strokeLength(stroke: Stroke): number {
   let len = 0;
   for (let i = 1; i < stroke.length; i++) {
@@ -29,34 +31,58 @@ function strokeLength(stroke: Stroke): number {
   return Math.max(len, 1);
 }
 
-/** Renders numbered stroke order as an SVG on a 0–100 grid. Order and direction are authentic. */
-export function StrokeOrderDiagram({ strokes, size = 220, mode = 'numbered', replayable = false, bare = false }: StrokeOrderDiagramProps) {
+/**
+ * Numbered stroke order on a 0–100 grid. Order and direction are authentic; the replay animation
+ * draws each stroke along its path in writing order (via an animated stroke-dashoffset), so the
+ * learner sees not just the sequence but the direction of every stroke.
+ */
+export function StrokeOrderDiagram({
+  strokes,
+  size = 220,
+  mode = 'numbered',
+  replayable = false,
+  bare = false,
+  autoPlay = false,
+}: StrokeOrderDiagramProps) {
   const [playing, setPlaying] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(strokes.length);
+  // How many strokes have started drawing. When idle this equals strokes.length (all shown).
+  const [drawnUpTo, setDrawnUpTo] = useState(strokes.length);
+  // Bumped on each play so the paths remount hidden and animate forward (never erase backward).
+  const [runId, setRunId] = useState(0);
   const timers = useRef<number[]>([]);
 
   const lengths = useMemo(() => strokes.map(strokeLength), [strokes]);
+  const durationOf = (i: number) => 260 + lengths[i] * 7;
 
-  useEffect(() => {
-    return () => timers.current.forEach((t) => window.clearTimeout(t));
-  }, []);
-
-  function play() {
+  const clearTimers = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
     timers.current = [];
+  };
+
+  useEffect(() => () => clearTimers(), []);
+
+  function play() {
+    clearTimers();
+    setRunId((r) => r + 1);
     setPlaying(true);
-    setVisibleCount(0);
+    setDrawnUpTo(0);
     let elapsed = 0;
     strokes.forEach((_, i) => {
-      const dur = 250 + lengths[i] * 6; // ms, longer strokes take a bit longer
-      const t = window.setTimeout(() => {
-        setVisibleCount(i + 1);
-        if (i === strokes.length - 1) setPlaying(false);
-      }, elapsed);
-      timers.current.push(t);
-      elapsed += dur;
+      const start = window.setTimeout(() => setDrawnUpTo(i + 1), elapsed);
+      timers.current.push(start);
+      elapsed += durationOf(i);
     });
+    const done = window.setTimeout(() => setPlaying(false), elapsed);
+    timers.current.push(done);
   }
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    // Defer out of the synchronous effect commit so the first frame paints before the draw starts.
+    const kickoff = window.setTimeout(() => play(), 0);
+    return () => window.clearTimeout(kickoff);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const showNumbers = mode === 'numbered' && !playing;
   const baseColor = mode === 'faint' ? 'rgba(148,163,184,0.35)' : 'currentColor';
@@ -76,7 +102,6 @@ export function StrokeOrderDiagram({ strokes, size = 220, mode = 'numbered', rep
         role="img"
         aria-label={`Stroke order diagram, ${strokes.length} strokes`}
       >
-        {/* practice grid */}
         {!bare && (
           <>
             <rect x="0.5" y="0.5" width="99" height="99" fill="none" stroke="rgba(148,163,184,0.25)" strokeWidth="0.5" />
@@ -86,17 +111,20 @@ export function StrokeOrderDiagram({ strokes, size = 220, mode = 'numbered', rep
         )}
 
         {strokes.map((stroke, i) => {
-          const shown = i < visibleCount;
+          const drawn = i < drawnUpTo;
           return (
             <path
-              key={i}
+              key={`${runId}-${i}`}
               d={toPath(stroke)}
               fill="none"
               stroke={baseColor}
               strokeWidth={mode === 'faint' ? 5 : 6}
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ opacity: shown ? 1 : 0, transition: 'opacity 120ms ease-out' }}
+              pathLength={100}
+              strokeDasharray={100}
+              strokeDashoffset={drawn ? 0 : 100}
+              style={{ transition: `stroke-dashoffset ${durationOf(i)}ms linear` }}
             />
           );
         })}
@@ -118,7 +146,7 @@ export function StrokeOrderDiagram({ strokes, size = 220, mode = 'numbered', rep
           disabled={playing}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
         >
-          <Play size={13} /> {playing ? 'Playing…' : 'Replay stroke order'}
+          <Play size={13} /> {playing ? 'Drawing…' : 'Animate stroke order'}
         </button>
       )}
     </div>

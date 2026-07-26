@@ -34,6 +34,8 @@ export interface ProgressState {
   learnedKanjiIds: string[];
   completedReadingIds: string[];
   quizResults: QuizResult[];
+  /** Best accuracy (0..1) achieved on each roadmap week's checkpoint quiz, keyed by week number. */
+  weeklyCheckpoints: Record<number, number>;
   session: StudySession | null;
 }
 
@@ -49,6 +51,7 @@ function defaultState(): ProgressState {
     learnedKanjiIds: [],
     completedReadingIds: [],
     quizResults: [],
+    weeklyCheckpoints: {},
     session: null,
   };
 }
@@ -184,6 +187,19 @@ export function recordQuizResult(result: Omit<QuizResult, 'id' | 'date'>) {
       ...s.quizResults,
       { ...result, id: crypto.randomUUID(), date: todayIso() },
     ],
+  }));
+}
+
+/** Records a roadmap week's checkpoint result, keeping the learner's best accuracy for that week. */
+export function recordCheckpointResult(week: number, correct: number, total: number) {
+  if (total <= 0) return;
+  const accuracy = correct / total;
+  setState((s) => ({
+    ...s,
+    weeklyCheckpoints: {
+      ...s.weeklyCheckpoints,
+      [week]: Math.max(s.weeklyCheckpoints[week] ?? 0, accuracy),
+    },
   }));
 }
 

@@ -79,7 +79,7 @@ export function WritingPractice({ character, meaning, reading, size = 260 }: Wri
       {/* SEE */}
       {stage === 'see' &&
         (strokes ? (
-          <StrokeOrderDiagram strokes={strokes} size={size} mode="numbered" replayable />
+          <StrokeOrderDiagram strokes={strokes} size={size} mode="numbered" replayable autoPlay />
         ) : (
           <div className="flex flex-col items-center gap-3">
             <div

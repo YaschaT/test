@@ -97,12 +97,30 @@ app's own hues (emerald/brand/amber/slate — the impeccable hook's violet AI-te
 `tsc`/`eslint`/`build`/`vitest` (27/27) clean; page, nav highlight, week expand/collapse and
 progress chips verified in-browser, zero console errors.
 
+### Batch 7 — stroke animation, N5 copy, checkpoint quizzes → gates (2026-07-26)
+
+Three follow-ups from the user:
+- **Stroke-order animation:** `StrokeOrderDiagram` now draws each stroke *along its path* in writing
+  order (animated `stroke-dashoffset`, paths remount per run so they draw forward, never erase). The
+  "See" stage auto-plays once; "Animate stroke order" replays. Verified in-browser: mid-draw a single
+  stroke is partially drawn while later strokes wait.
+- **N5 explicit in the path copy:** the Learning Path header/route cards now say the route *starts
+  from N5 basics (weeks 1–6)*, completes N4 (7–14), then the N3 stretch (15–20). (N5 was always there
+  as weeks 1–6; only the wording undersold it.)
+- **Weekly checkpoints wired to the mastery gates:** new `weeklyCheckpoints: Record<number,number>`
+  on `ProgressState` + `recordCheckpointResult`; `src/lib/checkpoint.ts` assembles each week's
+  checkpoint from its grammar points' existing quizzes; `WeeklyCheckpoint` component (inline MC quiz,
+  records best accuracy). `LearningPath` now feeds real scores into `evaluateGate`, so "mastered"
+  reflects the **full** gate (content + checkpoint); vocab-only weeks with no questions fall back to
+  content criteria. Verified in-browser: took week-1 checkpoint 4/4 → `weeklyCheckpoints {1:1}`
+  persisted, surfaced as "Best: 100%" + "Retake checkpoint". New `checkpoint.test.ts` proves a passing
+  checkpoint flips the gate. Tests 31/31, `tsc`/`eslint`/`build` clean, no console errors.
+
 **Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
 the font-outline fallback; full coverage would come from a KanjiVG import — needs a data-download
 decision); grow N4/N3 vocab & kanji volume; purpose-authored listening/dictation and
-speaking/Write&Say banks; wire weekly checkpoint quizzes into the store so `minCheckpointAccuracy`
-gates (and the Learning Path "readiness") read real results. JLPT level tags are estimates, labelled
-as such throughout.
+speaking/Write&Say banks. Minor: the Learning Path week card collapses after a checkpoint submit (best
+score persists and re-surfaces on reopen). JLPT level tags are estimates, labelled as such.
 
 ---
 

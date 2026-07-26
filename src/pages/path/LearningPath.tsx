@@ -6,6 +6,8 @@ import { ROADMAP } from '../../data/roadmap';
 import { evaluateGate, type GateProgress } from '../../lib/roadmapGate';
 import { useProgress } from '../../lib/progressStore';
 import { srsKey } from '../../lib/srs';
+import { hasCheckpoint } from '../../lib/checkpoint';
+import { WeeklyCheckpoint } from '../../components/path/WeeklyCheckpoint';
 import type { RoadmapPhase, RoadmapWeek } from '../../types';
 
 type WeekStatus = 'mastered' | 'current' | 'upcoming';
@@ -49,6 +51,7 @@ function countIn(ids: string[], set: Set<string>) {
 export function LearningPath() {
   const progress = useProgress();
   const [openWeek, setOpenWeek] = useState<number | null>(null);
+  const [checkpointOpen, setCheckpointOpen] = useState<number | null>(null);
 
   const gateProgress: GateProgress = useMemo(
     () => ({
@@ -56,37 +59,45 @@ export function LearningPath() {
       learnedKanjiIds: progress.learnedKanjiIds,
       completedReadingIds: progress.completedReadingIds,
       srsCards: progress.srsCards,
-      checkpointAccuracyByWeek: {}, // weekly checkpoint quizzes are not wired to the store yet
+      checkpointAccuracyByWeek: progress.weeklyCheckpoints,
     }),
     [progress],
   );
 
-  // "Content readiness" ignores the checkpoint criterion (not yet trackable) so the guide stays useful
-  // today: a week counts as mastered once its measurable content criteria are met.
-  const contentMet = useMemo(() => {
+  // A week is "mastered" when its full mastery gate passes. Weeks whose gate wants a checkpoint but
+  // have no checkpoint questions available (e.g. vocab-only weeks) fall back to their measurable
+  // content criteria, so the gate can never become impossible to satisfy.
+  const masteredMap = useMemo(() => {
     const map = new Map<number, boolean>();
     for (const w of ROADMAP) {
-      const measurable = evaluateGate(w, gateProgress).criteria.filter((c) => c.key !== 'checkpoint');
-      map.set(w.week, measurable.length > 0 && measurable.every((c) => c.met));
+      const evalr = evaluateGate(w, gateProgress);
+      if (hasCheckpoint(w)) {
+        map.set(w.week, evalr.passed);
+      } else {
+        const measurable = evalr.criteria.filter((c) => c.key !== 'checkpoint');
+        map.set(w.week, measurable.length > 0 && measurable.every((c) => c.met));
+      }
     }
     return map;
   }, [gateProgress]);
 
   function statusOf(week: RoadmapWeek): WeekStatus {
-    if (contentMet.get(week.week)) return 'mastered';
-    const prereqsMet = week.prerequisiteWeeks.every((w) => contentMet.get(w));
+    if (masteredMap.get(week.week)) return 'mastered';
+    const prereqsMet = week.prerequisiteWeeks.every((w) => masteredMap.get(w));
     return prereqsMet ? 'current' : 'upcoming';
   }
 
-  const masteredCount = ROADMAP.filter((w) => contentMet.get(w.week)).length;
+  const masteredCount = ROADMAP.filter((w) => masteredMap.get(w.week)).length;
 
   return (
     <div className="space-y-6 max-w-3xl">
       <header>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Learning Path</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          A 22-week route to a strong N4, with an optional N3 stretch. Weeks are guided by mastery — you’re
-          ready to move on once you’ve <em>shown</em> the previous week, not after a set number of days.
+          A 22-week route that starts from <strong>N5 basics</strong> (weeks 1–6), completes <strong>N4</strong>
+          (weeks 7–14) for a strong N4, then adds an optional <strong>N3</strong> stretch (weeks 15–20) before
+          consolidation. Weeks are guided by mastery — you’re ready to move on once you’ve <em>shown</em> the
+          previous week, not after a set number of days.
         </p>
       </header>
 
@@ -94,7 +105,7 @@ export function LearningPath() {
         <div>
           <h2 className="text-xs font-bold uppercase tracking-wide text-brand-600 dark:text-brand-400">Core route</h2>
           <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-            <strong>75–90 min/day.</strong> Grammar, vocabulary, kanji, reading, listening and speaking — the full path to a strong N4.
+            <strong>75–90 min/day.</strong> Builds N5 foundations first, then completes N4 — grammar, vocabulary, kanji, reading, listening and speaking.
           </p>
         </div>
         <div>
@@ -192,6 +203,31 @@ export function LearningPath() {
                     <p className="text-xs text-slate-400">
                       Checkpoint: {week.checkpoint.en} · Reviews after {week.reviewDaysAfter.join(', ')} days.
                     </p>
+
+                    {hasCheckpoint(week) &&
+                      (() => {
+                        const best = progress.weeklyCheckpoints[week.week];
+                        const showing = checkpointOpen === week.week;
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => setCheckpointOpen(showing ? null : week.week)}
+                                className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
+                              >
+                                {showing ? 'Hide checkpoint' : best != null ? 'Retake checkpoint' : 'Take the checkpoint'}
+                              </button>
+                              {best != null && (
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  Best: {Math.round(best * 100)}%
+                                </span>
+                              )}
+                            </div>
+                            {showing && <WeeklyCheckpoint week={week} />}
+                          </div>
+                        );
+                      })()}
                   </div>
                 )}
               </Card>
