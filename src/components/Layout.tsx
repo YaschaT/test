@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Flame, Moon, Sun, Volume2, VolumeX, Music2, RotateCcw, BarChart3, Trophy, CalendarDays, Lock, LogIn, LogOut } from 'lucide-react';
+import { Flame, Moon, Sun, Volume2, VolumeX, Music2, RotateCcw, Trophy, CalendarDays, LogIn, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/nav';
 import { useProgress } from '../lib/progressStore';
 import { displayedStreak } from '../lib/streak';
@@ -31,9 +31,8 @@ const NAV_ITEM_CLASSES = (isActive: boolean) =>
 
 /**
  * Real shortcuts into content that already exists on the Dashboard — not top-level routes, so they never
- * get the NavLink "active" highlight (that's reserved for NAV_ITEMS). "Progress" has no built destination
- * yet (no analytics page), so it's shown disabled/"Soon" rather than as a dead link — every other entry
- * here genuinely navigates somewhere real.
+ * get the NavLink "active" highlight (that's reserved for NAV_ITEMS). Every entry genuinely navigates
+ * somewhere real; nothing here is a placeholder or "coming soon" link.
  */
 function useSecondaryNavItems() {
   const navigate = useNavigate();
@@ -41,7 +40,6 @@ function useSecondaryNavItems() {
     { key: 'review', label: 'Review', icon: RotateCcw, onClick: () => navigate('/vocabulary') },
     { key: 'achievements', label: 'Achievements', icon: Trophy, onClick: () => navigate('/dashboard#achievements-section') },
     { key: 'study-plan', label: 'Study Plan', icon: CalendarDays, onClick: () => navigate('/dashboard#study-plan-section') },
-    { key: 'progress', label: 'Progress', icon: BarChart3, disabled: true },
   ];
 }
 
@@ -115,18 +113,11 @@ export function Layout() {
               <button
                 key={item.key}
                 type="button"
-                disabled={item.disabled}
                 onClick={item.onClick}
-                className={`w-full ${NAV_ITEM_CLASSES(false)} ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full ${NAV_ITEM_CLASSES(false)}`}
               >
                 <item.icon size={19} aria-hidden="true" />
                 <span className="flex-1 text-left">{item.label}</span>
-                {item.disabled && (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    <Lock size={11} aria-hidden="true" />
-                    Soon
-                  </span>
-                )}
               </button>
             ))}
           </nav>

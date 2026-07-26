@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Target, Lock } from 'lucide-react';
+import { Target, Play, BookOpen, RotateCcw, LineChart } from 'lucide-react';
+import { Card } from '../components/Card';
+import { PrimaryButton } from '../components/PrimaryButton';
 import { SegmentedTabs } from '../components/SegmentedTabs';
 import { MascotBubble } from '../components/dashboard/MascotBubble';
 import { StatCard } from '../components/dashboard/StatCard';
@@ -56,6 +58,23 @@ export function Dashboard() {
   const firstIncludedSkill = orderedSkills.find((skill) => planBySkill.has(skill) && SKILL_ROUTES[skill]);
   const firstRoute = firstIncludedSkill ? SKILL_ROUTES[firstIncludedSkill]! : '/grammar';
 
+  // A brand-new learner has literally nothing yet — no reviews, no completed lessons, no study time.
+  // They get a welcome + a first-lesson CTA instead of the usual "continue" flow.
+  const isNewUser =
+    totalSrsCards === 0 &&
+    progress.completedGrammarIds.length === 0 &&
+    progress.completedReadingIds.length === 0 &&
+    progress.learnedKanjiIds.length === 0 &&
+    Object.keys(progress.minutesByDate).length === 0;
+
+  // The single dominant action for the whole screen: start the first lesson, clear the review queue, or
+  // continue with the day's plan.
+  const primaryCta = isNewUser
+    ? { label: 'Start your first lesson', onClick: () => navigate('/grammar') }
+    : dueCount > 0
+      ? { label: `Review ${dueCount} card${dueCount === 1 ? '' : 's'}`, onClick: () => navigate('/vocabulary/review') }
+      : { label: 'Continue learning', onClick: () => navigate(firstRoute) };
+
   const pathSteps: TodayPathStepData[] = [
     {
       id: 'warm-up',
@@ -100,7 +119,11 @@ export function Dashboard() {
               <h1 className="text-fluid-hero-title font-extrabold text-white jp-text">
                 {greetingJa} {emoji}
               </h1>
-              <p className="text-fluid-hero-sub text-slate-300 mt-2">Let's make progress toward JLPT {progress.level} today.</p>
+              <p className="text-fluid-hero-sub text-slate-300 mt-2">
+                {isNewUser
+                  ? "Welcome to Kotobox! Learn a lesson, review it daily, and watch your JLPT progress grow."
+                  : `Let's make progress toward JLPT ${progress.level} today.`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <LevelToggle level={progress.level} onChange={setLevel} />
@@ -114,9 +137,17 @@ export function Dashboard() {
               </button>
             </div>
           </div>
-          <MascotBubble message={mascotMessage(streak, dueCount)} />
+          <div className="flex flex-wrap items-center gap-4">
+            <PrimaryButton onClick={primaryCta.onClick} className="px-6 py-3 text-base">
+              <Play size={18} aria-hidden="true" />
+              {primaryCta.label}
+            </PrimaryButton>
+            <MascotBubble message={mascotMessage(streak, dueCount)} />
+          </div>
         </div>
       </section>
+
+      {isNewUser && <OnboardingSteps />}
 
       <div key={progress.level} className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 shrink-0">
         <StatCard
@@ -181,6 +212,33 @@ export function Dashboard() {
   );
 }
 
+/** First-run teaching strip: the three-step loop the whole app is built around. Only rendered for a
+ * brand-new learner, and disappears the moment they have any real progress. */
+function OnboardingSteps() {
+  const steps = [
+    { n: 1, icon: BookOpen, title: 'Learn', text: 'Start a Grammar or Vocabulary lesson.' },
+    { n: 2, icon: RotateCcw, title: 'Review', text: 'Come back daily to lock it into memory.' },
+    { n: 3, icon: LineChart, title: 'Track', text: 'Watch your streak and readiness grow.' },
+  ];
+  return (
+    <div className="grid gap-3 sm:grid-cols-3 shrink-0">
+      {steps.map((step) => (
+        <Card key={step.n} className="flex items-start gap-3 p-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
+            <step.icon size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">
+              <span className="text-slate-400 dark:text-slate-500">{step.n}.</span> {step.title}
+            </p>
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{step.text}</p>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 function timeGreeting(): { greetingJa: string; emoji: string } {
   const hour = new Date().getHours();
   if (hour < 12) return { greetingJa: 'おはよう！', emoji: '🌅' };
@@ -214,10 +272,9 @@ function WeeklyGoalCard({ studyDays, index }: { studyDays: number; index?: numbe
       label="Weekly Goal"
       value={`${studyDays} / ${WEEKLY_GOAL_DAYS} days`}
       sublabel={
-        <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-600 cursor-not-allowed" title="Progress page coming soon">
-          <Lock size={11} aria-hidden="true" />
-          View Progress
-        </span>
+        studyDays >= WEEKLY_GOAL_DAYS
+          ? 'Goal reached!'
+          : `${WEEKLY_GOAL_DAYS - studyDays} ${WEEKLY_GOAL_DAYS - studyDays === 1 ? 'day' : 'days'} to goal`
       }
       ringProgress={studyDays / WEEKLY_GOAL_DAYS}
       ringColor="#10b981"

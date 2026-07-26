@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Trophy, Lock, CheckCircle2, ArrowRight } from 'lucide-react';
 import { DashboardCard } from './DashboardCard';
-import { PrimaryButton } from '../PrimaryButton';
+import { SECONDARY_BUTTON_CLASSES } from '../../lib/buttonStyles';
 import { ProgressBar } from '../ui/ProgressBar';
 import { computeBadges, pickFeaturedBadge } from '../../lib/badges';
 import type { ProgressState } from '../../lib/progressStore';
@@ -57,9 +57,9 @@ export function AchievementCard({ progress }: { progress: ProgressState }) {
             Earned!
           </div>
         ) : (
-          <PrimaryButton onClick={() => navigate(featured.route)} className="w-full justify-center py-2.5">
+          <button type="button" onClick={() => navigate(featured.route)} className={`${SECONDARY_BUTTON_CLASSES} w-full py-2.5`}>
             Continue Learning
-          </PrimaryButton>
+          </button>
         )}
       </div>
 

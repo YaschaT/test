@@ -1,7 +1,7 @@
 import { CalendarDays, Play, Zap } from 'lucide-react';
 import { DashboardCard } from './DashboardCard';
 import { StudyDurationPicker } from '../StudyDurationPicker';
-import { PrimaryButton } from '../PrimaryButton';
+import { SECONDARY_BUTTON_CLASSES } from '../../lib/buttonStyles';
 import type { StudyPlanResult } from '../../lib/studyPlanCalculator';
 
 interface StudyPlanCardProps {
@@ -16,10 +16,10 @@ export function StudyPlanCard({ durationMinutes, onDurationChange, plan, onStart
     <DashboardCard title="Your Study Plan" icon={<CalendarDays size={20} className="text-brand-500" />}>
       <StudyDurationPicker minutes={durationMinutes} onChange={onDurationChange} />
 
-      <PrimaryButton onClick={onStart} className="w-full justify-center py-3 text-base">
+      <button type="button" onClick={onStart} className={`${SECONDARY_BUTTON_CLASSES} w-full`}>
         <Play size={18} />
         Start Study Session
-      </PrimaryButton>
+      </button>
       <p className="flex items-center justify-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
         <Zap size={14} className="text-amber-400" aria-hidden="true" />
         {plan.totalMinutes} min · {plan.items.length} {plan.items.length === 1 ? 'section' : 'sections'}
