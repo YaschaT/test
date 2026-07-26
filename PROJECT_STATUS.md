@@ -83,11 +83,26 @@ stroke count against its `KanjiEntry.strokeCount` (this caught a wrong assumptio
 the build). Tests 27/27, `tsc`/`eslint`/`build` clean; See/Trace/Copy/Recall stages, the numbered
 diagram, live tracing, and the fallback path all verified in-browser with zero console errors.
 
-**Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (the rest
-use the font-outline fallback today — full coverage would come from a KanjiVG import, which needs a
-data-download decision); grow N4/N3 vocab & kanji volume; purpose-authored listening/dictation and
-speaking/Write&Say banks; wire checkpoint quizzes so `minCheckpointAccuracy` gates read real
-results. JLPT level tags are estimates, labelled as such throughout.
+### Batch 6 — Learning Path page (2026-07-26)
+
+Surfaced the 22-week roadmap in the app (it was data-only). New route `/path` + nav entry
+("Learning Path", new `PathNavIcon`) and page `src/pages/path/LearningPath.tsx`: the two routes
+(core 75–90 / N3 stretch +30–60), phase-banded week cards (N5/N4/N3/consolidation) with bilingual
+theme, live per-skill progress chips (Grammar/Kanji/Vocab/Reading x/y from real progress + SRS),
+mastery status icons (mastered/current/upcoming via `evaluateGate`), and expandable detail
+(objectives, mastery-gate summary, checkpoint, review cadence). Framed as a **guide**, not a hard
+wall — the app doesn't lock content, and checkpoint quizzes aren't wired yet, so "readiness" uses
+the measurable content criteria and the checkpoint shows as a note. Phase palette uses only the
+app's own hues (emerald/brand/amber/slate — the impeccable hook's violet AI-tell was removed).
+`tsc`/`eslint`/`build`/`vitest` (27/27) clean; page, nav highlight, week expand/collapse and
+progress chips verified in-browser, zero console errors.
+
+**Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
+the font-outline fallback; full coverage would come from a KanjiVG import — needs a data-download
+decision); grow N4/N3 vocab & kanji volume; purpose-authored listening/dictation and
+speaking/Write&Say banks; wire weekly checkpoint quizzes into the store so `minCheckpointAccuracy`
+gates (and the Learning Path "readiness") read real results. JLPT level tags are estimates, labelled
+as such throughout.
 
 ---
 

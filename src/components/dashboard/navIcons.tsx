@@ -78,3 +78,19 @@ export function ListeningNavIcon({ size = 18, className }: NavIconProps) {
     </svg>
   );
 }
+
+export function PathNavIcon({ size = 18, className }: NavIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="6" cy="19" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="18" cy="5" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8.2 19H14a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5.8"
+      />
+    </svg>
+  );
+}

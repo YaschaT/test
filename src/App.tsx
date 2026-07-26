@@ -13,6 +13,7 @@ const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.
 const Register = lazy(() => import('./pages/auth/Register').then((m) => ({ default: m.Register })));
 const AuthCallback = lazy(() => import('./pages/auth/AuthCallback').then((m) => ({ default: m.AuthCallback })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const LearningPath = lazy(() => import('./pages/path/LearningPath').then((m) => ({ default: m.LearningPath })));
 const GrammarList = lazy(() => import('./pages/grammar/GrammarList').then((m) => ({ default: m.GrammarList })));
 const GrammarDetail = lazy(() => import('./pages/grammar/GrammarDetail').then((m) => ({ default: m.GrammarDetail })));
 const VocabularyHome = lazy(() => import('./pages/vocabulary/VocabularyHome').then((m) => ({ default: m.VocabularyHome })));
@@ -73,6 +74,7 @@ function App() {
         />
         <Route element={<Layout />}>
           <Route path="/dashboard" element={page(Dashboard)} />
+          <Route path="/path" element={page(LearningPath)} />
           <Route path="/grammar" element={page(GrammarList)} />
           <Route path="/grammar/:id" element={page(GrammarDetail)} />
           <Route path="/vocabulary" element={page(VocabularyHome)} />

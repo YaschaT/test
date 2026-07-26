@@ -6,6 +6,7 @@ import {
   KanjiNavIcon,
   ReadingNavIcon,
   ListeningNavIcon,
+  PathNavIcon,
 } from '../components/dashboard/navIcons';
 import type { Translatable } from '../types';
 
@@ -18,6 +19,7 @@ export interface NavItem {
 /** Extended as each phase's page lands — every entry here must point to a real, working route. */
 export const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard', label: { en: 'Dashboard', nl: 'Overzicht' }, icon: DashboardNavIcon },
+  { path: '/path', label: { en: 'Learning Path', nl: 'Leerpad' }, icon: PathNavIcon },
   { path: '/grammar', label: { en: 'Grammar', nl: 'Grammatica' }, icon: GrammarNavIcon },
   { path: '/vocabulary', label: { en: 'Vocabulary', nl: 'Woordenschat' }, icon: VocabularyNavIcon },
   { path: '/kanji', label: { en: 'Kanji', nl: 'Kanji' }, icon: KanjiNavIcon },
