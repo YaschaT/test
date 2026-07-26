@@ -14,6 +14,7 @@ import { getSavedVoiceMode, saveVoiceMode, useGoogleTtsAvailability, useTtsPlaye
 import { getAutoPlayEnabled, setAutoPlayEnabled } from '../../lib/listeningPrefs';
 import { buildListeningPool, normalizeForCompare, shuffle, type ListeningItem } from '../../lib/listeningPool';
 import { recordQuizResult, useProgress } from '../../lib/progressStore';
+import type { JlptLevel } from '../../types';
 import { XP_RULES } from '../../lib/xp';
 import { playCorrect, playWrong } from '../../lib/sound';
 
@@ -124,7 +125,7 @@ interface ModeProps {
   speed: number;
   voiceMode: VoiceMode;
   playbackAvailable: boolean;
-  level: 'N5' | 'N4';
+  level: JlptLevel;
   autoPlay: boolean;
   onAutoPlayChange: (next: boolean) => void;
   onRestart: () => void;

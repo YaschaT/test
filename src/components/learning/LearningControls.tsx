@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import type { JlptLevel } from '../../types';
 import { playSoftClick } from '../../lib/sound';
 
-const LEVEL_TABS: Array<JlptLevel | 'all'> = ['all', 'N5', 'N4'];
+const LEVEL_TABS: Array<JlptLevel | 'all'> = ['all', 'N5', 'N4', 'N3'];
 
 interface LearningControlsProps {
   level: JlptLevel | 'all';

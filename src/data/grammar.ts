@@ -804,6 +804,242 @@ export const GRAMMAR_POINTS: GrammarPoint[] = [
       },
     ],
   },
+
+  // ─── N3 grammar (JLPT band is an estimate; verified against Genki II / Tae Kim usage) ───
+  {
+    id: 'n3-you-ni-naru',
+    level: 'N3',
+    title: '〜ようになる',
+    romaji: 'you ni naru',
+    structure: 'Verb (dictionary / potential form) + ようになる',
+    meaning: { en: 'to reach the point where…, to come to (be able to) do', nl: 'zover komen dat…, gaan (kunnen) doen' },
+    explanation: {
+      en: 'ようになる marks a gradual change reaching a new state or ability. Pair it with a potential verb (泳げる → 泳げるようになる) for "became able to", or a plain verb for a new habit ("came to do"). The opposite change uses なくなる.',
+      nl: 'ようになる markeert een geleidelijke verandering naar een nieuwe toestand of vaardigheid. Combineer met een potentiaalwerkwoord (泳げる → 泳げるようになる) voor "leren/kunnen gaan", of met een gewoon werkwoord voor een nieuwe gewoonte. De omgekeerde verandering gebruikt なくなる.',
+    },
+    examples: [
+      sentence([s('毎日', 'まいにち'), s('練習', 'れんしゅう'), s('して'), s('、'), s('泳', 'およ'), s('げるようになりました'), s('。')], 'まいにちれんしゅうして、およげるようになりました。', 'Mainichi renshuu shite, oyogeru you ni narimashita.', 'After practicing every day, I became able to swim.', 'Na elke dag oefenen kon ik uiteindelijk zwemmen.'),
+      sentence([s('最近', 'さいきん'), s('、'), s('野菜', 'やさい'), s('を'), s('食', 'た'), s('べるようになりました'), s('。')], 'さいきん、やさいをたべるようになりました。', 'Saikin, yasai o taberu you ni narimashita.', 'Recently I have come to eat vegetables.', 'De laatste tijd ben ik groente gaan eten.'),
+    ],
+    commonMistake: {
+      en: 'Do not use ようになる with a one-time action ("I came to go there once" is wrong). It describes an ongoing state or habit, not a single event.',
+      nl: 'Gebruik ようになる niet voor een eenmalige handeling. Het beschrijft een blijvende toestand of gewoonte, geen losse gebeurtenis.',
+    },
+    quiz: [
+      {
+        id: 'n3-you-ni-naru-q1',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'Complete: 漢字が読める___なりました。', nl: 'Vul aan: 漢字が読める___なりました。' },
+        japanesePrompt: '漢字が読める___なりました。',
+        options: ['ように', 'そうに', 'ことに', 'ための'],
+        correctIndex: 0,
+        explanation: { en: 'ようになる after a potential verb = "became able to".', nl: 'ようになる na een potentiaalwerkwoord = "leren kunnen".' },
+      },
+      {
+        id: 'n3-you-ni-naru-q2',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'Which expresses the OPPOSITE change (stopped doing)?', nl: 'Welke drukt de OMGEKEERDE verandering uit (stoppen)?' },
+        options: ['〜なくなる', '〜ようになる', '〜たがる', '〜ておく'],
+        correctIndex: 0,
+      },
+    ],
+  },
+  {
+    id: 'n3-tame-ni',
+    level: 'N3',
+    title: '〜ため(に)',
+    romaji: 'tame (ni)',
+    structure: 'Verb (dictionary) / Noun + の + ため(に)',
+    meaning: { en: 'in order to (purpose); because of (cause)', nl: 'om te (doel); vanwege (oorzaak)' },
+    explanation: {
+      en: 'ため(に) has two jobs. After a dictionary verb or Noun+の it means purpose ("in order to"). After a plain past/noun describing a situation it means cause ("because of"). Context and tense tell them apart; the cause reading is common in formal writing.',
+      nl: 'ため(に) heeft twee functies. Na een woordenboekwerkwoord of Naamwoord+の betekent het doel ("om te"). Na een gewone verledentijd/naamwoord betekent het oorzaak ("vanwege"). Context en tijd maken het verschil; de oorzaak-lezing komt veel voor in formeel schrift.',
+    },
+    examples: [
+      sentence([s('日本語', 'にほんご'), s('を'), s('勉強', 'べんきょう'), s('する'), s('ために'), s('、'), s('日本', 'にほん'), s('へ'), s('来', 'き'), s('ました'), s('。')], 'にほんごをべんきょうするために、にほんへきました。', 'Nihongo o benkyou suru tame ni, Nihon e kimashita.', 'I came to Japan in order to study Japanese.', 'Ik kwam naar Japan om Japans te studeren.'),
+      sentence([s('雨', 'あめ'), s('の'), s('ため'), s('、'), s('試合', 'しあい'), s('は'), s('中止', 'ちゅうし'), s('になりました'), s('。')], 'あめのため、しあいはちゅうしになりました。', 'Ame no tame, shiai wa chuushi ni narimashita.', 'Because of the rain, the match was cancelled.', 'Vanwege de regen werd de wedstrijd afgelast.'),
+    ],
+    commonMistake: {
+      en: 'For purpose, the verb before ために must be volitional (something you control). For a potential/spontaneous verb, use ように instead (見えるように = "so that it can be seen").',
+      nl: 'Voor doel moet het werkwoord vóór ために wilsafhankelijk zijn. Voor een potentiaal/spontaan werkwoord gebruik je ように (見えるように = "zodat het te zien is").',
+    },
+    quiz: [
+      {
+        id: 'n3-tame-ni-q1',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'Choose the purpose reading: 健康の___、毎日歩きます。', nl: 'Kies de doel-lezing: 健康の___、毎日歩きます。' },
+        japanesePrompt: '健康の___、毎日歩きます。',
+        options: ['ために', 'そうに', 'ように', 'ばかり'],
+        correctIndex: 0,
+      },
+      {
+        id: 'n3-tame-ni-q2',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'When does ため(に) mean "because of" rather than "in order to"?', nl: 'Wanneer betekent ため(に) "vanwege" i.p.v. "om te"?' },
+        options: ['After a situation/cause (often past or noun)', 'Only after adjectives', 'Only in questions', 'Never — it always means purpose'],
+        correctIndex: 0,
+      },
+    ],
+  },
+  {
+    id: 'n3-hazu',
+    level: 'N3',
+    title: '〜はずだ',
+    romaji: 'hazu da',
+    structure: 'Verb / い-adj (plain) · な-adj + な · Noun + の + はずだ',
+    meaning: { en: 'should be…, supposed to be… (logical expectation)', nl: 'zou moeten…, wordt verondersteld… (logische verwachting)' },
+    explanation: {
+      en: 'はず expresses what you confidently expect from reasoning or known facts — not a duty. "He left at noon, so he should be here by now." The negative はずがない means "there is no way that…". Contrast べき, which is about obligation.',
+      nl: 'はず drukt uit wat je op grond van redenering of bekende feiten verwacht — geen plicht. "Hij vertrok om twaalf uur, dus hij zou er nu moeten zijn." Het negatieve はずがない betekent "het kan niet dat…". Vergelijk べき, dat over verplichting gaat.',
+    },
+    examples: [
+      sentence([s('彼', 'かれ'), s('は'), s('もう'), s('着', 'つ'), s('いた'), s('はず'), s('です'), s('。')], 'かれはもうついたはずです。', 'Kare wa mou tsuita hazu desu.', 'He should have arrived already.', 'Hij zou al aangekomen moeten zijn.'),
+      sentence([s('この'), s('店', 'みせ'), s('は'), s('今日', 'きょう'), s('休', 'やす'), s('みの'), s('はず'), s('です'), s('。')], 'このみせはきょうやすみのはずです。', 'Kono mise wa kyou yasumi no hazu desu.', 'This shop should be closed today.', 'Deze winkel zou vandaag dicht moeten zijn.'),
+    ],
+    commonMistake: {
+      en: 'Do not use はず for your own intentions or obligations. "I should study" (duty) is 〜べき or 〜なければならない, not はず.',
+      nl: 'Gebruik はず niet voor je eigen bedoelingen of plichten. "Ik zou moeten studeren" (plicht) is 〜べき of 〜なければならない, niet はず.',
+    },
+    quiz: [
+      {
+        id: 'n3-hazu-q1',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'Which means "there is no way he would lie"?', nl: 'Welke betekent "het kan niet dat hij liegt"?' },
+        options: ['彼が嘘をつくはずがない', '彼が嘘をつくべきだ', '彼が嘘をつきたい', '彼が嘘をついてもいい'],
+        correctIndex: 0,
+      },
+      {
+        id: 'n3-hazu-q2',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'はず expresses…', nl: 'はず drukt uit…' },
+        options: ['a logical expectation', 'a personal obligation', 'a polite request', 'a past habit'],
+        correctIndex: 0,
+      },
+    ],
+  },
+  {
+    id: 'n3-okage-sei',
+    level: 'N3',
+    title: '〜おかげで／〜せいで',
+    romaji: 'okage de / sei de',
+    structure: 'Plain form · Noun + の + おかげで / せいで',
+    meaning: { en: 'thanks to… (good result) / because of… (bad result)', nl: 'dankzij… (goed) / door… (slecht)' },
+    explanation: {
+      en: 'Both give a cause, but they carry a judgement. おかげで credits a welcome result ("thanks to"). せいで blames an unwelcome one ("because of / it\'s the fault of"). Neutral cause uses から/ので instead.',
+      nl: 'Beide geven een oorzaak, maar met een waardeoordeel. おかげで schrijft een positief resultaat toe ("dankzij"). せいで legt de schuld bij een negatief resultaat ("door toedoen van"). Een neutrale oorzaak gebruikt から/ので.',
+    },
+    examples: [
+      sentence([s('先生', 'せんせい'), s('の'), s('おかげで'), s('、'), s('試験', 'しけん'), s('に'), s('合格', 'ごうかく'), s('しました'), s('。')], 'せんせいのおかげで、しけんにごうかくしました。', 'Sensei no okage de, shiken ni goukaku shimashita.', 'Thanks to my teacher, I passed the exam.', 'Dankzij mijn leraar ben ik geslaagd voor het examen.'),
+      sentence([s('雨', 'あめ'), s('の'), s('せいで'), s('、'), s('出', 'で'), s('かけられませんでした'), s('。')], 'あめのせいで、でかけられませんでした。', 'Ame no sei de, dekakeraremasen deshita.', "Because of the rain, I couldn't go out.", 'Door de regen kon ik niet weg.'),
+    ],
+    commonMistake: {
+      en: 'Do not use せいで for good outcomes — it always assigns blame. Swapping おかげで onto a bad result sounds sarcastic.',
+      nl: 'Gebruik せいで niet voor positieve uitkomsten — het legt altijd schuld. おかげで bij een slecht resultaat klinkt sarcastisch.',
+    },
+    quiz: [
+      {
+        id: 'n3-okage-sei-q1',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'Choose for a GOOD result: あなたの___、成功しました。', nl: 'Kies voor een GOED resultaat: あなたの___、成功しました。' },
+        japanesePrompt: 'あなたの___、成功しました。',
+        options: ['おかげで', 'せいで', 'ために', 'くせに'],
+        correctIndex: 0,
+      },
+      {
+        id: 'n3-okage-sei-q2',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'せいで is used to…', nl: 'せいで wordt gebruikt om…' },
+        options: ['blame a bad result on a cause', 'thank someone', 'state a neutral reason', 'give a purpose'],
+        correctIndex: 0,
+      },
+    ],
+  },
+  {
+    id: 'n3-ba-hodo',
+    level: 'N3',
+    title: '〜ば〜ほど',
+    romaji: 'ba … hodo',
+    structure: 'Verb (ば-form) + same Verb (dictionary) + ほど',
+    meaning: { en: 'the more…, the more…', nl: 'hoe meer…, hoe meer…' },
+    explanation: {
+      en: 'This pattern links two changes that scale together. Take the ば-conditional of a verb, then repeat the plain verb + ほど: 練習すれば練習するほど ("the more you practice…"). With い-adjectives use ければ…ほど (安ければ安いほど). With な-adjectives, なら…なほど.',
+      nl: 'Dit patroon koppelt twee veranderingen die samen toenemen. Neem de ば-voorwaarde van een werkwoord en herhaal het gewone werkwoord + ほど: 練習すれば練習するほど ("hoe meer je oefent…"). Bij い-bijvoeglijke naamwoorden ければ…ほど (安ければ安いほど). Bij な-woorden なら…なほど.',
+    },
+    examples: [
+      sentence([s('練習', 'れんしゅう'), s('すれば'), s('する'), s('ほど'), s('、'), s('上手', 'じょうず'), s('になります'), s('。')], 'れんしゅうすればするほど、じょうずになります。', 'Renshuu sureba suru hodo, jouzu ni narimasu.', 'The more you practice, the better you get.', 'Hoe meer je oefent, hoe beter je wordt.'),
+      sentence([s('考', 'かんが'), s('えれば'), s('考', 'かんが'), s('えるほど'), s('、'), s('分', 'わ'), s('からなくなります'), s('。')], 'かんがえればかんがえるほど、わからなくなります。', 'Kangaereba kangaeru hodo, wakaranaku narimasu.', 'The more I think about it, the less I understand.', 'Hoe meer ik erover nadenk, hoe minder ik het begrijp.'),
+    ],
+    commonMistake: {
+      en: 'Both verbs must be the SAME verb. Using two different verbs (食べれば飲むほど) is ungrammatical.',
+      nl: 'Beide werkwoorden moeten HETZELFDE werkwoord zijn. Twee verschillende werkwoorden (食べれば飲むほど) is fout.',
+    },
+    quiz: [
+      {
+        id: 'n3-ba-hodo-q1',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'Complete: 見れば___ほど、ほしくなる。', nl: 'Vul aan: 見れば___ほど、ほしくなる。' },
+        japanesePrompt: '見れば___ほど、ほしくなる。',
+        options: ['見る', '見た', '見て', '見ない'],
+        correctIndex: 0,
+      },
+      {
+        id: 'n3-ba-hodo-q2',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'For the い-adjective 安い, the pattern is…', nl: 'Voor het い-bijvoeglijk naamwoord 安い is het patroon…' },
+        options: ['安ければ安いほど', '安いば安いほど', '安なら安ほど', '安くて安いほど'],
+        correctIndex: 0,
+      },
+    ],
+  },
+  {
+    id: 'n3-ni-yoruto',
+    level: 'N3',
+    title: '〜によると／〜によれば',
+    romaji: 'ni yoru to / ni yoreba',
+    structure: 'Noun (source) + によると／によれば … + そうだ／らしい',
+    meaning: { en: 'according to… (reporting a source)', nl: 'volgens… (een bron aanhalen)' },
+    explanation: {
+      en: 'によると names where information came from — a forecast, the news, a person. It almost always ends with a hearsay marker (そうだ, らしい, とのことだ) because you are relaying, not asserting: 天気予報によると…雨だそうです ("according to the forecast, they say it will rain").',
+      nl: 'によると noemt de bron van informatie — een weerbericht, het nieuws, een persoon. Het eindigt bijna altijd met een hoor-zeg-marker (そうだ, らしい, とのことだ), want je geeft iets door in plaats van het te beweren.',
+    },
+    examples: [
+      sentence([s('天気', 'てんき'), s('予報', 'よほう'), s('によると'), s('、'), s('明日', 'あした'), s('は'), s('雨', 'あめ'), s('だ'), s('そうです'), s('。')], 'てんきよほうによると、あしたはあめだそうです。', 'Tenki yohou ni yoru to, ashita wa ame da sou desu.', 'According to the forecast, it will rain tomorrow.', 'Volgens het weerbericht gaat het morgen regenen.'),
+      sentence([s('ニュース'), s('によると'), s('、'), s('事故', 'じこ'), s('が'), s('あった'), s('そうです'), s('。')], 'ニュースによると、じこがあったそうです。', 'Nyuusu ni yoru to, jiko ga atta sou desu.', 'According to the news, there was an accident.', 'Volgens het nieuws is er een ongeluk gebeurd.'),
+    ],
+    commonMistake: {
+      en: 'Do not end the sentence with a plain statement. Pair によると with そうだ/らしい — "…によると、雨です" sounds like you are asserting it yourself.',
+      nl: 'Sluit de zin niet af met een gewone bewering. Combineer によると met そうだ/らしい — "…によると、雨です" klinkt alsof je het zelf beweert.',
+    },
+    quiz: [
+      {
+        id: 'n3-ni-yoruto-q1',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'Complete: 新聞に___、来月値上げされるそうだ。', nl: 'Vul aan: 新聞に___、来月値上げされるそうだ。' },
+        japanesePrompt: '新聞に___、来月値上げされるそうだ。',
+        options: ['よると', 'ついて', 'たいして', 'とって'],
+        correctIndex: 0,
+      },
+      {
+        id: 'n3-ni-yoruto-q2',
+        skill: 'grammar',
+        level: 'N3',
+        prompt: { en: 'によると is usually paired with…', nl: 'によると wordt meestal gecombineerd met…' },
+        options: ['a hearsay ending (そうだ/らしい)', 'a command', 'a question word', 'the て-form'],
+        correctIndex: 0,
+      },
+    ],
+  },
 ];
 
 export function getGrammarPoint(id: string): GrammarPoint | undefined {

@@ -71,7 +71,7 @@ export function GrammarList() {
         value={level}
         onChange={setLevel}
         groupLabel="Grammar level"
-        options={(['N5', 'N4'] as const).map((l) => ({ value: l, label: l }))}
+        options={(['N5', 'N4', 'N3'] as const).map((l) => ({ value: l, label: l }))}
       />
 
       <GrammarContinueCard point={currentPoint} onContinue={openLesson} />

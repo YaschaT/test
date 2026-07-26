@@ -1,5 +1,49 @@
 # Project Status — Kotobox (JLPT N5→N4 app)
 
+## N3 extension — batch 1: schema, 22-week path, first N3 content (2026-07-26)
+
+Began extending the app from N5–N4 toward N3. Started with an inspection pass and an honest
+**coverage audit** (`docs/coverage-audit.md`): confirmed there was **no existing N3 "bridge"** —
+the type system was `'N5' | 'N4'` and zero N3 items existed. Also found two structural gaps the
+brief needs: `KanjiCanvas` has **no authentic numbered stroke order** (it traces a system-font
+glyph outline), and there is **no See→Trace→Copy→Recall** flow yet. Baseline content counts:
+grammar 42 (30 N5 / 12 N4), kanji 30 (25/5), vocab 74 (64/10), readings 4 (2/2).
+
+Shipped this batch:
+- **Schema:** `JlptLevel` now `'N5' | 'N4' | 'N3'` (+ `JLPT_LEVELS`); widened the hardcoded
+  `['N5','N4']` level tabs in LearningControls, Dashboard, GrammarList, ListeningHome. Redesigned
+  the previously-unused `RoadmapWeek` type into a real curriculum + **MasteryGate** + `RoadmapUnit`
+  model.
+- **22-week learning path** (`src/data/roadmap.ts`): weeks 1–6 N5, 7–14 N4, 15–20 N3, 21–22
+  consolidation/mocks. Core route 75–90 min/day, N3 stretch overlay +30–60 min. Weeks open on
+  **mastery gates** (completion %, SRS retention, checkpoint accuracy — never elapsed time), with
+  the 1/3/7/14/30 review cadence and mixed-review weeks (6/14/20/21/22). Content-ID arrays point
+  at real items; "expansion pending" weeks carry finished objectives/gates but sparse ids on
+  purpose (no placeholders).
+- **Gate evaluator** (`src/lib/roadmapGate.ts`): pure `evaluateGate` / `isWeekUnlocked`.
+- **First N3 content seed:** 11 vocab (`v-sekai`…`v-saikin`, verified against the Kaishi 1.5k
+  deck; 経験 dropped as an existing N4 dup), 8 kanji (`k-sei-world`…`k-kei-relation`), 6 grammar
+  points (`n3-*`: ようになる, ため(に), はず, おかげで/せいで, ば〜ほど, によると), and 1 graded
+  reading (`r-ryuugaku`). All original content; deck used only for verification/mapping.
+- **Tests:** `src/data/roadmap.test.ts` (13 new, 24 total) — 22 weeks, phase bands, budgets,
+  review cadence, prerequisite ordering, **every roadmap content id resolves**, and gate
+  unlock/pass behaviour.
+
+The Kaishi deck was extracted to a reusable frequency-ordered JSON (1,500 unique words w/
+sentences, furigana, audio filenames, pitch) in the session scratchpad — source for future vocab
+batches. Validation: `tsc -b`, `eslint .`, `vite build`, `vitest` (24/24) all clean; N3 grammar
+list + detail, N3 reading, and N3 kanji/level tabs verified in-browser (port 5199) with zero
+console errors.
+
+**Remaining (future batches):** N4 grammar weeks 9–13 (giving/receiving, potential/volitional,
+quoting, transitivity) and N3 week 19 (passive/causative) are structured but need content; N4/N3
+vocab & kanji volume is still far below full-level sets; authentic numbered stroke order +
+See→Trace→Copy→Recall; purpose-authored listening/dictation and speaking/Write&Say banks; wiring
+checkpoint quizzes so `minCheckpointAccuracy` gates read real results. JLPT level tags are
+estimates, labelled as such throughout.
+
+---
+
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names
 tying into the fox mascot — "kotoba" = word + fox). The kanji wordmark (言葉道) next to the name was also
 removed from the sidebar/mobile header, now just the logo mark + "Kotobox". This was a display-name-only

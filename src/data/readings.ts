@@ -287,6 +287,97 @@ export const READINGS: ReadingPassage[] = [
       },
     ],
   },
+  {
+    id: 'r-ryuugaku',
+    level: 'N3',
+    title: { en: 'Deciding to Study Abroad', nl: 'De keuze om in het buitenland te studeren' },
+    description: {
+      en: 'An original N3 passage about preparing to study overseas — reuses this level’s new vocabulary and grammar.',
+      nl: 'Een originele N3-tekst over de voorbereiding op studeren in het buitenland — hergebruikt de nieuwe woordenschat en grammatica van dit niveau.',
+    },
+    difficulty: 'hard',
+    sentences: [
+      rs(
+        [s('最近', 'さいきん'), s('、'), s('私', 'わたし'), s('は'), s('外国', 'がいこく'), s('で'), s('勉強', 'べんきょう'), s('することに'), s('決', 'き'), s('めました'), s('。')],
+        'さいきん、わたしはがいこくでべんきょうすることにきめました。',
+        'Saikin, watashi wa gaikoku de benkyou suru koto ni kimemashita.',
+        'Recently, I decided to study abroad.',
+        'De laatste tijd heb ik besloten in het buitenland te gaan studeren.',
+      ),
+      rs(
+        [s('世界', 'せかい'), s('を'), s('見', 'み'), s('て'), s('、'), s('いろいろな'), s('経験', 'けいけん'), s('を'), s('したいからです'), s('。')],
+        'せかいをみて、いろいろなけいけんをしたいからです。',
+        'Sekai o mite, iroiro na keiken o shitai kara desu.',
+        'It is because I want to see the world and have all kinds of experiences.',
+        'Dat komt doordat ik de wereld wil zien en allerlei ervaringen wil opdoen.',
+      ),
+      rs(
+        [s('留学', 'りゅうがく'), s('の'), s('ため'), s('には'), s('、'), s('たくさんの'), s('準備', 'じゅんび'), s('が'), s('必要', 'ひつよう'), s('です'), s('。')],
+        'りゅうがくのためには、たくさんのじゅんびがひつようです。',
+        'Ryuugaku no tame ni wa, takusan no junbi ga hitsuyou desu.',
+        'In order to study abroad, a lot of preparation is necessary.',
+        'Om in het buitenland te studeren is veel voorbereiding nodig.',
+      ),
+      rs(
+        [s('学校', 'がっこう'), s('の'), s('ホームページ'), s('によると'), s('、'), s('六月', 'ろくがつ'), s('までに'), s('書類', 'しょるい'), s('を'), s('出', 'だ'), s('さなければなりません'), s('。')],
+        'がっこうのホームページによると、ろくがつまでにしょるいをださなければなりません。',
+        'Gakkou no hoomupeeji ni yoru to, rokugatsu made ni shorui o dasanakereba narimasen.',
+        'According to the school’s website, I must submit the documents by June.',
+        'Volgens de website van de school moet ik de documenten vóór juni indienen.',
+      ),
+      rs(
+        [s('毎日', 'まいにち'), s('勉強', 'べんきょう'), s('して'), s('、'), s('少', 'すこ'), s('しずつ'), s('日本語', 'にほんご'), s('が'), s('話', 'はな'), s('せるようになりました'), s('。')],
+        'まいにちべんきょうして、すこしずつにほんごがはなせるようになりました。',
+        'Mainichi benkyou shite, sukoshizutsu nihongo ga hanaseru you ni narimashita.',
+        'Studying every day, I have gradually become able to speak Japanese.',
+        'Door elke dag te studeren kan ik nu stukje bij beetje Japans spreken.',
+      ),
+      rs(
+        [s('準備', 'じゅんび'), s('は'), s('大変', 'たいへん'), s('ですが'), s('、'), s('大切', 'たいせつ'), s('な'), s('夢', 'ゆめ'), s('の'), s('ため'), s('に'), s('頑張', 'がんば'), s('ります'), s('。')],
+        'じゅんびはたいへんですが、たいせつなゆめのためにがんばります。',
+        'Junbi wa taihen desu ga, taisetsu na yume no tame ni ganbarimasu.',
+        'The preparation is tough, but I will do my best for an important dream.',
+        'De voorbereiding is zwaar, maar ik zet door voor een belangrijke droom.',
+      ),
+    ],
+    vocabHighlightIds: ['v-saikin', 'v-kimeru', 'v-sekai', 'v-keiken', 'v-junbi', 'v-hitsuyou'],
+    grammarHighlightIds: ['n3-tame-ni', 'n3-ni-yoruto', 'n3-you-ni-naru'],
+    questions: [
+      {
+        id: 'r-ryuugaku-q1',
+        question: { en: 'By when must the documents be submitted?', nl: 'Wanneer moeten de documenten uiterlijk ingediend zijn?' },
+        options: [
+          { en: 'By June', nl: 'Vóór juni' },
+          { en: 'By May', nl: 'Vóór mei' },
+          { en: 'By next year', nl: 'Vóór volgend jaar' },
+          { en: 'Today', nl: 'Vandaag' },
+        ],
+        correctIndex: 0,
+      },
+      {
+        id: 'r-ryuugaku-q2',
+        question: { en: 'Why does the writer want to study abroad?', nl: 'Waarom wil de schrijver in het buitenland studeren?' },
+        options: [
+          { en: 'To see the world and gain experiences', nl: 'Om de wereld te zien en ervaringen op te doen' },
+          { en: 'Because it is cheap', nl: 'Omdat het goedkoop is' },
+          { en: 'Because a friend told them to', nl: 'Omdat een vriend het zei' },
+          { en: 'To avoid exams', nl: 'Om examens te vermijden' },
+        ],
+        correctIndex: 0,
+      },
+      {
+        id: 'r-ryuugaku-q3',
+        question: { en: 'What became possible through daily study?', nl: 'Wat werd mogelijk door dagelijks te studeren?' },
+        options: [
+          { en: 'Speaking Japanese little by little', nl: 'Beetje bij beetje Japans spreken' },
+          { en: 'Reading the newspaper fluently', nl: 'De krant vloeiend lezen' },
+          { en: 'Writing a novel', nl: 'Een roman schrijven' },
+          { en: 'Teaching a class', nl: 'Een les geven' },
+        ],
+        correctIndex: 0,
+      },
+    ],
+  },
 ];
 
 export function getReading(id: string): ReadingPassage | undefined {
