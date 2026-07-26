@@ -77,6 +77,9 @@ Legend: ✅ solid · 🟡 partial / thin · 🔴 absent
 3. Content volume: expand N4 to a fuller set and build N3 across all skills, in batches,
    sourced-and-verified but originally written.
 4. Authentic **numbered stroke order** + a **See → Trace → Copy → Recall** writing flow.
+   _(Update: the See→Trace→Copy→Recall flow is now built (`WritingPractice`), with authentic
+   numbered stroke order for a starter set of 9 basic N5 kanji and a font-outline fallback for the
+   rest — see PROJECT_STATUS.md batch 5. Broad stroke-order coverage is still outstanding.)_
 5. Purpose-authored **listening/dictation/shadowing** and **speaking / Write & Say** banks.
 
 Progression order follows Genki I (≈N5) → Genki II (≈N4) → N3 expansion, matching the brief's

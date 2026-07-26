@@ -4,14 +4,29 @@ import { Eraser } from 'lucide-react';
 interface KanjiCanvasProps {
   character: string;
   size?: number;
+  /** Draw a faint full-glyph font outline as a tracing guide (default true). */
+  fontGuide?: boolean;
+  /** Transparent background so a stroke-order diagram can show through from behind (default false). */
+  transparent?: boolean;
+  /** Show the Clear button + guide toggle (default true). */
+  showControls?: boolean;
+  /** Changing this value clears the canvas — lets a parent stepper reset between stages. */
+  resetToken?: number;
 }
 
 /** Real mouse/touch/pen drawing surface via the Pointer Events API — not a static image. */
-export function KanjiCanvas({ character, size = 280 }: KanjiCanvasProps) {
+export function KanjiCanvas({
+  character,
+  size = 280,
+  fontGuide = true,
+  transparent = false,
+  showControls = true,
+  resetToken = 0,
+}: KanjiCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
-  const [showGuide, setShowGuide] = useState(true);
+  const [showGuide, setShowGuide] = useState(fontGuide);
 
   const drawGuide = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, size, size);
@@ -25,7 +40,7 @@ export function KanjiCanvas({ character, size = 280 }: KanjiCanvasProps) {
     ctx.lineTo(size, size / 2);
     ctx.stroke();
 
-    if (showGuide) {
+    if (fontGuide && showGuide) {
       ctx.font = `${size * 0.7}px "Hiragino Sans", "Noto Sans JP", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -41,11 +56,14 @@ export function KanjiCanvas({ character, size = 280 }: KanjiCanvasProps) {
     if (!ctx) return;
     drawGuide(ctx);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [character, showGuide]);
+  }, [character, showGuide, fontGuide, size, resetToken]);
 
   function getPoint(e: React.PointerEvent<HTMLCanvasElement>) {
     const rect = canvasRef.current!.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    // account for CSS scaling between the canvas backing size and its rendered size
+    const scaleX = size / rect.width;
+    const scaleY = size / rect.height;
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   }
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -89,7 +107,10 @@ export function KanjiCanvas({ character, size = 280 }: KanjiCanvasProps) {
         ref={canvasRef}
         width={size}
         height={size}
-        className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 touch-none cursor-crosshair"
+        className={`rounded-xl border border-slate-200 dark:border-slate-800 touch-none cursor-crosshair ${
+          transparent ? 'bg-transparent' : 'bg-white dark:bg-slate-950'
+        }`}
+        style={{ maxWidth: '100%' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -97,19 +118,23 @@ export function KanjiCanvas({ character, size = 280 }: KanjiCanvasProps) {
         role="img"
         aria-label={`Writing practice area for ${character}`}
       />
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={clear}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-        >
-          <Eraser size={14} /> Clear
-        </button>
-        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-          <input type="checkbox" checked={showGuide} onChange={(e) => setShowGuide(e.target.checked)} />
-          Show guide
-        </label>
-      </div>
+      {showControls && (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={clear}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            <Eraser size={14} /> Clear
+          </button>
+          {fontGuide && (
+            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <input type="checkbox" checked={showGuide} onChange={(e) => setShowGuide(e.target.checked)} />
+              Show guide
+            </label>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -68,11 +68,26 @@ week 14 (N4 mixed review), week 18 (+`readingCompletion` gate) and week 20 (N3 m
 `tsc`/`eslint`/`build`/`vitest` (24/24) clean; both passages, their furigana, linked-grammar panel
 and comprehension-question wiring verified in-browser, zero console errors.
 
-**Remaining (future batches):** vocab & kanji volume still below full-level sets (esp. N3);
-authentic numbered stroke order + See→Trace→Copy→Recall (biggest structural gap — needs new
-per-kanji stroke data + a writing component; decision pending on KanjiVG vs hand-encoding);
-purpose-authored listening/dictation and speaking/Write&Say banks; wiring checkpoint quizzes so
-`minCheckpointAccuracy` gates read real results. JLPT level tags are estimates, labelled as such.
+### Batch 5 — stroke order + See→Trace→Copy→Recall writing practice (2026-07-26)
+
+Closed the writing-practice structural gap. New `src/data/strokeOrder.ts` holds **numbered
+stroke-order data** on a normalized 0–100 grid with **authentic order and direction** (shapes
+simplified to straight segments; documented as such) for a verified starter set of 9 basic N5
+kanji (人大小山木日月火生). New `StrokeOrderDiagram` (SVG, numbered strokes + replay animation) and
+`WritingPractice` (4-stage See → Trace → Copy → Recall stepper) replace the single free-draw
+canvas in `KanjiDetail`. `KanjiCanvas` was extended (transparent overlay, optional font guide,
+hideable controls, external reset, CSS-scale-correct pointer mapping) and reused. Kanji **without**
+stroke data fall back to the accurate font-outline guide + an honest "not available yet" note, so
+stroke order is never guessed. New `strokeOrder.test.ts` cross-checks every covered character's
+stroke count against its `KanjiEntry.strokeCount` (this caught a wrong assumption — 聞 vs 文 — during
+the build). Tests 27/27, `tsc`/`eslint`/`build` clean; See/Trace/Copy/Recall stages, the numbered
+diagram, live tracing, and the fallback path all verified in-browser with zero console errors.
+
+**Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (the rest
+use the font-outline fallback today — full coverage would come from a KanjiVG import, which needs a
+data-download decision); grow N4/N3 vocab & kanji volume; purpose-authored listening/dictation and
+speaking/Write&Say banks; wire checkpoint quizzes so `minCheckpointAccuracy` gates read real
+results. JLPT level tags are estimates, labelled as such throughout.
 
 ---
 

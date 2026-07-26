@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { Bilingual } from '../../components/Bilingual';
-import { KanjiCanvas } from '../../components/KanjiCanvas';
+import { WritingPractice } from '../../components/kanji/WritingPractice';
 import { SrsRatingButtons } from '../../components/SrsRatingButtons';
 import { DisplayToggles, type DisplayPrefs } from '../../components/DisplayToggles';
 import { ExampleSentenceCard } from '../../components/ExampleSentenceCard';
@@ -85,9 +85,13 @@ export function KanjiDetail() {
       <Card className="p-5">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Writing practice</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-          Trace {kanji.character} with your mouse or finger, then rate how well you remembered it.
+          Learn {kanji.character} in four steps — See the stroke order, Trace it, Copy it, then Recall it from memory.
         </p>
-        <KanjiCanvas character={kanji.character} />
+        <WritingPractice
+          character={kanji.character}
+          meaning={kanji.meaning}
+          reading={[...kanji.kunyomi, ...kanji.onyomi][0] ?? ''}
+        />
       </Card>
 
       <Card className="p-5">
