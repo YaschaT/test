@@ -48,10 +48,20 @@ removed the "(planned)/expansion pending" wording from those weeks. `tsc`/`eslin
 N4 grammar list shows "12 of 12", N3 shows "8 of 8", and the new potential-form and causative
 detail pages render with examples, TTS, and common-mistake cards — zero console errors.
 
-**Remaining (future batches):** N4/N3 vocab & kanji volume is still far below full-level sets;
-authentic numbered stroke order + See→Trace→Copy→Recall; purpose-authored listening/dictation and
-speaking/Write&Say banks; wiring checkpoint quizzes so `minCheckpointAccuracy` gates read real
-results. JLPT level tags are estimates, labelled as such throughout.
+### Batch 3 — vocab + kanji volume (2026-07-26)
+
+Added **19 vocab** (7 N4: 場所/予定/用意/興味/用事/別/以上 · 12 N3: 情報/技術/変化/増える/減る/意見/
+計画/確認/複雑/成功/失敗/努力) and **10 kanji** (7 N4: 場/用/意/変/化/計/味 · 3 N3: 予/定/情), each
+with the full schema (kana, romaji, EN/NL, category, example sentence · on/kun readings, stroke
+count, example words + sentence). 約束 and 機会 were skipped as existing N4 dups. Counts now —
+vocab **64 N5 / 17 N4 / 23 N3** (104 total), kanji **25 N5 / 12 N4 / 11 N3** (48 total). Wired the
+new items into vocab-thin roadmap weeks (9 N4; 15–18 N3). `tsc`/`eslint`/`build`/`vitest` (24/24)
+clean; in-browser the N3 vocab tab shows all 23 words, kanji total reads 48, zero console errors.
+
+**Remaining (future batches):** vocab & kanji volume is closer but still below full-level sets
+(esp. N3); authentic numbered stroke order + See→Trace→Copy→Recall; purpose-authored listening/
+dictation and speaking/Write&Say banks; wiring checkpoint quizzes so `minCheckpointAccuracy` gates
+read real results. JLPT level tags are estimates, labelled as such throughout.
 
 ---
 
