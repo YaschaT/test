@@ -35,12 +35,23 @@ batches. Validation: `tsc -b`, `eslint .`, `vite build`, `vitest` (24/24) all cl
 list + detail, N3 reading, and N3 kanji/level tabs verified in-browser (port 5199) with zero
 console errors.
 
-**Remaining (future batches):** N4 grammar weeks 9–13 (giving/receiving, potential/volitional,
-quoting, transitivity) and N3 week 19 (passive/causative) are structured but need content; N4/N3
-vocab & kanji volume is still far below full-level sets; authentic numbered stroke order +
-See→Trace→Copy→Recall; purpose-authored listening/dictation and speaking/Write&Say banks; wiring
-checkpoint quizzes so `minCheckpointAccuracy` gates read real results. JLPT level tags are
-estimates, labelled as such throughout.
+### Batch 2 — N4 grammar + N3 passive/causative (2026-07-26)
+
+Filled the roadmap's placeholder grammar weeks with real content. Added **8 N4 grammar points**
+(`n4-ageru-kureru`, `n4-morau`, `n4-potential`, `n4-volitional`, `n4-to-omou`, `n4-to-iu`,
+`n4-teiru-state`, `n4-jita`) and **2 N3 points** (`n3-passive`, `n3-causative`), each with
+structure, EN/NL meaning + explanation, two examples, a common-mistake note, and a 2-question
+quiz. Grammar points are now **10 N5 / 12 N4 / 8 N3**. Wired them into roadmap weeks 10–13 (N4)
+and 19 (N3), expanded the week-14 and week-20 mixed reviews, updated prerequisite chains, and
+removed the "(planned)/expansion pending" wording from those weeks. `tsc`/`eslint`/`build`/
+`vitest` (24/24) clean; the roadmap id-resolution test now covers all new ids. Verified in-browser:
+N4 grammar list shows "12 of 12", N3 shows "8 of 8", and the new potential-form and causative
+detail pages render with examples, TTS, and common-mistake cards — zero console errors.
+
+**Remaining (future batches):** N4/N3 vocab & kanji volume is still far below full-level sets;
+authentic numbered stroke order + See→Trace→Copy→Recall; purpose-authored listening/dictation and
+speaking/Write&Say banks; wiring checkpoint quizzes so `minCheckpointAccuracy` gates read real
+results. JLPT level tags are estimates, labelled as such throughout.
 
 ---
 
