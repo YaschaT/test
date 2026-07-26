@@ -58,10 +58,21 @@ vocab **64 N5 / 17 N4 / 23 N3** (104 total), kanji **25 N5 / 12 N4 / 11 N3** (48
 new items into vocab-thin roadmap weeks (9 N4; 15–18 N3). `tsc`/`eslint`/`build`/`vitest` (24/24)
 clean; in-browser the N3 vocab tab shows all 23 words, kanji total reads 48, zero console errors.
 
-**Remaining (future batches):** vocab & kanji volume is closer but still below full-level sets
-(esp. N3); authentic numbered stroke order + See→Trace→Copy→Recall; purpose-authored listening/
-dictation and speaking/Write&Say banks; wiring checkpoint quizzes so `minCheckpointAccuracy` gates
-read real results. JLPT level tags are estimates, labelled as such throughout.
+### Batch 4 — graded readings (2026-07-26)
+
+Added **2 original graded passages** that reinforce the new grammar: `r-birthday` (N4 —
+giving/receiving, quoting, potential) and `r-kanji-study` (N3 — causative, passive, ば〜ほど,
+おかげで, によると). Each has furigana + romaji + EN/NL, vocab/grammar highlight links to real ids,
+and 3 comprehension questions. Readings now **2 N5 / 3 N4 / 2 N3** (7 total). Wired into roadmap
+week 14 (N4 mixed review), week 18 (+`readingCompletion` gate) and week 20 (N3 mixed review).
+`tsc`/`eslint`/`build`/`vitest` (24/24) clean; both passages, their furigana, linked-grammar panel
+and comprehension-question wiring verified in-browser, zero console errors.
+
+**Remaining (future batches):** vocab & kanji volume still below full-level sets (esp. N3);
+authentic numbered stroke order + See→Trace→Copy→Recall (biggest structural gap — needs new
+per-kanji stroke data + a writing component; decision pending on KanjiVG vs hand-encoding);
+purpose-authored listening/dictation and speaking/Write&Say banks; wiring checkpoint quizzes so
+`minCheckpointAccuracy` gates read real results. JLPT level tags are estimates, labelled as such.
 
 ---
 
