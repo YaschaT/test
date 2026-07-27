@@ -170,6 +170,25 @@ curl (status + scenario request both respond; scenarios module imports cleanly u
 `tsc`/`eslint`/`build`/`vitest` (31/31) clean. Still not testable here: live AI reply + real mic (need
 the user's key + mic permission).
 
+### Batch 11 — free AI providers for Kai (2026-07-26)
+
+User didn't want to pay for the companion, so the server is now **provider-agnostic**
+(`server/index.ts`): `activeProvider()` auto-picks from env (Gemini key → Anthropic key → Ollama;
+`AI_PROVIDER` forces one). Three backends, each returning the model's raw JSON text through the same
+parse path:
+- **Gemini** (`GEMINI_API_KEY`, default `gemini-2.0-flash`) — Google's **free tier, no credit card**;
+  uses `responseMimeType: application/json` for clean structured replies.
+- **Ollama** (`AI_PROVIDER=ollama`, `OLLAMA_MODEL=qwen2.5`, host `localhost:11434`) — **fully local,
+  free, no key**; `format: 'json'`. `/api/chat/status` pings Ollama (1.2s timeout) so an un-running
+  Ollama reports unavailable instead of hanging.
+- **Anthropic** (paid) — kept as an option.
+
+`/api/chat/status` now returns `{available, provider}`; the in-app "Turn on Kai" card and
+`.env`/`.env.example` document the two free paths (values left blank — keys are the user's to paste).
+Verified via curl: default → `{available:false, provider:null}`; forced Ollama with nothing running →
+`available:false` + `request_failed` (graceful, no crash). Free-options card verified in-browser.
+`tsc`/`eslint`/`build`/`vitest` (31/31) clean. Live reply still needs the user to set up one provider.
+
 **Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
 the font-outline fallback; full coverage would come from a KanjiVG import — **needs the user's OK to
 download that dataset**); keep growing N4/N3 vocab & kanji volume; purpose-authored

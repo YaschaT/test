@@ -115,13 +115,24 @@ export function SpeakingPage() {
     <Card className="p-4 flex gap-3">
       <Info size={18} className="text-brand-500 shrink-0 mt-0.5" />
       <div className="text-sm">
-        <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on Kai (the AI companion)</p>
+        <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on Kai (the AI companion) — free options</p>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          The conversation runs through your own Anthropic API key, used only on the server — never sent to
-          the browser. Add <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">ANTHROPIC_API_KEY=…</code>{' '}
-          to your <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">.env</code> file and restart the
-          dev server (<code className="rounded bg-slate-100 dark:bg-slate-800 px-1">npm run dev</code>).
+          Pick one in your <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">.env</code> file, then
+          restart with <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">npm run dev</code>:
         </p>
+        <ul className="text-slate-500 dark:text-slate-400 mt-1.5 space-y-1 list-disc list-inside">
+          <li>
+            <span className="font-medium text-slate-700 dark:text-slate-200">Gemini (free, no card):</span> get a
+            key at aistudio.google.com/apikey → set{' '}
+            <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">GEMINI_API_KEY</code>.
+          </li>
+          <li>
+            <span className="font-medium text-slate-700 dark:text-slate-200">Ollama (free, local):</span> install
+            from ollama.com, run <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">ollama pull qwen2.5</code>,
+            set <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">AI_PROVIDER=ollama</code>.
+          </li>
+        </ul>
+        <p className="text-slate-400 mt-1.5 text-xs">Everything stays on your machine/server — keys are never sent to the browser.</p>
       </div>
     </Card>
   );

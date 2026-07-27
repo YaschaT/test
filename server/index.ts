@@ -59,17 +59,102 @@ Respond with ONLY a single JSON object and nothing else (no markdown fences):
 {"ja": "<your Japanese reply>", "kana": "<full reading of ja in hiragana>", "romaji": "<romaji of ja>", "en": "<natural English translation of ja>", "feedback": "<short English tip, or empty string>"}`;
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
+type Provider = 'gemini' | 'ollama' | 'anthropic';
 
-function aiConfigured(): boolean {
-  return typeof process.env.ANTHROPIC_API_KEY === 'string' && process.env.ANTHROPIC_API_KEY.trim().length > 0;
+const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
+
+/**
+ * Which AI backend to use. `AI_PROVIDER` forces one; otherwise we auto-pick: a free Gemini key, then
+ * an Anthropic key, then a locally-running Ollama. Returns null if nothing is set up.
+ */
+function activeProvider(): Provider | null {
+  const forced = (process.env.AI_PROVIDER || '').trim().toLowerCase();
+  if (forced === 'gemini') return process.env.GEMINI_API_KEY ? 'gemini' : null;
+  if (forced === 'anthropic') return process.env.ANTHROPIC_API_KEY ? 'anthropic' : null;
+  if (forced === 'ollama') return 'ollama';
+  if (process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
+  return null;
 }
 
-app.get('/api/chat/status', (_req, res) => {
-  res.json({ available: aiConfigured() });
+async function ollamaReachable(): Promise<boolean> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 1200);
+    const r = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: ctrl.signal });
+    clearTimeout(t);
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function isAiAvailable(): Promise<boolean> {
+  const provider = activeProvider();
+  if (!provider) return false;
+  if (provider === 'ollama') return ollamaReachable();
+  return true;
+}
+
+/** Each provider call returns the model's raw text (which we ask to be a JSON object). */
+async function callGemini(system: string, messages: ChatMessage[]): Promise<string> {
+  const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const contents = messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: system }] },
+      contents,
+      generationConfig: { maxOutputTokens: 500, responseMimeType: 'application/json' },
+    }),
+  });
+  if (!res.ok) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+  return (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join('').trim();
+}
+
+async function callOllama(system: string, messages: ChatMessage[]): Promise<string> {
+  const model = process.env.OLLAMA_MODEL || 'qwen2.5';
+  const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      stream: false,
+      format: 'json',
+      messages: [{ role: 'system', content: system }, ...messages],
+    }),
+  });
+  if (!res.ok) throw new Error(`ollama ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as { message?: { content?: string } };
+  return (data.message?.content ?? '').trim();
+}
+
+async function callAnthropic(system: string, messages: ChatMessage[]): Promise<string> {
+  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.ANTHROPIC_API_KEY as string,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ model, max_tokens: 400, system, messages }),
+  });
+  if (!res.ok) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
+  return (data.content ?? []).filter((b) => b.type === 'text').map((b) => b.text ?? '').join('').trim();
+}
+
+app.get('/api/chat/status', async (_req, res) => {
+  res.json({ available: await isAiAvailable(), provider: activeProvider() });
 });
 
 app.post('/api/chat', async (req, res) => {
-  if (!aiConfigured()) {
+  const provider = activeProvider();
+  if (!provider) {
     res.status(503).json({ error: 'not_configured' });
     return;
   }
@@ -80,8 +165,8 @@ app.post('/api/chat', async (req, res) => {
     .slice(-20)
     .map((m) => ({ role: m.role, content: m.content }));
 
-  // The Anthropic API requires the conversation to begin with a user turn — drop any leading
-  // assistant turns (e.g. the companion's opening greeting, which is generated client-side).
+  // Providers expect the conversation to begin with a user turn — drop any leading assistant turns
+  // (e.g. the companion's opening greeting, which is generated client-side).
   while (messages.length > 0 && messages[0].role === 'assistant') messages.shift();
 
   if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
@@ -89,34 +174,17 @@ app.post('/api/chat', async (req, res) => {
     return;
   }
 
-  const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
-
   // Look up the role-play prompt by id (server-owned, so the client can't inject system text).
   const scenario = typeof req.body?.scenarioId === 'string' ? getScenario(req.body.scenarioId) : undefined;
-  const system = scenario?.systemAddon
-    ? `${COMPANION_SYSTEM}\n\n${scenario.systemAddon}`
-    : COMPANION_SYSTEM;
+  const system = scenario?.systemAddon ? `${COMPANION_SYSTEM}\n\n${scenario.systemAddon}` : COMPANION_SYSTEM;
 
   try {
-    const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': process.env.ANTHROPIC_API_KEY as string,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ model, max_tokens: 400, system, messages }),
-    });
-
-    if (!apiRes.ok) {
-      const detail = await apiRes.text();
-      console.error('[chat] Anthropic API error:', apiRes.status, detail.slice(0, 300));
-      res.status(502).json({ error: 'upstream_error', status: apiRes.status });
-      return;
-    }
-
-    const data = (await apiRes.json()) as { content?: Array<{ type: string; text?: string }> };
-    const raw = (data.content ?? []).filter((b) => b.type === 'text').map((b) => b.text ?? '').join('').trim();
+    const raw =
+      provider === 'gemini'
+        ? await callGemini(system, messages)
+        : provider === 'ollama'
+          ? await callOllama(system, messages)
+          : await callAnthropic(system, messages);
 
     // The model is asked for pure JSON; be defensive in case it wraps or adds stray text.
     let reply: { ja: string; kana?: string; romaji?: string; en?: string; feedback?: string };
@@ -131,14 +199,19 @@ app.post('/api/chat', async (req, res) => {
 
     res.json({ reply });
   } catch (err) {
-    console.error('[chat] request failed:', err instanceof Error ? err.message : err);
+    console.error(`[chat] ${provider} request failed:`, err instanceof Error ? err.message : err);
     res.status(502).json({ error: 'request_failed' });
   }
 });
 
 app.listen(PORT, () => {
   const config = readTtsConfig();
+  const provider = activeProvider();
   console.log(`[server] listening on http://localhost:${PORT}`);
   console.log(`[server] Google Cloud TTS: ${config.enabled ? (isConfigPresent(config) ? 'configured' : 'enabled but missing project/credentials env vars') : 'disabled'}`);
-  console.log(`[server] AI speaking companion: ${aiConfigured() ? 'configured' : 'set ANTHROPIC_API_KEY to enable'}`);
+  console.log(
+    `[server] AI speaking companion: ${
+      provider ? `using ${provider}${provider === 'ollama' ? ` (${OLLAMA_HOST}, model ${process.env.OLLAMA_MODEL || 'qwen2.5'})` : ''}` : 'not configured — set GEMINI_API_KEY (free), run Ollama, or set ANTHROPIC_API_KEY'
+    }`,
+  );
 });
