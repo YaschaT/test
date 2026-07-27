@@ -116,12 +116,19 @@ Three follow-ups from the user:
   persisted, surfaced as "Best: 100%" + "Retake checkpoint". New `checkpoint.test.ts` proves a passing
   checkpoint flips the gate. Tests 31/31, `tsc`/`eslint`/`build` clean, no console errors.
 
+### Batch 8 — more N3 vocab & kanji volume (2026-07-26)
+
++14 N3 vocab (意味, 感じる, 求める, 過ぎる, 比べる, 進む, 絶対, 受ける, 起こる, 伝える, 結果, 原因, 状況,
+能力) and +8 N3 kanji (感進受果原因能性), verified against the Kaishi deck / Jisho, deduped, original
+example sentences (several reuse earlier N3 words like 努力/説明/必要 for reinforcement). Totals now:
+grammar 10 N5 / 12 N4 / 8 N3 · vocab 64 / 17 / **37** · kanji 25 / 12 / **19** · reading 2 / 3 / 2.
+`tsc`/`eslint`/`build`/`vitest` (31/31) clean; new kanji detail + N3 vocab tab verified in-browser,
+no console errors.
+
 **Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
-the font-outline fallback; full coverage would come from a KanjiVG import — needs a data-download
-decision); grow N4/N3 vocab & kanji volume; purpose-authored listening/dictation and
-speaking/Write&Say banks. (Investigated a suspected "card collapses after checkpoint submit" quirk —
-not reproducible; the score persists to localStorage and the quiz form correctly resets to the
-questions on reopen.) JLPT level tags are estimates, labelled as such.
+the font-outline fallback; full coverage would come from a KanjiVG import — **needs the user's OK to
+download that dataset**); keep growing N4/N3 vocab & kanji volume; purpose-authored
+listening/dictation and speaking/Write&Say banks. JLPT level tags are estimates, labelled as such.
 
 ---
 
