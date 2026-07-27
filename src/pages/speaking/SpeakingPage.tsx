@@ -122,13 +122,14 @@ export function SpeakingPage() {
         </p>
         <ul className="text-slate-500 dark:text-slate-400 mt-1.5 space-y-1 list-disc list-inside">
           <li>
-            <span className="font-medium text-slate-700 dark:text-slate-200">Gemini (free, no card):</span> get a
-            key at aistudio.google.com/apikey → set{' '}
-            <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">GEMINI_API_KEY</code>.
+            <span className="font-medium text-slate-700 dark:text-slate-200">Groq (free, no card, works in Europe):</span>{' '}
+            get a key at console.groq.com/keys → set{' '}
+            <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">GROQ_API_KEY</code> and{' '}
+            <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">AI_PROVIDER=groq</code>.
           </li>
           <li>
-            <span className="font-medium text-slate-700 dark:text-slate-200">Ollama (free, local):</span> install
-            from ollama.com, run <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">ollama pull qwen2.5</code>,
+            <span className="font-medium text-slate-700 dark:text-slate-200">Ollama (free, local, no key):</span>{' '}
+            install from ollama.com, run <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">ollama pull qwen2.5</code>,
             set <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">AI_PROVIDER=ollama</code>.
           </li>
         </ul>

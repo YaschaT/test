@@ -59,19 +59,22 @@ Respond with ONLY a single JSON object and nothing else (no markdown fences):
 {"ja": "<your Japanese reply>", "kana": "<full reading of ja in hiragana>", "romaji": "<romaji of ja>", "en": "<natural English translation of ja>", "feedback": "<short English tip, or empty string>"}`;
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
-type Provider = 'gemini' | 'ollama' | 'anthropic';
+type Provider = 'groq' | 'gemini' | 'ollama' | 'anthropic';
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
 /**
- * Which AI backend to use. `AI_PROVIDER` forces one; otherwise we auto-pick: a free Gemini key, then
- * an Anthropic key, then a locally-running Ollama. Returns null if nothing is set up.
+ * Which AI backend to use. `AI_PROVIDER` forces one; otherwise we auto-pick from whatever is set up:
+ * Groq key → Gemini key → Anthropic key. Ollama (local) is only used when explicitly forced. Returns
+ * null if nothing is configured.
  */
 function activeProvider(): Provider | null {
   const forced = (process.env.AI_PROVIDER || '').trim().toLowerCase();
+  if (forced === 'groq') return process.env.GROQ_API_KEY ? 'groq' : null;
   if (forced === 'gemini') return process.env.GEMINI_API_KEY ? 'gemini' : null;
   if (forced === 'anthropic') return process.env.ANTHROPIC_API_KEY ? 'anthropic' : null;
   if (forced === 'ollama') return 'ollama';
+  if (process.env.GROQ_API_KEY) return 'groq';
   if (process.env.GEMINI_API_KEY) return 'gemini';
   if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
   return null;
@@ -132,6 +135,23 @@ async function callOllama(system: string, messages: ChatMessage[]): Promise<stri
   return (data.message?.content ?? '').trim();
 }
 
+async function callGroq(system: string, messages: ChatMessage[]): Promise<string> {
+  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${process.env.GROQ_API_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      max_tokens: 500,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'system', content: system }, ...messages],
+    }),
+  });
+  if (!res.ok) throw new Error(`groq ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  return (data.choices?.[0]?.message?.content ?? '').trim();
+}
+
 async function callAnthropic(system: string, messages: ChatMessage[]): Promise<string> {
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -180,11 +200,13 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     const raw =
-      provider === 'gemini'
-        ? await callGemini(system, messages)
-        : provider === 'ollama'
-          ? await callOllama(system, messages)
-          : await callAnthropic(system, messages);
+      provider === 'groq'
+        ? await callGroq(system, messages)
+        : provider === 'gemini'
+          ? await callGemini(system, messages)
+          : provider === 'ollama'
+            ? await callOllama(system, messages)
+            : await callAnthropic(system, messages);
 
     // The model is asked for pure JSON; be defensive in case it wraps or adds stray text.
     let reply: { ja: string; kana?: string; romaji?: string; en?: string; feedback?: string };
@@ -211,7 +233,7 @@ app.listen(PORT, () => {
   console.log(`[server] Google Cloud TTS: ${config.enabled ? (isConfigPresent(config) ? 'configured' : 'enabled but missing project/credentials env vars') : 'disabled'}`);
   console.log(
     `[server] AI speaking companion: ${
-      provider ? `using ${provider}${provider === 'ollama' ? ` (${OLLAMA_HOST}, model ${process.env.OLLAMA_MODEL || 'qwen2.5'})` : ''}` : 'not configured — set GEMINI_API_KEY (free), run Ollama, or set ANTHROPIC_API_KEY'
+      provider ? `using ${provider}${provider === 'ollama' ? ` (${OLLAMA_HOST}, model ${process.env.OLLAMA_MODEL || 'qwen2.5'})` : ''}` : 'not configured — set GROQ_API_KEY (free, no card), run Ollama, or set GEMINI_API_KEY / ANTHROPIC_API_KEY'
     }`,
   );
 });
