@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Mic, Send, Volume2, Loader2, RotateCcw, Sparkles, Info } from 'lucide-react';
+import { Mic, Send, Volume2, Loader2, RotateCcw, Sparkles, Info, ChevronLeft } from 'lucide-react';
 import { Card } from '../../components/Card';
-import { Mascot } from '../../components/Mascot';
+import { AiCore } from '../../components/speaking/AiCore';
 import { useSpeechRecognition } from '../../lib/speech';
 import {
   getCompanionStatus,
@@ -11,33 +11,24 @@ import {
   type CompanionReply,
 } from '../../lib/aiCompanion';
 import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
+import { SCENARIOS, type Scenario } from '../../data/scenarios';
 
 type Msg =
   | { id: string; role: 'user'; text: string }
   | { id: string; role: 'companion'; reply: CompanionReply };
 
-const GREETING: CompanionReply = {
-  ja: 'こんにちは！わたしはコトです。きょうはなにをしましたか？',
-  kana: 'こんにちは！わたしはことです。きょうはなにをしましたか？',
-  romaji: 'Konnichiwa! Watashi wa Koto desu. Kyou wa nani o shimashita ka?',
-  en: "Hi! I'm Koto, your conversation fox. What did you do today?",
-  feedback: '',
-};
-
-const STARTERS = [
-  { ja: 'はじめまして。', en: 'Nice to meet you.' },
-  { ja: 'きょうはいいてんきですね。', en: "It's nice weather today, isn't it?" },
-  { ja: 'にほんごをべんきょうしています。', en: "I'm studying Japanese." },
-  { ja: 'しゅみはなんですか。', en: 'What are your hobbies?' },
-];
-
 function newId() {
   return Math.random().toString(36).slice(2);
 }
 
+function openingReply(scenario: Scenario): CompanionReply {
+  return { ...scenario.opening, feedback: '' };
+}
+
 export function SpeakingPage() {
   const [available, setAvailable] = useState<boolean | null>(null);
-  const [messages, setMessages] = useState<Msg[]>([{ id: newId(), role: 'companion', reply: GREETING }]);
+  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +43,6 @@ export function SpeakingPage() {
     getCompanionStatus().then(setAvailable);
   }, []);
 
-  // When a speech session ends, fold what was heard into the draft for the learner to review + send.
   useEffect(() => {
     if (prevListening.current && !speech.listening && speech.transcript.trim()) {
       setDraft((d) => (d ? `${d} ${speech.transcript}` : speech.transcript).trim());
@@ -65,9 +55,32 @@ export function SpeakingPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
 
+  function pick(s: Scenario) {
+    setScenario(s);
+    setMessages([{ id: newId(), role: 'companion', reply: openingReply(s) }]);
+    setDraft('');
+    setError(null);
+  }
+
+  function backToScenarios() {
+    if (speech.listening) speech.stop();
+    setScenario(null);
+    setMessages([]);
+    setDraft('');
+    setError(null);
+  }
+
+  function restart() {
+    if (!scenario) return;
+    if (speech.listening) speech.stop();
+    setMessages([{ id: newId(), role: 'companion', reply: openingReply(scenario) }]);
+    setDraft('');
+    setError(null);
+  }
+
   async function send(text: string) {
     const content = text.trim();
-    if (!content || loading || available === false) return;
+    if (!content || loading || available === false || !scenario) return;
 
     const next: Msg[] = [...messages, { id: newId(), role: 'user', text: content }];
     setMessages(next);
@@ -80,7 +93,7 @@ export function SpeakingPage() {
     );
 
     try {
-      const reply = await sendCompanionMessage(history);
+      const reply = await sendCompanionMessage(history, scenario.id);
       setMessages((m) => [...m, { id: newId(), role: 'companion', reply }]);
       void tts.play(reply.ja, 1);
     } catch (e) {
@@ -91,51 +104,96 @@ export function SpeakingPage() {
     }
   }
 
-  function restart() {
-    setMessages([{ id: newId(), role: 'companion', reply: GREETING }]);
-    setDraft('');
-    setError(null);
-    if (speech.listening) speech.stop();
+  const speaking = tts.state.status === 'playing';
+  const coreActive = loading || speaking || speech.listening;
+  const status = loading ? 'Thinking…' : speaking ? 'Speaking…' : speech.listening ? 'Listening…' : 'Ready';
+  const liveTranscript = speech.listening
+    ? `${draft}${draft ? ' ' : ''}${speech.transcript}${speech.interim}`.trim()
+    : draft;
+
+  const notConfiguredCard = available === false && (
+    <Card className="p-4 flex gap-3">
+      <Info size={18} className="text-brand-500 shrink-0 mt-0.5" />
+      <div className="text-sm">
+        <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on Kai (the AI companion)</p>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">
+          The conversation runs through your own Anthropic API key, used only on the server — never sent to
+          the browser. Add <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">ANTHROPIC_API_KEY=…</code>{' '}
+          to your <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">.env</code> file and restart the
+          dev server (<code className="rounded bg-slate-100 dark:bg-slate-800 px-1">npm run dev</code>).
+        </p>
+      </div>
+    </Card>
+  );
+
+  // ── Scenario picker ──
+  if (!scenario) {
+    return (
+      <div className="space-y-5 max-w-3xl">
+        <header className="flex items-center gap-4">
+          <AiCore size={56} />
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Speaking with Kai</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+              Pick a real-life situation and have a spoken Japanese conversation — Kai plays the other person.
+              Talk with the mic, no multiple choice.
+            </p>
+          </div>
+        </header>
+
+        {notConfiguredCard}
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {SCENARIOS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => pick(s)}
+              className="text-left rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 hover:border-brand-400 hover:shadow-sm transition-colors"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl" aria-hidden="true">{s.emoji}</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{s.title.en}</span>
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">{s.blurb.en}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  const onlyGreeting = messages.length === 1;
-  const liveTranscript = speech.listening ? `${draft}${draft ? ' ' : ''}${speech.transcript}${speech.interim}`.trim() : draft;
-
+  // ── Conversation ──
   return (
     <div className="flex flex-col max-w-2xl h-[calc(100vh-7rem)]">
-      <header className="flex items-start justify-between gap-3 mb-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Speaking</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-            Have a real Japanese conversation with Koto, your AI fox companion. Tap the mic and just talk —
-            no multiple choice.
-          </p>
+      <div className="flex items-center gap-3 mb-3">
+        <button
+          type="button"
+          onClick={backToScenarios}
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 shrink-0"
+        >
+          <ChevronLeft size={16} /> Scenarios
+        </button>
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <AiCore size={40} active={coreActive} />
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-900 dark:text-white leading-tight truncate">
+              Kai · <span className="font-normal text-slate-500 dark:text-slate-400">{scenario.emoji} {scenario.title.en}</span>
+            </p>
+            <p className="text-xs text-brand-500 dark:text-brand-400">{status}</p>
+          </div>
         </div>
         <button
           type="button"
           onClick={restart}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shrink-0"
         >
           <RotateCcw size={13} /> Restart
         </button>
-      </header>
+      </div>
 
-      {available === false && (
-        <Card className="p-4 mb-3 flex gap-3">
-          <Info size={18} className="text-brand-500 shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on the AI companion</p>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
-              The conversation runs through your own Anthropic API key so nothing is shared. Add{' '}
-              <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">ANTHROPIC_API_KEY=…</code> to your{' '}
-              <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">.env</code> file and restart the dev
-              server. You can still read Koto's greeting below.
-            </p>
-          </div>
-        </Card>
-      )}
+      {available === false && <div className="mb-3">{notConfiguredCard}</div>}
 
-      {/* display toggles */}
       <div className="flex items-center gap-2 mb-2 text-xs">
         <span className="text-slate-400 font-medium">Show:</span>
         {(['kana', 'romaji', 'en'] as const).map((k) => (
@@ -144,9 +202,7 @@ export function SpeakingPage() {
             type="button"
             onClick={() => setShow((s) => ({ ...s, [k]: !s[k] }))}
             className={`rounded-full px-2.5 py-1 font-semibold capitalize ${
-              show[k]
-                ? 'bg-brand-600 text-white'
-                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+              show[k] ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
             }`}
           >
             {k === 'en' ? 'English' : k}
@@ -154,37 +210,31 @@ export function SpeakingPage() {
         ))}
       </div>
 
-      {/* conversation */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pr-1">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
         {messages.map((m) =>
           m.role === 'companion' ? (
-            <div key={m.id} className="flex gap-2.5 items-start">
-              <div className="shrink-0 rounded-full bg-brand-50 dark:bg-slate-800 p-1">
-                <Mascot size={34} mood="happy" />
+            <Card key={m.id} className="p-3.5 mr-6">
+              <div className="flex items-start justify-between gap-2">
+                <p className="jp-text text-lg text-slate-900 dark:text-white leading-relaxed">{m.reply.ja}</p>
+                <button
+                  type="button"
+                  onClick={() => tts.play(m.reply.ja, 1)}
+                  aria-label="Play audio"
+                  className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  <Volume2 size={16} />
+                </button>
               </div>
-              <Card className="p-3.5 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="jp-text text-lg text-slate-900 dark:text-white leading-relaxed">{m.reply.ja}</p>
-                  <button
-                    type="button"
-                    onClick={() => tts.play(m.reply.ja, 1)}
-                    aria-label="Play audio"
-                    className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  >
-                    <Volume2 size={16} />
-                  </button>
-                </div>
-                {show.kana && m.reply.kana && <p className="jp-text text-sm text-slate-500 dark:text-slate-400 mt-0.5">{m.reply.kana}</p>}
-                {show.romaji && m.reply.romaji && <p className="text-sm text-slate-500 dark:text-slate-400 italic mt-0.5">{m.reply.romaji}</p>}
-                {show.en && m.reply.en && <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{m.reply.en}</p>}
-                {m.reply.feedback && (
-                  <p className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs px-2.5 py-1.5">
-                    <Sparkles size={12} className="inline mr-1 -mt-0.5" />
-                    {m.reply.feedback}
-                  </p>
-                )}
-              </Card>
-            </div>
+              {show.kana && m.reply.kana && <p className="jp-text text-sm text-slate-500 dark:text-slate-400 mt-0.5">{m.reply.kana}</p>}
+              {show.romaji && m.reply.romaji && <p className="text-sm text-slate-500 dark:text-slate-400 italic mt-0.5">{m.reply.romaji}</p>}
+              {show.en && m.reply.en && <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{m.reply.en}</p>}
+              {m.reply.feedback && (
+                <p className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs px-2.5 py-1.5">
+                  <Sparkles size={12} className="inline mr-1 -mt-0.5" />
+                  {m.reply.feedback}
+                </p>
+              )}
+            </Card>
           ) : (
             <div key={m.id} className="flex justify-end">
               <div className="jp-text max-w-[80%] rounded-2xl rounded-br-sm bg-brand-600 text-white px-4 py-2.5 text-[15px]">
@@ -194,35 +244,14 @@ export function SpeakingPage() {
           ),
         )}
         {loading && (
-          <div className="flex gap-2.5 items-center text-slate-400 text-sm">
-            <div className="shrink-0 rounded-full bg-brand-50 dark:bg-slate-800 p-1">
-              <Mascot size={34} mood="neutral" />
-            </div>
-            <Loader2 size={16} className="animate-spin" /> Koto is thinking…
+          <div className="flex items-center gap-2 text-slate-400 text-sm mr-6">
+            <Loader2 size={16} className="animate-spin" /> Kai is thinking…
           </div>
         )}
       </div>
 
       {error && <p className="text-sm text-rose-600 dark:text-rose-400 mt-2">{error}</p>}
 
-      {/* starters */}
-      {onlyGreeting && available !== false && (
-        <div className="flex flex-wrap gap-2 mt-3">
-          {STARTERS.map((s) => (
-            <button
-              key={s.ja}
-              type="button"
-              onClick={() => send(s.ja)}
-              className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
-              title={s.en}
-            >
-              <span className="jp-text text-slate-700 dark:text-slate-200">{s.ja}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* input bar */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -236,9 +265,7 @@ export function SpeakingPage() {
             onClick={() => (speech.listening ? speech.stop() : speech.start())}
             aria-label={speech.listening ? 'Stop listening' : 'Start speaking'}
             className={`shrink-0 rounded-full p-3 transition-colors ${
-              speech.listening
-                ? 'bg-rose-500 text-white animate-pulse'
-                : 'bg-brand-600 text-white hover:bg-brand-700'
+              speech.listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-brand-600 text-white hover:bg-brand-700'
             }`}
           >
             <Mic size={20} />
@@ -271,9 +298,7 @@ export function SpeakingPage() {
       </form>
       {speech.error && <p className="text-xs text-rose-500 mt-1">{speech.error}</p>}
       {!speech.supported && (
-        <p className="text-xs text-slate-400 mt-1">
-          Voice input needs Chrome or Edge. You can still type your replies here.
-        </p>
+        <p className="text-xs text-slate-400 mt-1">Voice input needs Chrome or Edge. You can still type your replies here.</p>
       )}
     </div>
   );

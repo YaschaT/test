@@ -147,6 +147,29 @@ toggles reveal kana/romaji, mic button present, zero console errors. Server veri
 `tsc`/`eslint`/`build`/`vitest` (31/31) clean. **Not testable here:** the live AI reply + real mic
 capture need the user's `ANTHROPIC_API_KEY` and a browser with mic permission — honest coverage gap.
 
+### Batch 10 — Speaking scenarios + JARVIS-style avatar + rebrand to "Kai" (2026-07-26)
+
+Follow-ups on the Speaking page from user feedback:
+- **Real-life scenario picker** — new `src/data/scenarios.ts` (dependency-free so the server can import
+  it too) with 9 role-plays: free chat, restaurant, train ticket, shopping, café, class, directions,
+  hotel, clinic. Each supplies Kai's in-role opening line (shown instantly, no API call) and a
+  `systemAddon`. The Speaking page opens on a scenario grid; picking one starts the conversation in
+  role. `server/index.ts` `/api/chat` now takes a `scenarioId`, looks the role prompt up **server-side
+  by id** (so the client can't inject system text), and appends it to the base prompt.
+- **JARVIS-style avatar** — new `AiCore` component (glowing concentric rings + rotating HUD arcs +
+  pulsing core, CSS-animated, `prefers-reduced-motion` respected, `active` state while
+  thinking/speaking/listening). Replaced the fox `Mascot` in the chat; the companion is rebranded from
+  the fox "Koto" to **"Kai"**, a sleek AI assistant (greeting + system persona updated).
+- **"Turn it on"** — added an empty `ANTHROPIC_API_KEY=` line to the user's gitignored `.env` (value
+  left blank — a key is a credential the user must paste themselves) and kept the clear in-app "Turn on
+  Kai" card.
+
+Verified in-browser: scenario grid + AiCore render, picking "restaurant" shows Kai's role opening and
+the AiCore header with status, back button returns to the picker, no console errors. Server verified via
+curl (status + scenario request both respond; scenarios module imports cleanly under tsx).
+`tsc`/`eslint`/`build`/`vitest` (31/31) clean. Still not testable here: live AI reply + real mic (need
+the user's key + mic permission).
+
 **Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
 the font-outline fallback; full coverage would come from a KanjiVG import — **needs the user's OK to
 download that dataset**); keep growing N4/N3 vocab & kanji volume; purpose-authored

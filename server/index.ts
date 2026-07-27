@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { isConfigPresent, readTtsConfig, synthesizeSpeech } from './googleTts.ts';
+import { getScenario } from '../src/data/scenarios.ts';
 
 const app = express();
 app.use(express.json());
@@ -46,7 +47,7 @@ app.post('/api/tts', async (req, res) => {
 
 // ─── AI speaking companion (Anthropic Messages API, called server-side so the key stays secret) ───
 
-const COMPANION_SYSTEM = `You are Kotobox's friendly fox, a warm and patient Japanese conversation partner for a learner around JLPT N5–N4 (they may be reaching toward N3). Hold a natural, encouraging SPOKEN-style conversation in Japanese.
+const COMPANION_SYSTEM = `You are Kai, Kotobox's AI language companion — a calm, sharp, quietly encouraging conversational assistant (think a helpful AI copilot) who is also a patient Japanese tutor for a learner around JLPT N5–N4 (they may be reaching toward N3). Hold a natural, encouraging SPOKEN-style conversation in Japanese.
 
 Rules:
 - Reply in Japanese, kept SHORT (1–2 sentences) and simple for their level. Prefer common words and grammar they are likely to know.
@@ -90,6 +91,12 @@ app.post('/api/chat', async (req, res) => {
 
   const model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
 
+  // Look up the role-play prompt by id (server-owned, so the client can't inject system text).
+  const scenario = typeof req.body?.scenarioId === 'string' ? getScenario(req.body.scenarioId) : undefined;
+  const system = scenario?.systemAddon
+    ? `${COMPANION_SYSTEM}\n\n${scenario.systemAddon}`
+    : COMPANION_SYSTEM;
+
   try {
     const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -98,7 +105,7 @@ app.post('/api/chat', async (req, res) => {
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ model, max_tokens: 400, system: COMPANION_SYSTEM, messages }),
+      body: JSON.stringify({ model, max_tokens: 400, system, messages }),
     });
 
     if (!apiRes.ok) {

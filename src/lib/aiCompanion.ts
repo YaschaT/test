@@ -28,13 +28,13 @@ export async function getCompanionStatus(): Promise<boolean> {
 
 export class CompanionError extends Error {}
 
-export async function sendCompanionMessage(messages: ChatTurn[]): Promise<CompanionReply> {
+export async function sendCompanionMessage(messages: ChatTurn[], scenarioId?: string): Promise<CompanionReply> {
   let res: Response;
   try {
     res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, scenarioId }),
     });
   } catch {
     throw new CompanionError('Could not reach the companion. Is the server running?');
