@@ -119,8 +119,9 @@ Three follow-ups from the user:
 **Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
 the font-outline fallback; full coverage would come from a KanjiVG import — needs a data-download
 decision); grow N4/N3 vocab & kanji volume; purpose-authored listening/dictation and
-speaking/Write&Say banks. Minor: the Learning Path week card collapses after a checkpoint submit (best
-score persists and re-surfaces on reopen). JLPT level tags are estimates, labelled as such.
+speaking/Write&Say banks. (Investigated a suspected "card collapses after checkpoint submit" quirk —
+not reproducible; the score persists to localStorage and the quiz form correctly resets to the
+questions on reopen.) JLPT level tags are estimates, labelled as such.
 
 ---
 
