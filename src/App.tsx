@@ -23,6 +23,7 @@ const KanjiDetail = lazy(() => import('./pages/kanji/KanjiDetail').then((m) => (
 const ReadingList = lazy(() => import('./pages/reading/ReadingList').then((m) => ({ default: m.ReadingList })));
 const ReadingDetail = lazy(() => import('./pages/reading/ReadingDetail').then((m) => ({ default: m.ReadingDetail })));
 const ListeningHome = lazy(() => import('./pages/listening/ListeningHome').then((m) => ({ default: m.ListeningHome })));
+const SpeakingPage = lazy(() => import('./pages/speaking/SpeakingPage').then((m) => ({ default: m.SpeakingPage })));
 
 /** In-app pages suspend inside the Layout shell: sidebar stays put, content area fills in. */
 function page(Page: LazyExoticComponent<ComponentType>) {
@@ -84,6 +85,7 @@ function App() {
           <Route path="/reading" element={page(ReadingList)} />
           <Route path="/reading/:id" element={page(ReadingDetail)} />
           <Route path="/listening" element={page(ListeningHome)} />
+          <Route path="/speaking" element={page(SpeakingPage)} />
         </Route>
       </Routes>
     </TooltipProvider>

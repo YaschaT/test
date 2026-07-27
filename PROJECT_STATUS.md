@@ -125,10 +125,32 @@ grammar 10 N5 / 12 N4 / 8 N3 · vocab 64 / 17 / **37** · kanji 25 / 12 / **19**
 `tsc`/`eslint`/`build`/`vitest` (31/31) clean; new kanji detail + N3 vocab tab verified in-browser,
 no console errors.
 
+### Batch 9 — Speaking page with a voice AI companion (2026-07-26)
+
+New **Speaking** page (`/speaking` + nav, `SpeakingNavIcon`): a real spoken Japanese conversation
+with "Koto", an AI fox companion — **no multiple choice**.
+- **Voice in:** `src/lib/speech.ts` wraps the browser Web Speech API (`useSpeechRecognition`,
+  `ja-JP`); Chrome/Edge only, so it feature-detects and falls back to a typed input on other browsers.
+- **AI backend:** `server/index.ts` gained `/api/chat/status` + `/api/chat`, which call the Anthropic
+  Messages API via `fetch` (no new dependency) with a Japanese-tutor system prompt. The key
+  (`ANTHROPIC_API_KEY`, optional `ANTHROPIC_MODEL`, default `claude-haiku-4-5-20251001`) stays
+  server-side — the browser only talks to our own endpoint. Replies are structured JSON
+  (`ja/kana/romaji/en/feedback`) so the UI can show readings + translation + a gentle correction.
+- **Voice out:** companion replies auto-play through the existing `useTtsPlayer` (browser/Google TTS);
+  per-message replay button; Kana/Romaji/English toggles; topic-starter chips; Restart.
+- **Graceful degradation:** with no key the page still shows Koto's greeting and a clear "add
+  `ANTHROPIC_API_KEY`" card; input disabled. `src/lib/aiCompanion.ts` is the typed client.
+
+Verified in-browser (Vite-only preview → not-configured path): page renders, greeting + mascot,
+toggles reveal kana/romaji, mic button present, zero console errors. Server verified by running it:
+`/api/chat/status`→`{available:false}`, `/api/chat`→`not_configured` (503), startup log reports state.
+`tsc`/`eslint`/`build`/`vitest` (31/31) clean. **Not testable here:** the live AI reply + real mic
+capture need the user's `ANTHROPIC_API_KEY` and a browser with mic permission — honest coverage gap.
+
 **Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
 the font-outline fallback; full coverage would come from a KanjiVG import — **needs the user's OK to
 download that dataset**); keep growing N4/N3 vocab & kanji volume; purpose-authored
-listening/dictation and speaking/Write&Say banks. JLPT level tags are estimates, labelled as such.
+listening/dictation banks. JLPT level tags are estimates, labelled as such.
 
 ---
 

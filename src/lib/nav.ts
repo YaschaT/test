@@ -7,6 +7,7 @@ import {
   ReadingNavIcon,
   ListeningNavIcon,
   PathNavIcon,
+  SpeakingNavIcon,
 } from '../components/dashboard/navIcons';
 import type { Translatable } from '../types';
 
@@ -25,4 +26,5 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/kanji', label: { en: 'Kanji', nl: 'Kanji' }, icon: KanjiNavIcon },
   { path: '/reading', label: { en: 'Reading', nl: 'Lezen' }, icon: ReadingNavIcon },
   { path: '/listening', label: { en: 'Listening', nl: 'Luisteren' }, icon: ListeningNavIcon },
+  { path: '/speaking', label: { en: 'Speaking', nl: 'Spreken' }, icon: SpeakingNavIcon },
 ];
