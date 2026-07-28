@@ -11,6 +11,7 @@ import {
   type CompanionReply,
 } from '../../lib/aiCompanion';
 import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
+import { getNeuralTtsStatus, playNeural, type NeuralVoice } from '../../lib/tts/neuralTts';
 import { SCENARIOS, type Scenario } from '../../data/scenarios';
 
 type Msg =
@@ -38,10 +39,22 @@ export function SpeakingPage() {
   const tts = useTtsPlayer(getSavedVoiceMode());
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevListening = useRef(false);
+  const [neuralAvailable, setNeuralAvailable] = useState(false);
+  const [neuralVoice, setNeuralVoice] = useState<NeuralVoice>('ja-JP-NanamiNeural');
 
   useEffect(() => {
     getCompanionStatus().then(setAvailable);
+    getNeuralTtsStatus().then((s) => setNeuralAvailable(s.available));
   }, []);
+
+  // Speak Kai's line with the natural neural voice when available; fall back to the browser voice.
+  function speak(text: string) {
+    if (neuralAvailable) {
+      playNeural(text, { voice: neuralVoice }).catch(() => tts.play(text, 1));
+    } else {
+      void tts.play(text, 1);
+    }
+  }
 
   useEffect(() => {
     if (prevListening.current && !speech.listening && speech.transcript.trim()) {
@@ -95,7 +108,7 @@ export function SpeakingPage() {
     try {
       const reply = await sendCompanionMessage(history, scenario.id);
       setMessages((m) => [...m, { id: newId(), role: 'companion', reply }]);
-      void tts.play(reply.ja, 1);
+      speak(reply.ja);
     } catch (e) {
       if (e instanceof CompanionError && e.message === 'not_configured') setAvailable(false);
       else setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
@@ -220,6 +233,29 @@ export function SpeakingPage() {
             {k === 'en' ? 'English' : k}
           </button>
         ))}
+        {neuralAvailable && (
+          <span className="ml-auto flex items-center gap-1.5">
+            <span className="text-slate-400 font-medium">Voice:</span>
+            {([
+              ['ja-JP-NanamiNeural', 'Nanami ♀'],
+              ['ja-JP-KeitaNeural', 'Keita ♂'],
+            ] as const).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => {
+                  setNeuralVoice(v);
+                  playNeural('こんにちは。', { voice: v }).catch(() => {});
+                }}
+                className={`rounded-full px-2.5 py-1 font-semibold ${
+                  neuralVoice === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </span>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
@@ -230,7 +266,7 @@ export function SpeakingPage() {
                 <p className="jp-text text-lg text-slate-900 dark:text-white leading-relaxed">{m.reply.ja}</p>
                 <button
                   type="button"
-                  onClick={() => tts.play(m.reply.ja, 1)}
+                  onClick={() => speak(m.reply.ja)}
                   aria-label="Play audio"
                   className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >

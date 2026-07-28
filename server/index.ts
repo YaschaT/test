@@ -1,5 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
+import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { readFile, unlink } from 'node:fs/promises';
 import { isConfigPresent, readTtsConfig, synthesizeSpeech } from './googleTts.ts';
 import { getScenario } from '../src/data/scenarios.ts';
 
@@ -7,6 +12,65 @@ const app = express();
 app.use(express.json());
 
 const PORT = Number(process.env.SERVER_PORT) || 5174;
+
+// ─── Natural neural voice via edge-tts (free Azure neural voices, no API key) ───
+const PYTHON = process.env.PYTHON_BIN || 'python3';
+const NEURAL_VOICES = new Set(['ja-JP-NanamiNeural', 'ja-JP-KeitaNeural']);
+const DEFAULT_NEURAL_VOICE = process.env.EDGE_TTS_VOICE || 'ja-JP-NanamiNeural';
+
+let edgeChecked = false;
+let edgeAvailableCache = false;
+function edgeAvailable(): Promise<boolean> {
+  if (edgeChecked) return Promise.resolve(edgeAvailableCache);
+  return new Promise((resolve) => {
+    const p = spawn(PYTHON, ['-c', 'import edge_tts']);
+    p.on('error', () => { edgeChecked = true; edgeAvailableCache = false; resolve(false); });
+    p.on('close', (code) => { edgeChecked = true; edgeAvailableCache = code === 0; resolve(edgeAvailableCache); });
+  });
+}
+
+app.get('/api/tts/neural/status', async (_req, res) => {
+  res.json({ available: await edgeAvailable(), voices: [...NEURAL_VOICES], default: DEFAULT_NEURAL_VOICE });
+});
+
+app.post('/api/tts/neural', async (req, res) => {
+  if (!(await edgeAvailable())) {
+    res.status(503).json({ error: 'not_available' });
+    return;
+  }
+  const text = typeof req.body?.text === 'string' ? req.body.text.slice(0, 800).trim() : '';
+  if (!text) {
+    res.status(400).json({ error: 'missing_text' });
+    return;
+  }
+  const voice = NEURAL_VOICES.has(req.body?.voice) ? req.body.voice : DEFAULT_NEURAL_VOICE;
+  const rate = typeof req.body?.rate === 'number' ? req.body.rate : 1;
+  const pct = Math.max(-50, Math.min(50, Math.round((rate - 1) * 100)));
+  const rateArg = `${pct >= 0 ? '+' : ''}${pct}%`;
+  const file = join(tmpdir(), `kai-tts-${randomUUID()}.mp3`);
+
+  // spawn (no shell) with text passed as an argument — no injection surface.
+  const proc = spawn(PYTHON, ['-m', 'edge_tts', '--voice', voice, '--rate', rateArg, '--text', text, '--write-media', file]);
+  let errOut = '';
+  proc.stderr.on('data', (d) => (errOut += d.toString()));
+  proc.on('error', () => res.status(502).json({ error: 'spawn_failed' }));
+  proc.on('close', async (code) => {
+    if (code !== 0) {
+      console.error('[neural-tts] edge-tts failed:', errOut.slice(0, 200));
+      res.status(502).json({ error: 'synth_failed' });
+      return;
+    }
+    try {
+      const audio = await readFile(file);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.send(audio);
+    } catch {
+      res.status(502).json({ error: 'read_failed' });
+    } finally {
+      unlink(file).catch(() => {});
+    }
+  });
+});
 
 app.get('/api/tts/status', (_req, res) => {
   const config = readTtsConfig();
