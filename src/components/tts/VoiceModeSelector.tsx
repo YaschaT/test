@@ -4,10 +4,16 @@ interface VoiceModeSelectorProps {
   mode: VoiceMode;
   onChange: (mode: VoiceMode) => void;
   googleAvailable: boolean | null;
+  neuralAvailable?: boolean | null;
 }
 
-export function VoiceModeSelector({ mode, onChange, googleAvailable }: VoiceModeSelectorProps) {
+const ACTIVE = 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300';
+const IDLE = 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100';
+const DISABLED = 'text-slate-300 dark:text-slate-600 cursor-not-allowed';
+
+export function VoiceModeSelector({ mode, onChange, googleAvailable, neuralAvailable }: VoiceModeSelectorProps) {
   const googleDisabled = googleAvailable !== true;
+  const neuralDisabled = neuralAvailable !== true;
 
   return (
     <div>
@@ -15,13 +21,22 @@ export function VoiceModeSelector({ mode, onChange, googleAvailable }: VoiceMode
         <button
           type="button"
           role="radio"
+          aria-checked={mode === 'neural'}
+          disabled={neuralDisabled}
+          onClick={() => !neuralDisabled && onChange('neural')}
+          title={neuralDisabled ? 'Install edge-tts on the server to enable the natural neural voice' : undefined}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            mode === 'neural' ? ACTIVE : neuralDisabled ? DISABLED : IDLE
+          }`}
+        >
+          Natural {neuralDisabled ? '(unavailable)' : '(neural)'}
+        </button>
+        <button
+          type="button"
+          role="radio"
           aria-checked={mode === 'browser'}
           onClick={() => onChange('browser')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-            mode === 'browser'
-              ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'
-          }`}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'browser' ? ACTIVE : IDLE}`}
         >
           Browser voice
         </button>
@@ -33,20 +48,16 @@ export function VoiceModeSelector({ mode, onChange, googleAvailable }: VoiceMode
           onClick={() => !googleDisabled && onChange('google')}
           title={googleDisabled ? 'Requires Google Cloud TTS setup on the server — see README' : undefined}
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-            mode === 'google'
-              ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'
-              : googleDisabled
-                ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'
+            mode === 'google' ? ACTIVE : googleDisabled ? DISABLED : IDLE
           }`}
         >
-          Natural voice {googleDisabled ? '(unavailable)' : '(Google Cloud)'}
+          Google Cloud {googleDisabled ? '(unavailable)' : ''}
         </button>
       </div>
       <p className="text-xs text-slate-400 mt-1.5 max-w-md">
-        Natural voice uses Google Cloud Text-to-Speech when configured. Without it, Kotobox falls back
-        to your browser's Japanese voice. Voice quality depends on the selected provider and available
-        Japanese voices.
+        The natural (neural) voice uses free, lifelike Japanese voices (Azure "Nanami") when edge-tts is
+        installed on the server. Otherwise Kotobox falls back to your browser's Japanese voice, or Google
+        Cloud TTS if you've configured it.
       </p>
     </div>
   );

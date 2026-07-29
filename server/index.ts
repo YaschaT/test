@@ -109,18 +109,49 @@ app.post('/api/tts', async (req, res) => {
   }
 });
 
+// ─── Correct readings via pykakasi (deterministic kanji→hiragana+romaji, so small/fast models don't
+//     have to hallucinate furigana — the readings are always accurate for the learner) ───
+let kakasiChecked = false;
+let kakasiAvailableCache = false;
+function kakasiAvailable(): Promise<boolean> {
+  if (kakasiChecked) return Promise.resolve(kakasiAvailableCache);
+  return new Promise((resolve) => {
+    const p = spawn(PYTHON, ['-c', 'import pykakasi']);
+    p.on('error', () => { kakasiChecked = true; kakasiAvailableCache = false; resolve(false); });
+    p.on('close', (code) => { kakasiChecked = true; kakasiAvailableCache = code === 0; resolve(kakasiAvailableCache); });
+  });
+}
+
+const KAKASI_SCRIPT = `import pykakasi,sys,json,re
+r=pykakasi.kakasi().convert(sys.argv[1])
+kana=''.join(x['hira'] for x in r)
+romaji=re.sub(r'\\s+([.,!?。、！？])',r'\\1',re.sub(r'\\s+',' ',' '.join(x['hepburn'] for x in r))).strip()
+print(json.dumps({'kana':kana,'romaji':romaji}))`;
+
+function furigana(text: string): Promise<{ kana: string; romaji: string }> {
+  return new Promise((resolve) => {
+    const p = spawn(PYTHON, ['-c', KAKASI_SCRIPT, text]);
+    let out = '';
+    p.stdout.on('data', (d) => (out += d.toString()));
+    p.on('error', () => resolve({ kana: '', romaji: '' }));
+    p.on('close', () => {
+      try {
+        resolve(JSON.parse(out));
+      } catch {
+        resolve({ kana: '', romaji: '' });
+      }
+    });
+  });
+}
+
 // ─── AI speaking companion (Anthropic Messages API, called server-side so the key stays secret) ───
 
-const COMPANION_SYSTEM = `You are Kai, Kotobox's AI language companion — a calm, sharp, quietly encouraging conversational assistant (think a helpful AI copilot) who is also a patient Japanese tutor for a learner around JLPT N5–N4 (they may be reaching toward N3). Hold a natural, encouraging SPOKEN-style conversation in Japanese.
-
-Rules:
-- Reply in Japanese, kept SHORT (1–2 sentences) and simple for their level. Prefer common words and grammar they are likely to know.
-- Always end with a light follow-up question so the conversation keeps going.
-- If the learner made a mistake, offer a gentler/more natural version in the "feedback" field (in English), briefly and kindly. Never lecture; keep the chat flowing. If there is nothing to correct, use an empty string.
-- Stay in the role of a friendly companion. Keep it positive and low-pressure.
-
-Respond with ONLY a single JSON object and nothing else (no markdown fences):
-{"ja": "<your Japanese reply>", "kana": "<full reading of ja in hiragana>", "romaji": "<romaji of ja>", "en": "<natural English translation of ja>", "feedback": "<short English tip, or empty string>"}`;
+const COMPANION_SYSTEM = `You are Kai, a friendly Japanese conversation tutor for a JLPT N5–N4 learner.
+- Reply in natural Japanese: ONE short, simple sentence, then a short follow-up question. Use only common words/grammar for their level.
+- Write the "ja" field in Japanese only — never put English or roman letters inside it.
+- "en" must be an accurate, natural English translation of your "ja".
+- If the learner made a real mistake, add a short, kind English tip in "feedback"; otherwise use "".
+Reply with ONLY this JSON, nothing else (no markdown): {"ja":"<Japanese reply>","en":"<English translation of ja>","feedback":"<short English tip or empty>"}`;
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 type Provider = 'groq' | 'gemini' | 'ollama' | 'anthropic';
@@ -191,6 +222,10 @@ async function callOllama(system: string, messages: ChatMessage[]): Promise<stri
       model,
       stream: false,
       format: 'json',
+      // keep_alive holds the model in RAM between turns (no reload cost); num_predict caps the reply
+      // length so short answers generate fast on CPU. Both cut latency noticeably on local models.
+      keep_alive: process.env.OLLAMA_KEEP_ALIVE || '30m',
+      options: { num_predict: Number(process.env.OLLAMA_NUM_PREDICT) || 220, temperature: 0.7 },
       messages: [{ role: 'system', content: system }, ...messages],
     }),
   });
@@ -283,6 +318,13 @@ app.post('/api/chat', async (req, res) => {
     }
     if (!reply.ja) reply.ja = raw;
 
+    // Compute accurate furigana/romaji from the reply text (never trust a small model's readings).
+    if (reply.ja && (await kakasiAvailable())) {
+      const { kana, romaji } = await furigana(reply.ja);
+      if (kana) reply.kana = kana;
+      if (romaji) reply.romaji = romaji;
+    }
+
     res.json({ reply });
   } catch (err) {
     console.error(`[chat] ${provider} request failed:`, err instanceof Error ? err.message : err);
@@ -300,4 +342,16 @@ app.listen(PORT, () => {
       provider ? `using ${provider}${provider === 'ollama' ? ` (${OLLAMA_HOST}, model ${process.env.OLLAMA_MODEL || 'qwen2.5'})` : ''}` : 'not configured — set GROQ_API_KEY (free, no card), run Ollama, or set GEMINI_API_KEY / ANTHROPIC_API_KEY'
     }`,
   );
+
+  // Preload the local model into RAM at startup so the learner's FIRST reply isn't a slow cold-start.
+  if (provider === 'ollama') {
+    const model = process.env.OLLAMA_MODEL || 'qwen2.5';
+    fetch(`${OLLAMA_HOST}/api/generate`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model, prompt: 'hi', stream: false, keep_alive: process.env.OLLAMA_KEEP_ALIVE || '30m', options: { num_predict: 1 } }),
+    })
+      .then(() => console.log(`[server] warmed up ollama model ${model}`))
+      .catch(() => {});
+  }
 });

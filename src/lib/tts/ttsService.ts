@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { readStorage, writeStorage } from '../storage';
 import { speakJapaneseBrowser } from './browserTts';
 import { fetchGoogleTtsAudioUrl, fetchGoogleTtsStatus, GoogleTtsError } from './googleTts';
+import { fetchNeuralTtsAudioUrl } from './neuralTts';
 
-export type VoiceMode = 'browser' | 'google';
+export type VoiceMode = 'browser' | 'google' | 'neural';
 
 const VOICE_MODE_KEY = 'tts-voice-mode';
 
@@ -56,7 +57,7 @@ export function useTtsPlayer(mode: VoiceMode) {
 
     setState({ status: 'loading' });
     try {
-      const url = await fetchGoogleTtsAudioUrl(text, rate);
+      const url = mode === 'neural' ? await fetchNeuralTtsAudioUrl(text, rate) : await fetchGoogleTtsAudioUrl(text, rate);
       if (!audioRef.current) audioRef.current = new Audio();
       const audio = audioRef.current;
       audio.src = url;

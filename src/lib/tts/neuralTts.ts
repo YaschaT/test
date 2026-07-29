@@ -1,5 +1,6 @@
 /** Natural neural Japanese voice (Azure "Nanami"/"Keita" via edge-tts on the server, free, no key).
  *  Falls back to the browser voice at the call site if this isn't available. */
+import { useEffect, useState } from 'react';
 
 export type NeuralVoice = 'ja-JP-NanamiNeural' | 'ja-JP-KeitaNeural';
 
@@ -40,4 +41,31 @@ export async function playNeural(text: string, opts?: { rate?: number; voice?: N
 
 export function stopNeural(): void {
   audioEl?.pause();
+}
+
+/** Fetches neural audio and returns a blob URL — mirrors fetchGoogleTtsAudioUrl so the shared
+ *  useTtsPlayer can drive it through its own <audio> element (with onended state, etc.). */
+export async function fetchNeuralTtsAudioUrl(text: string, rate = 1, voice?: NeuralVoice): Promise<string> {
+  const res = await fetch('/api/tts/neural', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text, rate, voice }),
+  });
+  if (!res.ok) throw new Error('neural_tts_failed');
+  return URL.createObjectURL(await res.blob());
+}
+
+/** null while checking, then whether the neural voice endpoint is available. */
+export function useNeuralTtsAvailability(): boolean | null {
+  const [available, setAvailable] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getNeuralTtsStatus().then((s) => {
+      if (!cancelled) setAvailable(s.available);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return available;
 }

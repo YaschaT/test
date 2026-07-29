@@ -11,6 +11,7 @@ import { BigPlayButton } from '../../components/listening/BigPlayButton';
 import { ListeningSessionProgress } from '../../components/listening/ListeningSessionProgress';
 import { useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
 import { getSavedVoiceMode, saveVoiceMode, useGoogleTtsAvailability, useTtsPlayer, type VoiceMode } from '../../lib/tts/ttsService';
+import { useNeuralTtsAvailability } from '../../lib/tts/neuralTts';
 import { getAutoPlayEnabled, setAutoPlayEnabled } from '../../lib/listeningPrefs';
 import { buildListeningPool, normalizeForCompare, shuffle, type ListeningItem } from '../../lib/listeningPool';
 import { recordQuizResult, useProgress } from '../../lib/progressStore';
@@ -25,13 +26,22 @@ export function ListeningHome() {
   const progress = useProgress();
   const browserVoiceAvailable = useJapaneseVoiceAvailable();
   const googleAvailable = useGoogleTtsAvailability();
+  const neuralAvailable = useNeuralTtsAvailability();
   const [voiceMode, setVoiceMode] = useState<VoiceMode>(() => getSavedVoiceMode());
   const [mode, setMode] = useState<'select' | 'dictation'>('select');
   const [speed, setSpeed] = useState<number>(1);
   const [autoPlay, setAutoPlay] = useState<boolean>(() => getAutoPlayEnabled());
   const [sessionKey, setSessionKey] = useState(0);
+  const userChoseVoice = useRef(false);
+
+  // Prefer the natural neural voice by default once we know it's available (unless the learner has
+  // picked a voice this session). It's strictly nicer than the robotic browser voice.
+  useEffect(() => {
+    if (neuralAvailable && !userChoseVoice.current && voiceMode === 'browser') setVoiceMode('neural');
+  }, [neuralAvailable, voiceMode]);
 
   function handleVoiceModeChange(next: VoiceMode) {
+    userChoseVoice.current = true;
     setVoiceMode(next);
     saveVoiceMode(next);
   }
@@ -41,7 +51,8 @@ export function ListeningHome() {
     setAutoPlayEnabled(next);
   }
 
-  const playbackAvailable = voiceMode === 'browser' ? browserVoiceAvailable : googleAvailable === true;
+  const playbackAvailable =
+    voiceMode === 'browser' ? browserVoiceAvailable : voiceMode === 'neural' ? neuralAvailable === true : googleAvailable === true;
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -64,7 +75,7 @@ export function ListeningHome() {
       )}
 
       <Card className="p-4 space-y-3">
-        <VoiceModeSelector mode={voiceMode} onChange={handleVoiceModeChange} googleAvailable={googleAvailable} />
+        <VoiceModeSelector mode={voiceMode} onChange={handleVoiceModeChange} googleAvailable={googleAvailable} neuralAvailable={neuralAvailable} />
         {voiceMode === 'browser' && <BrowserVoiceSelector />}
       </Card>
 
