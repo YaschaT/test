@@ -189,10 +189,20 @@ Verified via curl: default → `{available:false, provider:null}`; forced Ollama
 `available:false` + `request_failed` (graceful, no crash). Free-options card verified in-browser.
 `tsc`/`eslint`/`build`/`vitest` (31/31) clean. Live reply still needs the user to set up one provider.
 
-**Remaining (future batches):** extend authentic stroke order beyond the 9 starter kanji (rest use
-the font-outline fallback; full coverage would come from a KanjiVG import — **needs the user's OK to
-download that dataset**); keep growing N4/N3 vocab & kanji volume; purpose-authored
-listening/dictation banks. JLPT level tags are estimates, labelled as such.
+### Batch — N4 vocab & kanji volume (2026-07-30)
+
+Quick low-effort content batch. +14 N4 vocab (音 力 特別 相談 連絡 案内 趣味 危険 残念 会話 質問 答え
+夢 将来) and +6 N4 kanji (力 音 会 相 答 特) that reinforce them. Totals now: vocab 64/31/37,
+kanji 25/18/19. Verified/deduped against the Kaishi deck; `tsc`/`eslint`/`build`/`vitest` clean; new
+words + a kanji page verified in-browser.
+
+**Remaining (future batches):** **production deployment of the AI features** (Kai/Ollama, edge-tts,
+pykakasi are local-only — won't run on Vercel; needs a cloud provider like Groq + hosted TTS wired via
+env vars); extend authentic stroke order beyond the 9 starter kanji (rest use the font-outline
+fallback; full coverage would come from a KanjiVG import — **needs the user's OK to download that
+dataset**); keep growing N4/N3 vocab & kanji volume; purpose-authored listening/dictation banks; merge
+the open PR into main; recreate the deleted Supabase project for account sync. JLPT level tags are
+estimates, labelled as such.
 
 ---
 

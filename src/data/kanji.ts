@@ -792,6 +792,92 @@ export const KANJI_LIST: KanjiEntry[] = [
     ],
     exampleSentence: sentence([s('彼女', 'かのじょ'), s('は'), s('明', 'あか'), s('るい'), s('性格', 'せいかく'), s('です'), s('。')], 'かのじょはあかるいせいかくです。', 'Kanojo wa akarui seikaku desu.', 'She has a cheerful personality.', 'Zij heeft een vrolijk karakter.'),
   },
+
+  // Kanji — batch 6 (N4; readings & stroke counts verified against Jisho; reinforce this batch's vocab)
+  {
+    id: 'k-riki-power',
+    level: 'N4',
+    character: '力',
+    onyomi: ['リョク', 'リキ'],
+    kunyomi: ['ちから'],
+    meaning: { en: 'power, strength', nl: 'kracht' },
+    strokeCount: 2,
+    exampleWords: [
+      { word: '力', kana: 'ちから', meaning: { en: 'strength', nl: 'kracht' } },
+      { word: '努力', kana: 'どりょく', meaning: { en: 'effort', nl: 'inspanning' } },
+    ],
+    exampleSentence: sentence([s('彼', 'かれ'), s('は'), s('力', 'ちから'), s('が'), s('強', 'つよ'), s('いです'), s('。')], 'かれはちからがつよいです。', 'Kare wa chikara ga tsuyoi desu.', 'He is strong.', 'Hij is sterk.'),
+  },
+  {
+    id: 'k-on-sound',
+    level: 'N4',
+    character: '音',
+    onyomi: ['オン', 'イン'],
+    kunyomi: ['おと', 'ね'],
+    meaning: { en: 'sound, noise', nl: 'geluid, klank' },
+    strokeCount: 9,
+    exampleWords: [
+      { word: '音', kana: 'おと', meaning: { en: 'sound', nl: 'geluid' } },
+      { word: '音楽', kana: 'おんがく', meaning: { en: 'music', nl: 'muziek' } },
+    ],
+    exampleSentence: sentence([s('大', 'おお'), s('きな'), s('音', 'おと'), s('が'), s('しました'), s('。')], 'おおきなおとがしました。', 'Ookina oto ga shimashita.', 'There was a loud sound.', 'Er was een hard geluid.'),
+  },
+  {
+    id: 'k-kai-meet',
+    level: 'N4',
+    character: '会',
+    onyomi: ['カイ', 'エ'],
+    kunyomi: ['あ-う'],
+    meaning: { en: 'meet, association, society', nl: 'ontmoeten, vereniging' },
+    strokeCount: 6,
+    exampleWords: [
+      { word: '会話', kana: 'かいわ', meaning: { en: 'conversation', nl: 'gesprek' } },
+      { word: '会社', kana: 'かいしゃ', meaning: { en: 'company', nl: 'bedrijf' } },
+    ],
+    exampleSentence: sentence([s('駅', 'えき'), s('で'), s('友達', 'ともだち'), s('に'), s('会', 'あ'), s('いました'), s('。')], 'えきでともだちにあいました。', 'Eki de tomodachi ni aimashita.', 'I met a friend at the station.', 'Ik ontmoette een vriend op het station.'),
+  },
+  {
+    id: 'k-sou-mutual',
+    level: 'N4',
+    character: '相',
+    onyomi: ['ソウ', 'ショウ'],
+    kunyomi: ['あい'],
+    meaning: { en: 'mutual, phase, appearance', nl: 'wederzijds, aanblik' },
+    strokeCount: 9,
+    exampleWords: [
+      { word: '相談', kana: 'そうだん', meaning: { en: 'consultation', nl: 'overleg' } },
+      { word: '相手', kana: 'あいて', meaning: { en: 'partner, the other party', nl: 'tegenpartij, partner' } },
+    ],
+    exampleSentence: sentence([s('先生', 'せんせい'), s('に'), s('相談', 'そうだん'), s('しました'), s('。')], 'せんせいにそうだんしました。', 'Sensei ni soudan shimashita.', 'I consulted my teacher.', 'Ik heb mijn leraar om advies gevraagd.'),
+  },
+  {
+    id: 'k-tou-answer',
+    level: 'N4',
+    character: '答',
+    onyomi: ['トウ'],
+    kunyomi: ['こた-える'],
+    meaning: { en: 'answer, respond', nl: 'antwoord, antwoorden' },
+    strokeCount: 12,
+    exampleWords: [
+      { word: '答え', kana: 'こたえ', meaning: { en: 'answer', nl: 'antwoord' } },
+      { word: '返答', kana: 'へんとう', meaning: { en: 'reply', nl: 'reactie' } },
+    ],
+    exampleSentence: sentence([s('質問', 'しつもん'), s('に'), s('答', 'こた'), s('えます'), s('。')], 'しつもんにこたえます。', 'Shitsumon ni kotaemasu.', 'I answer the question.', 'Ik beantwoord de vraag.'),
+  },
+  {
+    id: 'k-toku-special',
+    level: 'N4',
+    character: '特',
+    onyomi: ['トク'],
+    kunyomi: [],
+    meaning: { en: 'special, particular', nl: 'speciaal, bijzonder' },
+    strokeCount: 10,
+    exampleWords: [
+      { word: '特別', kana: 'とくべつ', meaning: { en: 'special', nl: 'speciaal' } },
+      { word: '特に', kana: 'とくに', meaning: { en: 'especially', nl: 'vooral' } },
+    ],
+    exampleSentence: sentence([s('今日', 'きょう'), s('は'), s('特別', 'とくべつ'), s('な'), s('日', 'ひ'), s('です'), s('。')], 'きょうはとくべつなひです。', 'Kyou wa tokubetsu na hi desu.', 'Today is a special day.', 'Vandaag is een speciale dag.'),
+  },
 ];
 
 export function getKanji(id: string): KanjiEntry | undefined {
