@@ -206,6 +206,35 @@ clean; new N3 vocab + the new N3 kanji (e.g. 成 detail page) verified in-browse
 example words, furigana sentence and N3 badge all render, with the expected "stroke order not available
 yet" font-outline fallback for the uncovered kanji.
 
+### Batch — N5 vocab bulk import + speaking scenarios (2026-07-30)
+
+Big content push toward "8–9/10 content, real conversation ability". Two verified batches:
+
+- **Vocab 146 → 524** (N5 64 → 442). Bulk-imported **378 N5 words** into a new file
+  `src/data/vocabularyExtra.ts` (spread into `VOCABULARY`). Sourcing decision (user-approved):
+  word/reading/meaning are **facts from a public JLPT N5 word list** (NihongoShark cramming deck),
+  example sentences from **Tatoeba (CC BY 2.0 FR)** with the community **furigana transcriptions**
+  (so kana is human-verified, not guessed); romaji derived from those readings; pykakasi only for
+  romanisation. Quality gate: kanji headwords must appear as a **bracketed transcription token whose
+  reading matches the deck reading (rendaku-tolerant)** — this guarantees the furigana matches the
+  word *and* kills homograph mismatches (e.g. 回 "times" never matches 回す "to turn"); kana words
+  need a particle/punctuation boundary. Dutch sentence translations used where Tatoeba has one (28);
+  word-meaning `nl` falls back to the English gloss (no offline NL dictionary). Tatoeba files live in
+  the session scratchpad (`.../scratchpad/tatoeba`), generator = `gen_vocab2.py`. `tsc`/`eslint`/
+  `build`/`vitest` (31) clean; verified in-browser — 524 count, 電車 renders furigana + EN + NL.
+- **Speaking 9 → 20 role-play scenarios** (`src/data/scenarios.ts`): +making-a-friend, phone call,
+  konbini, pharmacy, post office, izakaya, hobbies, part-time interview, host-family dinner, hair
+  salon, neighbour small talk. Hand-authored natural openings (ja/kana/romaji/en) + in-character
+  `systemAddon` for Kai; file stays dependency-free (server imports it). Verified in-browser.
+
+Local resource decks discovered on the user's Desktop (`~/Desktop/Japanese 🇯🇵/`): Core2.3k,
+Kaishi 1.5k (+v2.3), JLPT Tango N5 (1000/MIA), NihongoShark N5, N5 Kanji Top 80, **Set Phrases 1**
+(205 conversational phrases — good for a shadowing phrasebook), full **Genki I** textbook+workbook
+PDFs (grammar source). All extract locally with `python3 + zstandard/sqlite3`. **Still to reach
+8–9/10 across every chapter:** more N4/N3 vocab (this batch was N5-focused per user), a conversational
+**phrasebook + offline speaking drills** (Set Phrases + shadowing that works without the AI provider),
+**grammar 30 → ~150** (Genki-based, hand-authored), and **kanji stroke order at scale** (KanjiVG).
+
 **Remaining (future batches):** **production deployment of the AI features** (Kai/Ollama, edge-tts,
 pykakasi are local-only — won't run on Vercel; needs a cloud provider like Groq + hosted TTS wired via
 env vars); extend authentic stroke order beyond the 9 starter kanji (rest use the font-outline
