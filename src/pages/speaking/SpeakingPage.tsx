@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Mic, Send, Volume2, Loader2, RotateCcw, Sparkles, Info, ChevronLeft } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { AiCore } from '../../components/speaking/AiCore';
+import { Phrasebook } from '../../components/speaking/Phrasebook';
 import { useSpeechRecognition } from '../../lib/speech';
 import {
   getCompanionStatus,
@@ -34,6 +35,7 @@ export function SpeakingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [show, setShow] = useState({ kana: false, romaji: false, en: true });
+  const [tab, setTab] = useState<'chat' | 'phrases'>('chat');
 
   const speech = useSpeechRecognition('ja-JP');
   const tts = useTtsPlayer(getSavedVoiceMode());
@@ -160,30 +162,62 @@ export function SpeakingPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Speaking with Kai</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-              Pick a real-life situation and have a spoken Japanese conversation — Kai plays the other person.
-              Talk with the mic, no multiple choice.
+              Have a spoken conversation with Kai, or practise real phrases out loud — no multiple choice.
             </p>
           </div>
         </header>
 
-        {notConfiguredCard}
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          {SCENARIOS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => pick(s)}
-              className="text-left rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 hover:border-brand-400 hover:shadow-sm transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl" aria-hidden="true">{s.emoji}</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{s.title.en}</span>
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">{s.blurb.en}</p>
-            </button>
-          ))}
+        <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-sm font-medium">
+          <button
+            type="button"
+            onClick={() => setTab('chat')}
+            className={`px-4 py-1.5 rounded-lg transition-colors ${
+              tab === 'chat' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            Conversations
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('phrases')}
+            className={`px-4 py-1.5 rounded-lg transition-colors ${
+              tab === 'phrases' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            Phrases
+          </button>
         </div>
+
+        {tab === 'phrases' ? (
+          <>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Tap a phrase to hear it and shadow the pronunciation. Turn on <em>Say it first</em> to hide the
+              Japanese and produce it from the meaning before revealing. Works offline — no AI key needed.
+            </p>
+            <Phrasebook />
+          </>
+        ) : (
+          <>
+            {notConfiguredCard}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {SCENARIOS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => pick(s)}
+                  className="text-left rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 hover:border-brand-400 hover:shadow-sm transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl" aria-hidden="true">{s.emoji}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{s.title.en}</span>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">{s.blurb.en}</p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     );
   }
