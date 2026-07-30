@@ -1,6 +1,7 @@
 import type { VocabWord } from '../types';
 import { s, sentence } from './textHelpers';
 import { VOCAB_N5_EXTRA } from './vocabularyExtra';
+import { VOCAB_N4N3_EXTRA } from './vocabularyExtraN4N3';
 
 /** Original example sentences throughout — no textbook content. */
 const VOCABULARY_CORE: VocabWord[] = [
@@ -1523,8 +1524,8 @@ const VOCABULARY_CORE: VocabWord[] = [
   },
 ];
 
-/** Core hand-authored words first, then the bulk-imported N5 set. */
-export const VOCABULARY: VocabWord[] = [...VOCABULARY_CORE, ...VOCAB_N5_EXTRA];
+/** Core hand-authored words first, then the bulk-imported N5, then N4/N3 sets. */
+export const VOCABULARY: VocabWord[] = [...VOCABULARY_CORE, ...VOCAB_N5_EXTRA, ...VOCAB_N4N3_EXTRA];
 
 export function getVocabWord(id: string): VocabWord | undefined {
   return VOCABULARY.find((w) => w.id === id);
