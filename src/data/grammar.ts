@@ -1,8 +1,9 @@
 import type { GrammarPoint } from '../types';
 import { s, sentence } from './textHelpers';
+import { GRAMMAR_EXTRA } from './grammarExtra';
 
 /** All example sentences are original, written for this app — no textbook content. */
-export const GRAMMAR_POINTS: GrammarPoint[] = [
+const GRAMMAR_CORE: GrammarPoint[] = [
   {
     id: 'desu',
     level: 'N5',
@@ -1427,6 +1428,9 @@ export const GRAMMAR_POINTS: GrammarPoint[] = [
     ],
   },
 ];
+
+/** Hand-authored core points first, then the conversation-focused installment. */
+export const GRAMMAR_POINTS: GrammarPoint[] = [...GRAMMAR_CORE, ...GRAMMAR_EXTRA];
 
 export function getGrammarPoint(id: string): GrammarPoint | undefined {
   return GRAMMAR_POINTS.find((g) => g.id === id);
