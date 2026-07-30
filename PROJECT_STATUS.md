@@ -226,6 +226,13 @@ Big content push toward "8–9/10 content, real conversation ability". Two verif
   konbini, pharmacy, post office, izakaya, hobbies, part-time interview, host-family dinner, hair
   salon, neighbour small talk. Hand-authored natural openings (ja/kana/romaji/en) + in-character
   `systemAddon` for Kai; file stays dependency-free (server imports it). Verified in-browser.
+- **Offline Phrasebook + say-it-first drill** (`src/data/phrases.ts`,
+  `src/components/speaking/Phrasebook.tsx`, new "Phrases" tab in `SpeakingPage`): 54 hand-authored
+  conversational set phrases (greetings, thanks/manners, aizuchi, asking & clarifying, shopping &
+  eating, plans) with verified kana/romaji + EN/NL. Tap to hear & shadow via the existing
+  `useTtsPlayer` (browser TTS — **works with no AI key**); "Say it first" hides the Japanese so you
+  produce it from the meaning, then reveal. This is the offline production-practice path the user
+  asked for (they chose to leave the live AI aside for now). Verified in-browser.
 
 Local resource decks discovered on the user's Desktop (`~/Desktop/Japanese 🇯🇵/`): Core2.3k,
 Kaishi 1.5k (+v2.3), JLPT Tango N5 (1000/MIA), NihongoShark N5, N5 Kanji Top 80, **Set Phrases 1**
