@@ -196,6 +196,16 @@ Quick low-effort content batch. +14 N4 vocab (音 力 特別 相談 連絡 案�
 kanji 25/18/19. Verified/deduped against the Kaishi deck; `tsc`/`eslint`/`build`/`vitest` clean; new
 words + a kanji page verified in-browser.
 
+### Batch — N3 vocab & kanji volume (2026-07-30)
+
+Two more content batches. +14 N3 vocab (解決 満足 秘密 内容 判断 提案 参加 感謝 期待 意識 成長 活動
+違う 足りる), then +8 N3 kanji (解 満 足 内 案 期 待 成) that reinforce them. Full schema on every
+item (readings, stroke counts, two example words + a sentence each). Totals now: vocab 64/31/51 (146),
+kanji 25/18/27 (70). Verified/deduped against the Kaishi deck; `tsc`/`eslint`/`build`/`vitest` (31)
+clean; new N3 vocab + the new N3 kanji (e.g. 成 detail page) verified in-browser at :5199 — readings,
+example words, furigana sentence and N3 badge all render, with the expected "stroke order not available
+yet" font-outline fallback for the uncovered kanji.
+
 **Remaining (future batches):** **production deployment of the AI features** (Kai/Ollama, edge-tts,
 pykakasi are local-only — won't run on Vercel; needs a cloud provider like Groq + hosted TTS wired via
 env vars); extend authentic stroke order beyond the 9 starter kanji (rest use the font-outline
