@@ -1,5 +1,5 @@
-import { activeProvider, callProvider, COMPANION_SYSTEM, type ChatMessage } from './_ai.ts';
-import { getScenario } from '../src/data/scenarios.ts';
+import { activeProvider, callProvider, COMPANION_SYSTEM, type ChatMessage } from './_ai.js';
+import { getScenario } from '../src/data/scenarios.js';
 
 interface ApiRequest {
   method?: string;

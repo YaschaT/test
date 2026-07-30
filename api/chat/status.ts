@@ -1,4 +1,4 @@
-import { activeProvider } from '../_ai.ts';
+import { activeProvider } from '../_ai.js';
 
 interface ApiResponse {
   status(code: number): ApiResponse;

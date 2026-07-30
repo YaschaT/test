@@ -206,6 +206,38 @@ clean; new N3 vocab + the new N3 kanji (e.g. 成 detail page) verified in-browse
 example words, furigana sentence and N3 badge all render, with the expected "stroke order not available
 yet" font-outline fallback for the uncovered kanji.
 
+### Batch — N4/N3 vocab, grammar installment, live-deploy + serverless AI (2026-07-30)
+
+- **Vocab 524 → 1024** (N4 31 → 291, N3 51 → 291). `src/data/vocabularyExtraN4N3.ts` (gen_n4n3.py):
+  facts from the **Core 2.3k** frequency deck; JLPT level **estimated by frequency band** (deck has no
+  tags), labelled in the header. Same Tatoeba human-furigana + reading-match gate as the N5 import.
+- **Grammar 30 → 42.** `src/data/grammarExtra.ts` (spread into `GRAMMAR_POINTS`): 12 conversation-first
+  points — 8 N5 (ましょう, ませんか, が好き, てから, ています, ないでください, ほうがいい, より〜のほうが),
+  4 N4 (ば, と, なら, てみる), full schema each. Hand-authored, original examples.
+- **Deployed live** to Vercel (`https://test-ten-jade-63.vercel.app/`) by fast-forwarding `main`.
+- **Serverless AI** (`api/chat.ts`, `api/chat/status.ts`, `api/_ai.ts`; `tsconfig.node` includes `api/`):
+  the deployed site is static-only, so `/api/chat*` was 404 and Kai read "not configured" live. These
+  Vercel functions port the fetch providers (Groq/Gemini/Anthropic) from `server/`. **Ollama, pykakasi
+  furigana and edge-tts neural voice stay local-only** — live replies are ja+en(+feedback), browser TTS
+  for audio. **Still needs the USER to set env vars in the Vercel dashboard:** `GROQ_API_KEY`
+  (+ optional `AI_PROVIDER=groq`) for Kai, and `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (already in
+  local `.env`) for login — the live bundle currently has no Supabase config baked in, so accounts are
+  disabled. Claude cannot set secrets / access the Vercel dashboard.
+
+### Fix — serverless functions crashed on the live deploy (2026-07-30)
+
+The just-shipped Vercel functions were returning **`FUNCTION_INVOCATION_FAILED`** on the live site for
+*both* `/api/chat` and `/api/chat/status` (verified via curl against the production URL). Root cause: with
+`"type": "module"` in `package.json`, the handlers imported their siblings with **explicit `.ts`
+extensions** (`from './_ai.ts'`, `from '../src/data/scenarios.ts'`) — Vercel's Node runtime serves the
+compiled `.js`, so `./_ai.ts` doesn't exist at runtime and the module fails to load *before* the handler
+body runs (which is why even `status.ts`, that only reads env vars, crashed). Fixed by importing with
+**`.js` extensions** (`./_ai.js`, `../src/data/scenarios.js`) — the canonical nodenext-ESM pattern:
+TypeScript resolves `.js` → the `.ts` source (so `tsc -b` stays clean), and Vercel resolves it at runtime.
+`scenarios.ts` is dependency-free, so the whole `api/` graph now resolves. `tsc`/`eslint`/`build`/`vitest`
+(31) clean. The functions still report `available:false` until the user sets `GROQ_API_KEY` in Vercel — but
+they no longer 500; status now returns a clean JSON `{available:false, provider:null}` instead of crashing.
+
 ### Batch — N5 vocab bulk import + speaking scenarios (2026-07-30)
 
 Big content push toward "8–9/10 content, real conversation ability". Two verified batches:
