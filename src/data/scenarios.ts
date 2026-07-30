@@ -156,6 +156,160 @@ export const SCENARIOS: Scenario[] = [
     systemAddon:
       'ROLE-PLAY: You are a kind Japanese doctor at a small clinic and the learner is a patient. Stay in character: ask about their symptoms (どうしましたか, どこがいたいですか, ねつ, せき), how long, then give simple advice and mention medicine (くすり). Keep vocabulary gentle and simple.',
   },
+  {
+    id: 'jikoshoukai',
+    emoji: '🤝',
+    title: { en: 'Making a new friend', nl: 'Een nieuwe vriend maken' },
+    blurb: { en: 'Introduce yourself and get to know someone.', nl: 'Stel jezelf voor en leer iemand kennen.' },
+    opening: {
+      ja: 'はじめまして！わたし、あたらしくここにきたんです。おなまえは？',
+      kana: 'はじめまして！わたし、あたらしくここにきたんです。おなまえは？',
+      romaji: 'Hajimemashite! Watashi, atarashiku koko ni kita n desu. Onamae wa?',
+      en: "Nice to meet you! I'm new here. What's your name?",
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a friendly Japanese person meeting the learner for the first time at a party or school. Stay in character: exchange self-introductions, ask their name, where they are from (どこからきましたか), what they do, and their hobbies (しゅみ). Use polite-casual です／ます and keep it warm and simple.',
+  },
+  {
+    id: 'phone',
+    emoji: '📞',
+    title: { en: 'A phone call with a friend', nl: 'Bellen met een vriend' },
+    blurb: { en: 'Catch up and make weekend plans.', nl: 'Bijpraten en weekendplannen maken.' },
+    opening: {
+      ja: 'もしもし！ひさしぶり！げんき？こんどのしゅうまつ、ひまある？',
+      kana: 'もしもし！ひさしぶり！げんき？こんどのしゅうまつ、ひまある？',
+      romaji: 'Moshi moshi! Hisashiburi! Genki? Kondo no shuumatsu, hima aru?',
+      en: 'Hey! Long time no talk! How are you? Are you free this weekend?',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a close friend phoning the learner to make weekend plans. Stay in character: suggest activities (えいが, ごはん, かいもの), agree on a day, time and place to meet. Use casual speech and keep it warm and easy.',
+  },
+  {
+    id: 'konbini',
+    emoji: '🏪',
+    title: { en: 'At the convenience store', nl: 'In de buurtwinkel' },
+    blurb: { en: 'Pay, and handle the little questions at the register.', nl: 'Afrekenen en de kleine vragen aan de kassa.' },
+    opening: {
+      ja: 'いらっしゃいませ。おべんとう、あたためますか？',
+      kana: 'いらっしゃいませ。おべんとう、あたためますか？',
+      romaji: 'Irasshaimase. Obentou, atatamemasu ka?',
+      en: 'Welcome. Shall I heat up your bento?',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a convenience-store (コンビニ) clerk and the learner is a customer buying a few things. Stay in character: ask whether to heat the bento (あたため), if they need a bag (ふくろ) or chopsticks (おはし), tell them the total, and handle payment (げんきん／カード). Keep it quick and realistic.',
+  },
+  {
+    id: 'pharmacy',
+    emoji: '💊',
+    title: { en: 'At the pharmacy', nl: 'Bij de apotheek' },
+    blurb: { en: 'Describe a symptom and get the right medicine.', nl: 'Beschrijf een klacht en krijg het juiste medicijn.' },
+    opening: {
+      ja: 'いらっしゃいませ。どうされましたか？',
+      kana: 'いらっしゃいませ。どうされましたか？',
+      romaji: 'Irasshaimase. Dou saremashita ka?',
+      en: 'Hello. How can I help you?',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a pharmacist and the learner needs medicine. Stay in character: ask about symptoms (かぜ, ずつう, せき, はなみず), recommend a medicine (くすり), explain how many times a day to take it (いちにちなんかい) and the price. Keep it gentle and simple.',
+  },
+  {
+    id: 'post',
+    emoji: '📮',
+    title: { en: 'At the post office', nl: 'Bij het postkantoor' },
+    blurb: { en: 'Send a letter or parcel abroad.', nl: 'Een brief of pakket naar het buitenland sturen.' },
+    opening: {
+      ja: 'いらっしゃいませ。きょうはどんなごようですか？',
+      kana: 'いらっしゃいませ。きょうはどんなごようですか？',
+      romaji: 'Irasshaimase. Kyou wa donna goyou desu ka?',
+      en: 'Welcome. What can I do for you today?',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a post-office clerk and the learner wants to send a letter or parcel. Stay in character: ask the destination country (くに), whether regular or express (ふつう／そくたつ), tell them the postage, and offer stamps (きって). Keep it simple.',
+  },
+  {
+    id: 'izakaya',
+    emoji: '🍶',
+    title: { en: 'Drinks with friends', nl: 'Borrelen met vrienden' },
+    blurb: { en: 'Relax at an izakaya after work — casual speech.', nl: 'Ontspannen in een izakaya na het werk — informeel.' },
+    opening: {
+      ja: 'おつかれさま！とりあえずビールでいい？なにたべたい？',
+      kana: 'おつかれさま！とりあえずビールでいい？なにたべたい？',
+      romaji: 'Otsukaresama! Toriaezu biiru de ii? Nani tabetai?',
+      en: 'Good work today! Shall we start with a beer? What do you want to eat?',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are the learner\'s friend at an izakaya (いざかや) after work or school. Stay in character and use casual speech: suggest drinks and small dishes (えだまめ, からあげ), make a toast (かんぱい), and chat about the day. Keep it fun and easy.',
+  },
+  {
+    id: 'hobbies',
+    emoji: '🎨',
+    title: { en: 'Talking about hobbies', nl: "Praten over hobby's" },
+    blurb: { en: 'Share what you like and find things in common.', nl: 'Deel wat je leuk vindt en vind overeenkomsten.' },
+    opening: {
+      ja: 'ねえ、しゅみはなに？わたしはえいががすきなんだ。',
+      kana: 'ねえ、しゅみはなに？わたしはえいががすきなんだ。',
+      romaji: 'Nee, shumi wa nani? Watashi wa eiga ga suki nanda.',
+      en: 'Hey, what are your hobbies? I love movies.',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a friend chatting with the learner about hobbies and free time. Stay in character: ask what they like (すきなこと) — sports, music, movies, food — share your own, and find something in common. Casual and encouraging.',
+  },
+  {
+    id: 'baito',
+    emoji: '💼',
+    title: { en: 'A part-time job interview', nl: 'Sollicitatie voor een bijbaan' },
+    blurb: { en: 'Introduce yourself and talk about availability.', nl: 'Stel jezelf voor en bespreek je beschikbaarheid.' },
+    opening: {
+      ja: 'どうぞおかけください。では、じこしょうかいをおねがいします。',
+      kana: 'どうぞおかけください。では、じこしょうかいをおねがいします。',
+      romaji: 'Douzo okake kudasai. Dewa, jikoshoukai o onegai shimasu.',
+      en: 'Please have a seat. Now, could you introduce yourself?',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a manager interviewing the learner for a part-time job (アルバイト) at a café or shop. Stay in character: ask for a self-introduction, their availability (なんようび, なんじ), any experience, and why they want the job. Be polite, friendly and not too hard.',
+  },
+  {
+    id: 'homestay',
+    emoji: '🏠',
+    title: { en: 'Dinner with a host family', nl: 'Eten bij het gastgezin' },
+    blurb: { en: 'Chat over dinner and learn table manners.', nl: 'Kletsen tijdens het eten en tafelmanieren leren.' },
+    opening: {
+      ja: 'おかえりなさい！ばんごはん、できてるよ。おなかすいた？',
+      kana: 'おかえりなさい！ばんごはん、できてるよ。おなかすいた？',
+      romaji: 'Okaerinasai! Bangohan, dekiteru yo. Onaka suita?',
+      en: "Welcome home! Dinner's ready. Are you hungry?",
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a warm Japanese host-family parent and the learner is your homestay student coming home for dinner. Stay in character: ask about their day, offer more food (おかわり), and gently teach table phrases (いただきます／ごちそうさま). Kind, homely and simple.',
+  },
+  {
+    id: 'hair',
+    emoji: '💇',
+    title: { en: 'At the hair salon', nl: 'Bij de kapper' },
+    blurb: { en: 'Explain the haircut you want.', nl: 'Leg uit welk kapsel je wilt.' },
+    opening: {
+      ja: 'いらっしゃいませ。きょうはどうなさいますか？',
+      kana: 'いらっしゃいませ。きょうはどうなさいますか？',
+      romaji: 'Irasshaimase. Kyou wa dou nasaimasu ka?',
+      en: 'Welcome. What would you like done today?',
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a hairdresser and the learner is a customer. Stay in character: ask what they want (カット, みじかく, パーマ), how much to cut off, make a little small talk, then finish and take payment. Keep it friendly and simple.',
+  },
+  {
+    id: 'neighbour',
+    emoji: '🌤️',
+    title: { en: 'Small talk with a neighbour', nl: 'Praatje met de buren' },
+    blurb: { en: 'Weather and daily-life chat — natural aizuchi.', nl: 'Weer en dagelijks leven — natuurlijke aizuchi.' },
+    opening: {
+      ja: 'あ、こんにちは！きょうはいいてんきですね。',
+      kana: 'あ、こんにちは！きょうはいいてんきですね。',
+      romaji: 'A, konnichiwa! Kyou wa ii tenki desu ne.',
+      en: "Oh, hello! Nice weather today, isn't it?",
+    },
+    systemAddon:
+      'ROLE-PLAY: You are a friendly neighbour making small talk with the learner outside. Stay in character: talk about the weather (あつい／さむい／あめ), the season, and daily life. Use polite-casual speech and natural aizuchi (そうですね, ほんとうに). Keep turns short and natural.',
+  },
 ];
 
 export function getScenario(id: string): Scenario | undefined {
