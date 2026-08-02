@@ -359,6 +359,31 @@ ids resolve, so it stays green. `tsc`/`eslint`/`build`/`vitest` (31) clean; veri
 expanding week 19 on `/path` now shows a **Reading 0/1** chip that wasn't there before, zero console
 errors.
 
+### Batch — authentic stroke order for all 130 kanji via KanjiVG (2026-08-02)
+
+Closed the last kanji gap. Previously only 9 hand-authored kanji had numbered stroke order; the
+other 121 fell back to a font-outline guide + "not available yet" note. With the user's explicit OK
+to download, imported **KanjiVG** (per-kanji SVGs, one `<path>` per stroke in writing order on a
+109×109 canvas) for **all 130** kanji in `KANJI_LIST`.
+
+Pipeline (all local, python3, no runtime deps): downloaded the 130 SVGs by codepoint, parsed each
+stroke's cubic-bezier `d`, sampled it into points, simplified (Douglas–Peucker ε≈0.8), rescaled
+109→0–100, and emitted the app's existing `Stroke[]` polyline format. This **reuses the entire
+render pipeline unchanged** — `StrokeOrderDiagram` (numbered + animated draw), `WritingPractice`
+(See→Trace→Copy→Recall), `KanjiCanvas` overlay — no component edits. `src/data/strokeOrder.ts`
+regenerated in full (9 hand entries → 130 authentic; ~34 KB). A validation pass confirmed **all 130
+KanjiVG stroke counts match the declared `strokeCount`** (0 mismatches), so `strokeOrder.test.ts`
+(which asserts exactly that + on-grid points) now green-covers every kanji.
+
+**Licence:** KanjiVG is CC BY-SA 3.0. Added attribution in the file header + new
+`docs/kanjivg-attribution.md`, and the derived stroke-data file is marked as inheriting CC BY-SA 3.0
+(share-alike). No KanjiVG files are redistributed verbatim — only the transformed polylines.
+
+`tsc`/`eslint`/`build`/`vitest` (31) clean; verified in-browser — 説 (previously uncovered) now
+auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exactly 14 stroke paths,
+the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
+UI for any future kanji added without stroke data.
+
 ---
 
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names
