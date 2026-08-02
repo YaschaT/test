@@ -1,7 +1,8 @@
 import type { KanjiEntry } from '../types';
 import { s, sentence } from './textHelpers';
+import { KANJI_EXTRA } from './kanjiExtra';
 
-export const KANJI_LIST: KanjiEntry[] = [
+const KANJI_CORE: KanjiEntry[] = [
   {
     id: 'k-hi',
     level: 'N5',
@@ -991,6 +992,8 @@ export const KANJI_LIST: KanjiEntry[] = [
     exampleSentence: sentence([s('子供', 'こども'), s('が'), s('大', 'おお'), s('きく'), s('成長', 'せいちょう'), s('しました'), s('。')], 'こどもがおおきくせいちょうしました。', 'Kodomo ga ookiku seichou shimashita.', 'The child has grown up a lot.', 'Het kind is flink gegroeid.'),
   },
 ];
+
+export const KANJI_LIST: KanjiEntry[] = [...KANJI_CORE, ...KANJI_EXTRA];
 
 export function getKanji(id: string): KanjiEntry | undefined {
   return KANJI_LIST.find((k) => k.id === id);

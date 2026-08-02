@@ -282,6 +282,20 @@ dataset**); keep growing N4/N3 vocab & kanji volume; purpose-authored listening/
 the open PR into main; recreate the deleted Supabase project for account sync. JLPT level tags are
 estimates, labelled as such.
 
+### Batch — core N5 kanji volume (2026-08-02)
+
+Rebalanced the thinnest skill. Kanji was **70 entries against ~1,024 vocab words**, and 20 of the
+most essential **N5 kanji were missing entirely** even though hundreds of N5 vocab lean on them
+(time/date, people, body, transport, basic verbs). Added them in a new `src/data/kanjiExtra.ts`
+(`KANJI_EXTRA`, spread into `KANJI_LIST` alongside the renamed `KANJI_CORE`, same pattern as the
+vocab-extra files): **時 間 分 前 後 半 気 天 車 電 男 女 子 国 語 名 手 目 口 立**. Each has authentic
+on/kun readings, stroke count, two example words (kana + EN/NL), and a furigana-segmented example
+sentence with romaji + EN/NL. No id or character collisions with the existing 70. Kanji total
+**70 → 90** (N5 25 → 45). `tsc`/`eslint`/`build`/`vitest` (31) all clean; verified in-browser —
+kanji list header reads **0 / 90**, the 時 detail page renders readings/example words/furigana
+sentence, and (as expected) uncovered kanji still show the honest "numbered stroke order isn't
+available yet" fallback — that gap is the blocked **KanjiVG** batch. Zero console errors.
+
 ---
 
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names
