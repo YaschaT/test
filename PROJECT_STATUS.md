@@ -321,6 +321,28 @@ Kanji this session: **70 → 130 (+60)** across three batches (core N5, daily-li
 N3). Authentic numbered stroke order still covers only the original 9 kanji — the rest use the
 font-outline fallback until the **KanjiVG** import (still needs the user's OK to download).
 
+### Batch — graded reading passages (2026-08-02)
+
+Readings were the most underweight content type (7, vs ~1,024 vocab / 130 kanji / 126 grammar).
+Added **4 original passages** (`src/data/readings.ts`) that reinforce this session's new kanji and
+existing grammar, each with furigana + romaji + EN/NL per sentence, valid vocab/grammar highlight
+links, and 3 comprehension questions:
+- `r-my-town` (N5, easy) — town/places kanji 町駅銀行病院図書館学校電車; grammar ますでした. Links
+  v-byouin/v-densha/v-toshokan/v-benri.
+- `r-studying-japanese` (N4, medium) — 勉強/漢字/教室/質問/試験, potential form + と思う. Links
+  v-benkyou/v-shitsumon/v-shiken · n4-potential/n4-to-omou.
+- `r-healthy-life` (N3, medium) — 運動/体重/増える/減る/走る, 〜ようになる + 〜ば〜ほど. Links
+  v-undou/v-fueru/v-heru/v-genki · n3-you-ni-naru/n3-ba-hodo.
+- `r-part-time-job` (N3, hard) — 働く/仕事/店長/忙しい, 〜ために + passive (任される) + おかげで.
+  Links v-shigoto/v-isha · n3-tame-ni/n3-passive/n3-okage-sei.
+
+Readings **7 → 11** (N5 3 / N4 4 / N3 4). A node check confirmed every cited vocab/grammar
+highlight id resolves (so the "Vocabulary in this passage" count stays honest). `tsc`/`eslint`/
+`build`/`vitest` (31) clean; verified in-browser — Reading list shows all 11, the A Healthy Life
+passage renders furigana, both grammar chips (〜ようになる · 〜ば〜ほど) and all 4 resolved vocab
+highlights, zero console errors. Not yet wired into the roadmap weeks (available in the Reading
+section) — an optional low-risk follow-up.
+
 ---
 
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names
