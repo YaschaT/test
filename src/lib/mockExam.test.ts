@@ -5,8 +5,8 @@ import {
   EXAM_CONFIG,
   examTotal,
   MOCK_SECTIONS,
-  PASS_THRESHOLD,
-  scoreExam,
+  SCORING,
+  scoreExamOfficial,
 } from './mockExam';
 
 describe('mock exam builder', () => {
@@ -19,7 +19,7 @@ describe('mock exam builder', () => {
         expect(exam.length).toBe(examTotal(config));
       });
 
-      it('fills every section to its configured count', () => {
+      it('fills every section (incl. listening) to its configured count', () => {
         for (const section of MOCK_SECTIONS) {
           const n = exam.filter((q) => q.section === section).length;
           expect(n, `${level} ${section}`).toBe(config.perSection[section]);
@@ -36,28 +36,46 @@ describe('mock exam builder', () => {
         }
       });
 
-      it('keeps sections in a stable order (vocab → kanji → grammar → reading)', () => {
+      it('gives listening questions audio and no visible japanese', () => {
+        for (const q of exam.filter((x) => x.section === 'listening')) {
+          expect(q.audioText, `${q.id} has audioText`).toBeTruthy();
+          expect(q.japanese, `${q.id} hides the transcript`).toBeUndefined();
+        }
+      });
+
+      it('keeps sections in official order (vocab → kanji → grammar → reading → listening)', () => {
         const order = exam.map((q) => MOCK_SECTIONS.indexOf(q.section));
-        const sorted = [...order].sort((a, b) => a - b);
-        expect(order).toEqual(sorted);
+        expect(order).toEqual([...order].sort((a, b) => a - b));
       });
     });
   }
+});
 
-  it('scores a fully-correct exam as 100% and a passing result', () => {
+describe('official JLPT scoring', () => {
+  it('scores a fully-correct exam as 180/180 and an official pass', () => {
     const exam = buildMockExam('N5');
     const answers = exam.map((q) => q.correctIndex);
-    const { correct, total, bySection } = scoreExam(exam, answers);
-    expect(correct).toBe(total);
-    expect(correct / total).toBeGreaterThanOrEqual(PASS_THRESHOLD);
-    expect(bySection.reduce((n, s) => n + s.total, 0)).toBe(total);
+    const r = scoreExamOfficial('N5', exam, answers);
+    expect(r.scaled).toBe(180);
+    expect(r.passed).toBe(true);
+    expect(r.sections.every((s) => s.passed)).toBe(true);
   });
 
-  it('counts unanswered questions as wrong', () => {
+  it('scores an all-blank exam as 0 and a fail', () => {
     const exam = buildMockExam('N4');
-    const answers = exam.map(() => null);
-    const { correct, total } = scoreExam(exam, answers);
-    expect(correct).toBe(0);
-    expect(total).toBe(exam.length);
+    const r = scoreExamOfficial('N4', exam, exam.map(() => null));
+    expect(r.scaled).toBe(0);
+    expect(r.passed).toBe(false);
+  });
+
+  it('fails on a sectional minimum even when the overall mark is met', () => {
+    const exam = buildMockExam('N3');
+    // Everything correct except the whole listening section → listening scaled 0 (< 19).
+    const answers = exam.map((q) => (q.section === 'listening' ? (q.correctIndex + 1) % q.options.length : q.correctIndex));
+    const r = scoreExamOfficial('N3', exam, answers);
+    expect(r.scaled).toBeGreaterThanOrEqual(SCORING.N3.overallPass); // overall mark cleared
+    expect(r.passed).toBe(false); // but a section fell short
+    expect(r.failedOnSection).toBe(true);
+    expect(r.sections.find((s) => s.key === 'listening')!.passed).toBe(false);
   });
 });

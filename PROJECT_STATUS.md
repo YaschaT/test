@@ -2689,3 +2689,34 @@ question palette, flag), the finish-confirm dialog, and the results screen (ambe
 "Not quite yet" verdict, section bars, personal-best + XP pills, answer review) — zero console errors. The
 fail path correctly shows **no** confetti (calm-not-carnival). The pass path is the same components with a
 green ring, "You passed!" copy, and the confetti burst.
+
+### Mock Exam — official JLPT alignment + listening + UX fixes (2026-08-02)
+
+Reworked the mock exam to follow the **official JLPT** format & scoring (sourced from jlpt.jp: the
+test-sections and pass-mark pages), keeping our own original questions (official items are copyrighted).
+
+- **Official 0–180 scaled scoring** (`src/lib/mockExam.ts`, `scoreExamOfficial`): each scoring section's
+  raw accuracy maps onto its real range, and passing now requires the **overall pass mark AND every
+  sectional minimum** — N5 80/180 (≥38/120, ≥19/60), N4 90/180 (same), N3 95/180 (≥19 in each of three
+  0–60 sections). A section can drag a high total to a fail (`failedOnSection`), exactly like the real test.
+- **Official section grouping:** N5/N4 combine Language Knowledge (Vocab/Grammar) + Reading into one
+  0–120 section + Listening 0–60; N3 splits Language Knowledge / Reading / Listening (0–60 each).
+- **New Listening section:** hears a same-level example sentence (browser TTS via `useTtsPlayer`), pick the
+  meaning; transcript is hidden with a "show transcript" fallback for no-audio browsers. Auto-plays once.
+- **Official timing** shown for reference (N5 90m / N4 115m / N3 140m); our condensed paper keeps a
+  proportionate clock. Lobby states the scoring rule; footer credits jlpt.jp, notes questions are original.
+- Results is now an **official-style score report:** scaled /180 ring with the pass-mark tick, per-scoring-
+  section scaled scores + sectional pass/fail chips with the minimum marked on each bar, plus a raw
+  content breakdown. Persistence switched to `bestScore` (0–180) + official `passed`.
+
+**UX/UI audit fixes (mobile):**
+- **Bottom nav** was squashing 9 items (`flex-1`) into overlapping labels; now each item has a fixed
+  readable width and the bar scrolls horizontally (`Layout.tsx`).
+- **Exam timer was hidden** on mobile: the exam's `sticky top-0` header collided with the app's mobile
+  header (`h-14 sticky top-0`); changed to `top-14 md:top-0`, and `begin()` scrolls to top so the section
+  eyebrow isn't clipped.
+
+`tsc`/`eslint`/`build`/`vitest` (49, +3 official-scoring/listening tests) clean. Verified in-browser on
+desktop and mobile, light + dark: lobby (official format), runtime (listening play + transcript fallback,
+visible timer), and the official score report (scaled 10/180 example, sectional "needs 38 / needs 19"
+chips). Zero runtime console errors (earlier PASS_THRESHOLD entries were stale mid-edit HMR).

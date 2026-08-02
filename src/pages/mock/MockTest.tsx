@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import type { JlptLevel } from '../../types';
-import { buildMockExam, scoreExam, PASS_THRESHOLD, type MockQuestion } from '../../lib/mockExam';
+import { buildMockExam, scoreExamOfficial, EXAM_CONFIG, type MockQuestion } from '../../lib/mockExam';
 import { getProgressSnapshot, recordMockExamResult, useProgress } from '../../lib/progressStore';
 import { ExamLobby } from '../../components/mock/ExamLobby';
 import { ExamRuntime } from '../../components/mock/ExamRuntime';
 import { ExamResults } from '../../components/mock/ExamResults';
-import { EXAM_CONFIG } from '../../lib/mockExam';
 
 type Phase = 'lobby' | 'exam' | 'results';
 
@@ -16,9 +15,9 @@ interface FinishedExam {
 }
 
 /**
- * JLPT mock-exam flow: a self-contained state machine (lobby → timed exam → results). The lobby picks a
- * level and shows real best scores; the runtime owns the in-exam interaction and clock; on submit we score
- * it, record the attempt (which also logs a `mock-test` QuizResult so XP updates), and show the breakdown.
+ * JLPT mock-exam flow: a self-contained state machine (lobby → timed exam → results). Scored on the
+ * official JLPT model (scaled 0–180, overall pass mark + sectional minimums; see mockExam.ts). Each
+ * attempt is recorded (which also logs a `mock-test` QuizResult so XP updates).
  */
 export function MockTest() {
   const progress = useProgress();
@@ -31,15 +30,15 @@ export function MockTest() {
     setQuestions(buildMockExam(level));
     setFinished(null);
     setPhase('exam');
+    window.scrollTo({ top: 0 });
   }
 
   function finish(answers: (number | null)[]) {
-    const { correct, total } = scoreExam(questions, answers);
-    const percent = total > 0 ? correct / total : 0;
+    const result = scoreExamOfficial(level, questions, answers);
     // Capture the prior best before recording so we can flag a genuine improvement.
-    const previousBest = getProgressSnapshot().mockExams[level]?.bestPercent ?? -1;
-    recordMockExamResult(level, correct, total, PASS_THRESHOLD);
-    setFinished({ questions, answers, isNewBest: percent > previousBest });
+    const previousBest = getProgressSnapshot().mockExams[level]?.bestScore ?? -1;
+    recordMockExamResult(level, result.correct, result.rawTotal, result.scaled, result.passed);
+    setFinished({ questions, answers, isNewBest: result.scaled > previousBest });
     setPhase('results');
     window.scrollTo({ top: 0 });
   }

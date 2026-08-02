@@ -1,4 +1,4 @@
-import { Layers, PenLine, BookOpen, ScrollText, type LucideIcon } from 'lucide-react';
+import { Layers, PenLine, BookOpen, ScrollText, Headphones, type LucideIcon } from 'lucide-react';
 import type { MockSection } from '../../lib/mockExam';
 
 /**
@@ -39,5 +39,11 @@ export const SECTION_THEME: Record<MockSection, SectionTheme> = {
     hex: '#f59e0b',
     chip: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
     text: 'text-amber-600 dark:text-amber-300',
+  },
+  listening: {
+    icon: Headphones,
+    hex: '#e8735c',
+    chip: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+    text: 'text-rose-600 dark:text-rose-300',
   },
 };

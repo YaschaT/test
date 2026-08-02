@@ -203,8 +203,10 @@ export function Layout() {
           <Outlet />
         </main>
 
+        {/* Many destinations (9) don't fit a fixed mobile bar, so each item keeps a readable fixed
+            width and the bar scrolls horizontally instead of squashing the labels into each other. */}
         <nav
-          className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex overflow-x-auto"
+          className="md:hidden fixed bottom-0 inset-x-0 z-30 flex overflow-x-auto border-t border-slate-200 bg-white/95 backdrop-blur [scrollbar-width:none] dark:border-slate-800 dark:bg-slate-900/95 [&::-webkit-scrollbar]:hidden"
           aria-label="Main navigation"
         >
           {NAV_ITEMS.map((item) => (
@@ -213,13 +215,13 @@ export function Layout() {
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 py-2 text-[11px] font-medium ${
+                `flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1 px-1 py-2 text-center text-[11px] font-medium leading-tight ${
                   isActive ? 'text-brand-600 dark:text-brand-300' : 'text-slate-500 dark:text-slate-400'
                 }`
               }
             >
               <item.icon size={18} aria-hidden="true" />
-              {item.label.en}
+              <span className="w-full">{item.label.en}</span>
             </NavLink>
           ))}
         </nav>

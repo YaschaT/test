@@ -42,9 +42,9 @@ export interface ProgressState {
 }
 
 export interface MockExamRecord {
-  /** Best accuracy (0..1) ever achieved on this level's mock exam. */
-  bestPercent: number;
-  /** Whether the best result cleared the pass threshold. */
+  /** Best scaled score (0..180, official JLPT scale) ever achieved on this level's mock exam. */
+  bestScore: number;
+  /** Whether that best result was an official pass (overall mark + every sectional minimum). */
   passed: boolean;
   attempts: number;
   lastAttempt: string;
@@ -216,18 +216,17 @@ export function recordCheckpointResult(week: number, correct: number, total: num
 }
 
 /**
- * Records a mock-exam attempt: keeps the learner's best accuracy + pass status for that level, and
- * logs a `mock-test` QuizResult so its correct answers feed the derived XP score like any other quiz.
+ * Records a mock-exam attempt on the official JLPT scale: keeps the learner's best scaled score (0–180)
+ * and pass status for that level, and logs a `mock-test` QuizResult so its correct answers feed the
+ * derived XP score like any other quiz. `passed` reflects the full official rule (overall + sectionals).
  */
-export function recordMockExamResult(level: JlptLevel, correct: number, total: number, passThreshold: number) {
+export function recordMockExamResult(level: JlptLevel, correct: number, total: number, scaled: number, passed: boolean) {
   if (total <= 0) return;
-  const accuracy = correct / total;
   setState((s) => {
     const prev = s.mockExams[level];
-    const bestPercent = Math.max(prev?.bestPercent ?? 0, accuracy);
     const record: MockExamRecord = {
-      bestPercent,
-      passed: bestPercent >= passThreshold,
+      bestScore: Math.max(prev?.bestScore ?? 0, scaled),
+      passed: (prev?.passed ?? false) || passed,
       attempts: (prev?.attempts ?? 0) + 1,
       lastAttempt: todayIso(),
     };

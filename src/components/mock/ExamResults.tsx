@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Sparkles, RotateCcw, ChevronDown, Check, X as XIcon, Minus } from 'lucide-react';
 import type { JlptLevel } from '../../types';
 import type { MockQuestion } from '../../lib/mockExam';
-import { PASS_THRESHOLD, SECTION_LABEL, scoreExam } from '../../lib/mockExam';
+import { SECTION_LABEL, scoreByContent, scoreExamOfficial } from '../../lib/mockExam';
 import { SECTION_THEME } from './examTheme';
 import { ScoreRing } from './ScoreRing';
 import { Mascot } from '../Mascot';
@@ -26,9 +26,9 @@ function prefersReducedMotion(): boolean {
 }
 
 export function ExamResults({ level, questions, answers, isNewBest, onRetake, onExit }: ExamResultsProps) {
-  const { correct, total, bySection } = scoreExam(questions, answers);
-  const percent = total > 0 ? correct / total : 0;
-  const passed = percent >= PASS_THRESHOLD;
+  const result = scoreExamOfficial(level, questions, answers);
+  const content = scoreByContent(questions, answers);
+  const { scaled, total, overallPass, passed, failedOnSection, correct } = result;
   const xpEarned = correct * XP_RULES.quizCorrectAnswer;
   const confettiRef = useRef<HTMLDivElement>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -56,6 +56,13 @@ export function ExamResults({ level, questions, answers, isNewBest, onRetake, on
   }, [passed]);
 
   const ringColor = passed ? '#10b981' : '#f59e0b';
+  const shortfall = overallPass - scaled;
+
+  const subtitle = passed
+    ? { en: 'You cleared the overall mark and every section — strong work.', nl: 'Je haalde de totaalgrens én elke sectie — knap werk.' }
+    : failedOnSection
+      ? { en: 'Your total was high enough, but one section fell below its minimum.', nl: 'Je totaal was hoog genoeg, maar één sectie bleef onder het minimum.' }
+      : { en: `${shortfall} point${shortfall === 1 ? '' : 's'} short of the ${overallPass}/${total} pass mark. Keep at it.`, nl: `${shortfall} punt${shortfall === 1 ? '' : 'en'} onder de slaaggrens van ${overallPass}/${total}. Blijf oefenen.` };
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -68,21 +75,20 @@ export function ExamResults({ level, questions, answers, isNewBest, onRetake, on
           {level} Mock Exam
         </p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-          {passed ? 'You passed!' : 'Not quite yet'}
+          {passed ? 'You passed!' : failedOnSection ? 'So close' : 'Not quite yet'}
         </h1>
-        <p className="mt-1.5 text-slate-500 dark:text-slate-400">
-          {passed ? 'Above the 60% pass line — strong work.' : `${Math.round((PASS_THRESHOLD - percent) * 100)}% short of the 60% pass line. Keep at it.`}
-          <span className="mt-0.5 block text-sm text-slate-400 dark:text-slate-500">
-            {passed ? 'Boven de slaaggrens van 60% — knap werk.' : 'Nog niet over de slaaggrens van 60%. Blijf oefenen.'}
-          </span>
+        <p className="mx-auto mt-1.5 max-w-md text-slate-500 dark:text-slate-400">
+          {subtitle.en}
+          <span className="mt-0.5 block text-sm text-slate-400 dark:text-slate-500">{subtitle.nl}</span>
         </p>
       </div>
 
-      {/* Score ring */}
+      {/* Scaled score ring (0–180, official scale) */}
       <div className="mt-6 flex flex-col items-center">
-        <ScoreRing percent={percent} color={ringColor} threshold={PASS_THRESHOLD} size={208}>
-          <span className="text-5xl font-bold tabular-nums text-slate-900 dark:text-white">{Math.round(percent * 100)}%</span>
-          <span className="mt-1 text-sm font-medium text-slate-400 dark:text-slate-500">{correct} / {total} correct</span>
+        <ScoreRing percent={scaled / total} color={ringColor} threshold={overallPass / total} size={208}>
+          <span className="text-5xl font-bold tabular-nums text-slate-900 dark:text-white">{scaled}</span>
+          <span className="mt-1 text-sm font-medium text-slate-400 dark:text-slate-500">of {total}</span>
+          <span className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">pass mark {overallPass}</span>
         </ScoreRing>
         <div className="mt-4 flex items-center gap-2">
           {isNewBest && (
@@ -96,30 +102,50 @@ export function ExamResults({ level, questions, answers, isNewBest, onRetake, on
         </div>
       </div>
 
-      {/* Section breakdown */}
+      {/* Official scoring sections — scaled score + sectional pass/fail */}
       <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">By section</h2>
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Scoring sections</h2>
+        <p className="mb-4 text-xs text-slate-400 dark:text-slate-500">You must reach each section’s minimum, not just the overall mark.</p>
         <div className="space-y-4">
-          {bySection.map((s) => {
-            const theme = SECTION_THEME[s.section];
-            const Icon = theme.icon;
-            const pct = s.total > 0 ? s.correct / s.total : 0;
+          {result.sections.map((s) => {
+            const pct = s.scaled / s.max;
+            const minPct = s.min / s.max;
             return (
-              <div key={s.section}>
+              <div key={s.key}>
                 <div className="mb-1.5 flex items-center gap-2 text-sm">
-                  <Icon size={15} className={theme.text} strokeWidth={2.2} />
-                  <span className="font-medium text-slate-700 dark:text-slate-200">{SECTION_LABEL[s.section].en}</span>
-                  <span className="ml-auto font-semibold tabular-nums text-slate-500 dark:text-slate-400">
-                    {s.correct}/{s.total} · {Math.round(pct * 100)}%
+                  <span className="font-medium text-slate-700 dark:text-slate-200">{s.label.en}</span>
+                  <span className="ml-auto font-semibold tabular-nums text-slate-500 dark:text-slate-400">{s.scaled}/{s.max}</span>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${
+                      s.passed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                    }`}
+                  >
+                    {s.passed ? <><Check size={11} strokeWidth={3} /> pass</> : `needs ${s.min}`}
                   </span>
                 </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div className="relative h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                   <div
                     className="h-full rounded-full transition-[width] duration-700 ease-out"
-                    style={{ width: `${pct * 100}%`, backgroundColor: theme.hex }}
+                    style={{ width: `${pct * 100}%`, backgroundColor: s.passed ? '#10b981' : '#f59e0b' }}
                   />
+                  {/* sectional minimum marker */}
+                  <span className="absolute top-0 h-full w-0.5 bg-slate-400 dark:bg-slate-500" style={{ left: `${minPct * 100}%` }} aria-hidden="true" />
                 </div>
               </div>
+            );
+          })}
+        </div>
+
+        {/* Content detail (raw correct per content section) */}
+        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-slate-100 pt-4 dark:border-slate-800">
+          {content.map((c) => {
+            const theme = SECTION_THEME[c.section];
+            const Icon = theme.icon;
+            return (
+              <span key={c.section} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <Icon size={13} className={theme.text} strokeWidth={2.2} />
+                {SECTION_LABEL[c.section].en} <span className="tabular-nums text-slate-400 dark:text-slate-500">{c.correct}/{c.total}</span>
+              </span>
             );
           })}
         </div>
@@ -127,12 +153,8 @@ export function ExamResults({ level, questions, answers, isNewBest, onRetake, on
 
       {/* Review answers */}
       <div className="mt-4 rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <button
-          onClick={() => setReviewOpen((v) => !v)}
-          aria-expanded={reviewOpen}
-          className="flex w-full items-center justify-between rounded-3xl px-6 py-4 text-left"
-        >
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Review all {total} answers</span>
+        <button onClick={() => setReviewOpen((v) => !v)} aria-expanded={reviewOpen} className="flex w-full items-center justify-between rounded-3xl px-6 py-4 text-left">
+          <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Review all {questions.length} answers</span>
           <ChevronDown size={18} className={`text-slate-400 transition-transform ${reviewOpen ? 'rotate-180' : ''}`} />
         </button>
         {reviewOpen && (
@@ -144,29 +166,19 @@ export function ExamResults({ level, questions, answers, isNewBest, onRetake, on
               return (
                 <li key={q.id} className="animate-review-reveal-in rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                   <div className="flex items-start gap-2.5">
-                    <span
-                      className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-white ${
-                        isCorrect ? 'bg-emerald-500' : unanswered ? 'bg-slate-400' : 'bg-red-500'
-                      }`}
-                    >
+                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-white ${isCorrect ? 'bg-emerald-500' : unanswered ? 'bg-slate-400' : 'bg-red-500'}`}>
                       {isCorrect ? <Check size={12} strokeWidth={3} /> : unanswered ? <Minus size={12} strokeWidth={3} /> : <XIcon size={12} strokeWidth={3} />}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
-                        {i + 1}. {SECTION_LABEL[q.section].en}
-                      </p>
-                      {q.japanese && <p className="jp-text mt-0.5 text-base font-semibold text-slate-900 dark:text-white">{q.japanese}</p>}
+                      <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{i + 1}. {SECTION_LABEL[q.section].en}</p>
+                      {(q.japanese || q.audioText) && <p className="jp-text mt-0.5 text-base font-semibold text-slate-900 dark:text-white">{q.japanese ?? q.audioText}</p>}
                       <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{q.prompt.en}</p>
                       <p className="mt-2 text-sm">
                         <span className="text-emerald-600 dark:text-emerald-400">✓ {q.options[q.correctIndex]}</span>
-                        {!isCorrect && !unanswered && (
-                          <span className="mt-0.5 block text-red-500 dark:text-red-400">✗ You chose: {q.options[chosen]}</span>
-                        )}
+                        {!isCorrect && !unanswered && <span className="mt-0.5 block text-red-500 dark:text-red-400">✗ You chose: {q.options[chosen]}</span>}
                         {unanswered && <span className="mt-0.5 block text-slate-400">— Not answered</span>}
                       </p>
-                      {q.explanation && (
-                        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{q.explanation.en}</p>
-                      )}
+                      {q.explanation && <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{q.explanation.en}</p>}
                     </div>
                   </div>
                 </li>
@@ -181,10 +193,7 @@ export function ExamResults({ level, questions, answers, isNewBest, onRetake, on
         <PrimaryButton onClick={onRetake} className="flex-1 !py-3">
           <RotateCcw size={16} /> Retake exam
         </PrimaryButton>
-        <button
-          onClick={onExit}
-          className="flex-1 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
+        <button onClick={onExit} className="flex-1 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
           Back to overview
         </button>
       </div>

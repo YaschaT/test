@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, Flag, ChevronLeft, ChevronRight, LayoutGrid, Check } from 'lucide-react';
+import { X, Flag, ChevronLeft, ChevronRight, LayoutGrid, Check, Volume2, Loader2 } from 'lucide-react';
 import type { MockExamConfig, MockQuestion } from '../../lib/mockExam';
 import { SECTION_LABEL } from '../../lib/mockExam';
 import { SECTION_THEME } from './examTheme';
 import { playCardTap } from '../../lib/sound';
+import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
 
 interface ExamRuntimeProps {
   questions: MockQuestion[];
@@ -27,6 +28,9 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
   const [secondsLeft, setSecondsLeft] = useState(config.minutes * 60);
   const [showPalette, setShowPalette] = useState(false);
   const [confirming, setConfirming] = useState<null | 'exit' | 'finish'>(null);
+  // Transcript reveal is keyed to the question index, so it resets automatically on navigation.
+  const [transcriptIdx, setTranscriptIdx] = useState<number | null>(null);
+  const tts = useTtsPlayer(getSavedVoiceMode());
 
   const question = questions[index];
   const isLast = index === questions.length - 1;
@@ -51,6 +55,14 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
     const id = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearTimeout(id);
   }, [secondsLeft, finish]);
+
+  // On opening a listening question, play the clip once (like the real test). tts.play reads fresh
+  // state internally, so depending only on `index` is correct here.
+  useEffect(() => {
+    const q = questions[index];
+    if (q.section === 'listening' && q.audioText) void tts.play(q.audioText, 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
 
   const select = useCallback(
     (optionIndex: number) => {
@@ -104,8 +116,9 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-2xl flex-col">
-      {/* Sticky exam header */}
-      <div className="sticky top-0 z-10 -mx-4 border-b border-slate-200 bg-canvas-light/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      {/* Sticky exam header — sits below the mobile app header (h-14), flush to the top on desktop
+          where the app uses a sidebar instead of a top bar. */}
+      <div className="sticky top-14 z-20 -mx-4 border-b border-slate-200 bg-canvas-light/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 md:top-0">
         <div className="flex items-center justify-between">
           <button
             onClick={() => setConfirming('exit')}
@@ -173,6 +186,33 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
 
         {question.context && (
           <p className="mt-4 text-sm italic text-slate-400 dark:text-slate-500">{question.context.en}</p>
+        )}
+
+        {question.section === 'listening' && (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => question.audioText && tts.play(question.audioText, 1)}
+                className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-95"
+                aria-label="Play audio again"
+              >
+                {tts.state.status === 'loading' ? <Loader2 size={22} className="animate-spin" /> : <Volume2 size={22} />}
+              </button>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Listen, then choose the meaning</p>
+                <button
+                  onClick={() => setTranscriptIdx((v) => (v === index ? null : index))}
+                  className="mt-0.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  {transcriptIdx === index ? 'Hide transcript' : 'Can’t hear it? Show transcript'}
+                </button>
+                {transcriptIdx === index && <p className="jp-text mt-1.5 text-base text-slate-700 dark:text-slate-200">{question.audioText}</p>}
+              </div>
+            </div>
+            {tts.state.status === 'error' && (
+              <p className="mt-2 text-xs text-rose-500 dark:text-rose-400">Audio isn’t available here — use the transcript to answer.</p>
+            )}
+          </div>
         )}
 
         {question.japanese && (

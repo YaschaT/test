@@ -2,7 +2,7 @@ import { Clock, ListChecks, Target, Trophy, ArrowRight } from 'lucide-react';
 import type { JlptLevel } from '../../types';
 import { JLPT_LEVELS } from '../../types';
 import { useProgress } from '../../lib/progressStore';
-import { EXAM_CONFIG, MOCK_SECTIONS, PASS_THRESHOLD, SECTION_LABEL, examTotal } from '../../lib/mockExam';
+import { EXAM_CONFIG, MOCK_SECTIONS, SCORING, SECTION_LABEL, examTotal } from '../../lib/mockExam';
 import { SECTION_THEME } from './examTheme';
 import { PrimaryButton } from '../PrimaryButton';
 import { playPrimaryAction, playSoftClick } from '../../lib/sound';
@@ -16,6 +16,7 @@ interface ExamLobbyProps {
 export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
   const progress = useProgress();
   const config = EXAM_CONFIG[level];
+  const scoring = SCORING[level];
   const total = examTotal(config);
   const best = progress.mockExams[level];
 
@@ -24,19 +25,15 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
       <header className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Mock Exam</h1>
         <p className="mt-2 text-slate-500 dark:text-slate-400">
-          A timed, JLPT-style paper built from your real content.
+          A timed practice exam, scored on the official JLPT scale.
           <span className="mt-0.5 block text-sm text-slate-400 dark:text-slate-500">
-            Een tijdgebonden JLPT-proefexamen uit je eigen leerstof.
+            Een tijdgebonden oefenexamen, beoordeeld op de officiële JLPT-schaal.
           </span>
         </p>
       </header>
 
       {/* Level selector */}
-      <div
-        role="tablist"
-        aria-label="Exam level"
-        className="mt-8 grid grid-cols-3 gap-2 rounded-2xl bg-slate-100 p-1.5 dark:bg-slate-800/60"
-      >
+      <div role="tablist" aria-label="Exam level" className="mt-8 grid grid-cols-3 gap-2 rounded-2xl bg-slate-100 p-1.5 dark:bg-slate-800/60">
         {JLPT_LEVELS.map((lv) => {
           const active = lv === level;
           const rec = progress.mockExams[lv];
@@ -52,21 +49,14 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
                 }
               }}
               className={`relative rounded-xl px-3 py-3 text-center transition-all ${
-                active
-                  ? 'bg-white shadow-sm dark:bg-slate-900'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                active ? 'bg-white shadow-sm dark:bg-slate-900' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               <span className={`block text-lg font-bold ${active ? 'text-brand-600 dark:text-brand-300' : ''}`}>{lv}</span>
               <span className="mt-0.5 block text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
-                {rec ? `Best ${Math.round(rec.bestPercent * 100)}%` : 'Not taken'}
+                {rec ? `Best ${rec.bestScore}/180` : 'Not taken'}
               </span>
-              {rec?.passed && (
-                <span
-                  className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500"
-                  aria-label="Passed"
-                />
-              )}
+              {rec?.passed && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500" aria-label="Passed" />}
             </button>
           );
         })}
@@ -76,8 +66,8 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
       <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
         <div className="grid grid-cols-3 divide-x divide-slate-200 dark:divide-slate-800">
           <Stat icon={ListChecks} value={String(total)} label="questions" sub="vragen" />
-          <Stat icon={Clock} value={`${config.minutes}`} label="minutes" sub="minuten" />
-          <Stat icon={Target} value={`${Math.round(PASS_THRESHOLD * 100)}%`} label="to pass" sub="om te slagen" />
+          <Stat icon={Clock} value={`${config.minutes}`} label="minutes" sub={`official ${config.officialMinutes}m`} />
+          <Stat icon={Target} value={`${scoring.overallPass}`} label={`to pass / ${scoring.total}`} sub="om te slagen" />
         </div>
 
         <div className="mt-6 space-y-2.5">
@@ -100,29 +90,34 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
           })}
         </div>
 
+        {/* Official scoring note */}
+        <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/50">
+          <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            Scored 0–{scoring.total} across {scoring.sections.length} sections. To pass you need{' '}
+            <span className="font-semibold text-slate-700 dark:text-slate-200">{scoring.overallPass}/{scoring.total} overall</span>{' '}
+            <span className="text-slate-400">and</span> at least the minimum in{' '}
+            <span className="font-semibold text-slate-700 dark:text-slate-200">every</span> section
+            {' '}({scoring.sections.map((s) => `${s.min}/${s.max}`).join(', ')}).
+          </p>
+        </div>
+
         {best && (
-          <div className="mt-6 flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/50">
+          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/50">
             <Trophy size={18} className="shrink-0 text-amber-500" />
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              Your best: <span className="font-bold tabular-nums text-slate-900 dark:text-white">{Math.round(best.bestPercent * 100)}%</span>
+              Your best: <span className="font-bold tabular-nums text-slate-900 dark:text-white">{best.bestScore}/180</span>
               <span className="text-slate-400 dark:text-slate-500"> · {best.attempts} {best.attempts === 1 ? 'attempt' : 'attempts'}</span>
               {best.passed && <span className="ml-1 font-semibold text-emerald-600 dark:text-emerald-400">· passed ✓</span>}
             </p>
           </div>
         )}
 
-        <PrimaryButton
-          onClick={() => {
-            playPrimaryAction();
-            onBegin();
-          }}
-          className="mt-6 w-full !py-3.5 text-base"
-        >
+        <PrimaryButton onClick={() => { playPrimaryAction(); onBegin(); }} className="mt-6 w-full !py-3.5 text-base">
           {best ? 'Retake exam' : 'Begin exam'}
           <ArrowRight size={18} />
         </PrimaryButton>
         <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-500">
-          The clock starts as soon as you begin. No pausing — just like the real thing.
+          Format &amp; scoring follow the official JLPT (jlpt.jp). Questions are original practice items.
         </p>
       </div>
     </div>
@@ -131,7 +126,7 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
 
 function Stat({ icon: Icon, value, label, sub }: { icon: typeof Clock; value: string; label: string; sub: string }) {
   return (
-    <div className="flex flex-col items-center px-2">
+    <div className="flex flex-col items-center px-2 text-center">
       <Icon size={18} className="text-slate-400 dark:text-slate-500" />
       <span className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900 dark:text-white">{value}</span>
       <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
