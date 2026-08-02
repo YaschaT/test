@@ -2651,3 +2651,41 @@ order. Same rules as before: no fake placeholder features, verify everything by 
 and clicking through it (not just typecheck/build), fix errors before moving on, keep the UX calm/clean/
 responsive, and update PROJECT_STATUS.md again before ending the session if we hit limits again.
 ```
+
+### Feature — JLPT Mock Exam (gamified, 2026-08-02)
+
+Built the biggest missing capability: a **timed, JLPT-style mock exam**. New `/mock` route + "Mock Exam"
+nav entry (`MockTestNavIcon`). Designed under the impeccable skill against the project's own design
+system (twilight-indigo brand, Nunito/Baloo, generous rounding) and PRODUCT.md's "calm confidence, not
+carnival" rule — gamified but measured, and **every number is real** (no fabricated stats).
+
+**Architecture** — a self-contained three-phase state machine in `src/pages/mock/MockTest.tsx`:
+- **Lobby** (`components/mock/ExamLobby.tsx`): level selector (N5/N4/N3) showing real best score + pass
+  dot per level, a format panel (question count / minutes / 60% pass line + per-section counts), and the
+  personal-best callout. Begin/Retake CTA.
+- **Runtime** (`components/mock/ExamRuntime.tsx`): immersive focus mode — sticky countdown timer (amber
+  under 20%, red pulse under 30s, auto-submits at 0), segmented section-colored progress bar, one MCQ at a
+  time with the JP stimulus large, A–D options, **full keyboard support** (1–4/A–D select, ←/→ navigate,
+  F flag), flag-for-review, a jump-anywhere question palette, and an inline exit/finish confirm (warns on
+  unanswered). No mid-exam answer reveal — real-exam feel.
+- **Results** (`components/mock/ExamResults.tsx`): animated `ScoreRing` (SVG sweep with a pass-line tick),
+  pass/fail verdict vs the real 60% line with mascot mood, per-section breakdown bars, "New personal best"
+  + "+N XP" pills, and a collapsible full answer review (correct/your-choice/explanation, colour-coded).
+  One confetti burst **on pass only** (mirrors LevelUpDialog; disabled under reduced motion).
+
+**Content & data** — `src/lib/mockExam.ts` assembles each paper from real content: vocab reading→meaning,
+kanji→meaning, authored grammar `quiz` items, and authored reading-comprehension questions; distractors
+are same-level, deduped; sizes sit safely under every pool (N5 30Q/20m, N4 35Q/25m, N3 36Q/30m). Scoring
++ per-section tally are pure functions. Persistence: new `mockExams` field on ProgressState +
+`recordMockExamResult`, which also logs a `mock-test` QuizResult so its correct answers feed the **derived
+XP** score automatically (verified: sidebar XP went 0 → 4 after a 2-correct attempt). Spread-safe migration.
+
+**Tests** — `src/lib/mockExam.test.ts` (14 new, 45 total): exact size, every section filled, 4 unique
+options + in-range correct index per question, stable section order, and scoring (100% → pass, all-null →
+0). `tsc`/`eslint`/`build`/`vitest` (45) all clean; MockTest is code-split (8 KB gz).
+
+**Verified in-browser** (N5): lobby, exam runtime (question render, answer-select highlight, live timer,
+question palette, flag), the finish-confirm dialog, and the results screen (amber ring at the scored %,
+"Not quite yet" verdict, section bars, personal-best + XP pills, answer review) — zero console errors. The
+fail path correctly shows **no** confetti (calm-not-carnival). The pass path is the same components with a
+green ring, "You passed!" copy, and the confetti burst.

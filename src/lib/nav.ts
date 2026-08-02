@@ -8,6 +8,7 @@ import {
   ListeningNavIcon,
   PathNavIcon,
   SpeakingNavIcon,
+  MockTestNavIcon,
 } from '../components/dashboard/navIcons';
 import type { Translatable } from '../types';
 
@@ -27,4 +28,5 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/reading', label: { en: 'Reading', nl: 'Lezen' }, icon: ReadingNavIcon },
   { path: '/listening', label: { en: 'Listening', nl: 'Luisteren' }, icon: ListeningNavIcon },
   { path: '/speaking', label: { en: 'Speaking', nl: 'Spreken' }, icon: SpeakingNavIcon },
+  { path: '/mock', label: { en: 'Mock Exam', nl: 'Proefexamen' }, icon: MockTestNavIcon },
 ];

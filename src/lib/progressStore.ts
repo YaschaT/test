@@ -36,7 +36,18 @@ export interface ProgressState {
   quizResults: QuizResult[];
   /** Best accuracy (0..1) achieved on each roadmap week's checkpoint quiz, keyed by week number. */
   weeklyCheckpoints: Record<number, number>;
+  /** Best mock-exam result per JLPT level (kept as best accuracy + attempt count). */
+  mockExams: Record<string, MockExamRecord>;
   session: StudySession | null;
+}
+
+export interface MockExamRecord {
+  /** Best accuracy (0..1) ever achieved on this level's mock exam. */
+  bestPercent: number;
+  /** Whether the best result cleared the pass threshold. */
+  passed: boolean;
+  attempts: number;
+  lastAttempt: string;
 }
 
 const STORAGE_KEY = 'progress-v1';
@@ -52,6 +63,7 @@ function defaultState(): ProgressState {
     completedReadingIds: [],
     quizResults: [],
     weeklyCheckpoints: {},
+    mockExams: {},
     session: null,
   };
 }
@@ -201,6 +213,33 @@ export function recordCheckpointResult(week: number, correct: number, total: num
       [week]: Math.max(s.weeklyCheckpoints[week] ?? 0, accuracy),
     },
   }));
+}
+
+/**
+ * Records a mock-exam attempt: keeps the learner's best accuracy + pass status for that level, and
+ * logs a `mock-test` QuizResult so its correct answers feed the derived XP score like any other quiz.
+ */
+export function recordMockExamResult(level: JlptLevel, correct: number, total: number, passThreshold: number) {
+  if (total <= 0) return;
+  const accuracy = correct / total;
+  setState((s) => {
+    const prev = s.mockExams[level];
+    const bestPercent = Math.max(prev?.bestPercent ?? 0, accuracy);
+    const record: MockExamRecord = {
+      bestPercent,
+      passed: bestPercent >= passThreshold,
+      attempts: (prev?.attempts ?? 0) + 1,
+      lastAttempt: todayIso(),
+    };
+    return {
+      ...s,
+      mockExams: { ...s.mockExams, [level]: record },
+      quizResults: [
+        ...s.quizResults,
+        { id: crypto.randomUUID(), quizId: `mock-${level}`, skill: 'mock-test', level, date: todayIso(), correct, total },
+      ],
+    };
+  });
 }
 
 export function resetAllProgress() {

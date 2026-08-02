@@ -109,3 +109,25 @@ export function SpeakingNavIcon({ size = 18, className }: NavIconProps) {
     </svg>
   );
 }
+
+export function MockTestNavIcon({ size = 18, className }: NavIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 4h6a1 1 0 0 1 1 1 2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2 1 1 0 0 1 1-1Z"
+      />
+      <path
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 5.5H6.5A1.5 1.5 0 0 0 5 7v12.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V7a1.5 1.5 0 0 0-1.5-1.5H16"
+      />
+      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="m9 14 2 2 4-4.5" />
+    </svg>
+  );
+}
