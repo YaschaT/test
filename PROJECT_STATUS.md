@@ -307,6 +307,20 @@ N4 38 / N3 27). `tsc`/`eslint`/`build`/`vitest` (31) clean; verified in-browser 
 **0 / 110**, the 駅 detail page renders (14 strokes · N4, example words, furigana sentence), zero
 console errors. Stroke-order fallback still applies (KanjiVG batch remains blocked on download OK).
 
+### Batch — N3 intermediate kanji volume (2026-08-02)
+
+Finished the kanji rebalance by growing **N3** (was 27, the thinnest). Appended 20 intermediate
+core kanji to `kanjiExtra.ts`: thought/speech verbs **思 考 言 知 動 働 住**, abstractions **事 物
+者 業 全 明**, and change verbs **説 増 減 起 過 始 終** — several directly back existing N3 vocab
+(説明→説, 増える→増, 減る→減, 起こる→起, 過ぎる→過). Full schema per entry. No id/character
+collisions. Kanji total **110 → 130**, now level-balanced **N5 45 / N4 38 / N3 47**. `tsc`/`eslint`/
+`build`/`vitest` (31) clean; verified in-browser — list header **0 / 130**, the 説 detail page
+renders (14 strokes · N3, 説明/小説 example words, furigana sentence), zero console errors.
+
+Kanji this session: **70 → 130 (+60)** across three batches (core N5, daily-life N4, intermediate
+N3). Authentic numbered stroke order still covers only the original 9 kanji — the rest use the
+font-outline fallback until the **KanjiVG** import (still needs the user's OK to download).
+
 ---
 
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names
