@@ -343,6 +343,22 @@ passage renders furigana, both grammar chips (〜ようになる · 〜ば〜ほ
 highlights, zero console errors. Not yet wired into the roadmap weeks (available in the Reading
 section) — an optional low-risk follow-up.
 
+### Batch — wire new readings into the roadmap (2026-08-02)
+
+Surfaced the 4 new passages in the 22-week Learning Path (they were only in the Reading section).
+Additive `readingIds` edits in `src/data/roadmap.ts`, placed by pedagogical fit into weeks that
+lacked a reading, plus the level's mixed-review week:
+- `r-my-town` → week 4 (places/family vocab) + week 6 (N5 mixed review).
+- `r-studying-japanese` → week 9 (N4 vocab deepening) + week 14 (N4 mixed review).
+- `r-healthy-life` → week 18 (ば〜ほど — passage uses 〜ようになる + 〜ば〜ほど) + week 20 (N3 review).
+- `r-part-time-job` → week 19 (passive — passage uses 任される + ため/おかげで) + week 20 (N3 review).
+
+Gates deliberately left unchanged (no new `readingCompletion` requirement) so unlock difficulty is
+untouched — the readings show as guide chips only. The roadmap test just asserts referenced reading
+ids resolve, so it stays green. `tsc`/`eslint`/`build`/`vitest` (31) clean; verified in-browser —
+expanding week 19 on `/path` now shows a **Reading 0/1** chip that wasn't there before, zero console
+errors.
+
 ---
 
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names
