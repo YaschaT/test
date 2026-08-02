@@ -296,6 +296,17 @@ kanji list header reads **0 / 90**, the 時 detail page renders readings/example
 sentence, and (as expected) uncovered kanji still show the honest "numbered stroke order isn't
 available yet" fallback — that gap is the blocked **KanjiVG** batch. Zero console errors.
 
+### Batch — N4 daily-life kanji volume (2026-08-02)
+
+Continued the kanji rebalance into **N4** (was 18, the smallest of the three level sets). Appended
+20 daily-life essentials to `kanjiExtra.ts` — places & travel **教 室 駅 道 町 市 地 図 海 空**,
+health & money **体 病 院 銀**, and core action verbs **行 来 帰 持 作 使** — each backing vocab
+already in the app. Full schema per entry (readings, stroke count, two example words, furigana
+example sentence). No id/character collisions. Kanji total **90 → 110** (N4 18 → 38; now N5 45 /
+N4 38 / N3 27). `tsc`/`eslint`/`build`/`vitest` (31) clean; verified in-browser — list header reads
+**0 / 110**, the 駅 detail page renders (14 strokes · N4, example words, furigana sentence), zero
+console errors. Stroke-order fallback still applies (KanjiVG batch remains blocked on download OK).
+
 ---
 
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names
