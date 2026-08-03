@@ -126,29 +126,51 @@ export function SpeakingPage() {
     ? `${draft}${draft ? ' ' : ''}${speech.transcript}${speech.interim}`.trim()
     : draft;
 
+  const codeChip = 'rounded bg-slate-100 dark:bg-slate-800 px-1';
+  // The deployed site can't read a local `.env` or run Ollama, so it needs a cloud key set on the host.
+  // Show host-appropriate steps: Vercel env vars in production, `.env` in local dev.
   const notConfiguredCard = available === false && (
     <Card className="p-4 flex gap-3">
       <Info size={18} className="text-brand-500 shrink-0 mt-0.5" />
       <div className="text-sm">
-        <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on Kai (the AI companion) — free options</p>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Pick one in your <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">.env</code> file, then
-          restart with <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">npm run dev</code>:
-        </p>
-        <ul className="text-slate-500 dark:text-slate-400 mt-1.5 space-y-1 list-disc list-inside">
-          <li>
-            <span className="font-medium text-slate-700 dark:text-slate-200">Groq (free, no card, works in Europe):</span>{' '}
-            get a key at console.groq.com/keys → set{' '}
-            <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">GROQ_API_KEY</code> and{' '}
-            <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">AI_PROVIDER=groq</code>.
-          </li>
-          <li>
-            <span className="font-medium text-slate-700 dark:text-slate-200">Ollama (free, local, no key):</span>{' '}
-            install from ollama.com, run <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">ollama pull qwen2.5</code>,
-            set <code className="rounded bg-slate-100 dark:bg-slate-800 px-1">AI_PROVIDER=ollama</code>.
-          </li>
-        </ul>
-        <p className="text-slate-400 mt-1.5 text-xs">Everything stays on your machine/server — keys are never sent to the browser.</p>
+        <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on Kai (the AI companion) — free</p>
+        {import.meta.env.PROD ? (
+          <>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Kai needs a cloud AI key on your host. <span className="font-medium text-slate-700 dark:text-slate-200">Groq</span> is
+              free, needs no credit card, and works in Europe:
+            </p>
+            <ol className="text-slate-500 dark:text-slate-400 mt-1.5 space-y-1 list-decimal list-inside">
+              <li>Get a free key at <span className="font-medium text-slate-700 dark:text-slate-200">console.groq.com/keys</span>.</li>
+              <li>
+                In Vercel → your project → <span className="font-medium text-slate-700 dark:text-slate-200">Settings → Environment Variables</span>,
+                add <code className={codeChip}>GROQ_API_KEY</code> = your key (and <code className={codeChip}>AI_PROVIDER=groq</code>).
+              </li>
+              <li>Redeploy (Deployments → ⋯ → Redeploy).</li>
+            </ol>
+            <p className="text-slate-400 mt-1.5 text-xs">
+              Gemini’s free tier is 0 quota in the EEA and Ollama can’t run on Vercel — use Groq. The key stays server-side, never sent to the browser.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Pick one in your <code className={codeChip}>.env</code> file, then restart with <code className={codeChip}>npm run dev</code>:
+            </p>
+            <ul className="text-slate-500 dark:text-slate-400 mt-1.5 space-y-1 list-disc list-inside">
+              <li>
+                <span className="font-medium text-slate-700 dark:text-slate-200">Groq (free, no card, works in Europe):</span>{' '}
+                get a key at console.groq.com/keys → set <code className={codeChip}>GROQ_API_KEY</code> and{' '}
+                <code className={codeChip}>AI_PROVIDER=groq</code>.
+              </li>
+              <li>
+                <span className="font-medium text-slate-700 dark:text-slate-200">Ollama (free, local, no key):</span>{' '}
+                install from ollama.com, run <code className={codeChip}>ollama pull qwen2.5</code>, set <code className={codeChip}>AI_PROVIDER=ollama</code>.
+              </li>
+            </ul>
+            <p className="text-slate-400 mt-1.5 text-xs">Everything stays on your machine/server — keys are never sent to the browser.</p>
+          </>
+        )}
       </div>
     </Card>
   );
