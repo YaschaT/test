@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Mic, Send, Volume2, Loader2, RotateCcw, Sparkles, Info, ChevronLeft } from 'lucide-react';
+import { Mic, Send, Volume2, Loader2, RotateCcw, Sparkles, Info, ChevronLeft, Cpu } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { AiCore } from '../../components/speaking/AiCore';
 import { Phrasebook } from '../../components/speaking/Phrasebook';
@@ -11,6 +11,8 @@ import {
   type ChatTurn,
   type CompanionReply,
 } from '../../lib/aiCompanion';
+import { isWebGpuAvailable, browserAiReply, type LoadProgress } from '../../lib/browserAi';
+import { COMPANION_SYSTEM } from '../../lib/companionPrompt';
 import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
 import { getNeuralTtsStatus, playNeural, type NeuralVoice } from '../../lib/tts/neuralTts';
 import { SCENARIOS, type Scenario } from '../../data/scenarios';
@@ -27,8 +29,14 @@ function openingReply(scenario: Scenario): CompanionReply {
   return { ...scenario.opening, feedback: '' };
 }
 
+// 'cloud' = a provider key is set on the host (fast, best); 'browser' = no key but WebGPU is available,
+// so Kai runs on-device; 'none' = no key and no WebGPU, so we show setup guidance. null = still checking.
+type Engine = 'cloud' | 'browser' | 'none' | null;
+
 export function SpeakingPage() {
-  const [available, setAvailable] = useState<boolean | null>(null);
+  const [engine, setEngine] = useState<Engine>(null);
+  const [modelProgress, setModelProgress] = useState<LoadProgress | null>(null);
+  const [modelReady, setModelReady] = useState(false);
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
@@ -45,7 +53,8 @@ export function SpeakingPage() {
   const [neuralVoice, setNeuralVoice] = useState<NeuralVoice>('ja-JP-NanamiNeural');
 
   useEffect(() => {
-    getCompanionStatus().then(setAvailable);
+    // Prefer a cloud key if the host has one; otherwise run on-device when WebGPU is available.
+    getCompanionStatus().then((cloud) => setEngine(cloud ? 'cloud' : isWebGpuAvailable() ? 'browser' : 'none'));
     getNeuralTtsStatus().then((s) => setNeuralAvailable(s.available));
   }, []);
 
@@ -95,7 +104,7 @@ export function SpeakingPage() {
 
   async function send(text: string) {
     const content = text.trim();
-    if (!content || loading || available === false || !scenario) return;
+    if (!content || loading || engine === 'none' || engine === null || !scenario) return;
 
     const next: Msg[] = [...messages, { id: newId(), role: 'user', text: content }];
     setMessages(next);
@@ -108,12 +117,26 @@ export function SpeakingPage() {
     );
 
     try {
-      const reply = await sendCompanionMessage(history, scenario.id);
+      let reply: CompanionReply;
+      if (engine === 'browser') {
+        // On-device: first call downloads/compiles the model (progress shown), then runs locally.
+        const system = scenario.systemAddon ? `${COMPANION_SYSTEM}\n\n${scenario.systemAddon}` : COMPANION_SYSTEM;
+        reply = await browserAiReply(system, history, setModelProgress);
+        setModelReady(true);
+        setModelProgress(null);
+      } else {
+        reply = await sendCompanionMessage(history, scenario.id);
+      }
       setMessages((m) => [...m, { id: newId(), role: 'companion', reply }]);
       speak(reply.ja);
     } catch (e) {
-      if (e instanceof CompanionError && e.message === 'not_configured') setAvailable(false);
-      else setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      // A cloud key that vanished mid-session → re-route to on-device if we can, else show setup.
+      if (e instanceof CompanionError && e.message === 'not_configured') {
+        setEngine(isWebGpuAvailable() ? 'browser' : 'none');
+      } else {
+        setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      }
+      setModelProgress(null);
     } finally {
       setLoading(false);
     }
@@ -127,13 +150,16 @@ export function SpeakingPage() {
     : draft;
 
   const codeChip = 'rounded bg-slate-100 dark:bg-slate-800 px-1';
-  // The deployed site can't read a local `.env` or run Ollama, so it needs a cloud key set on the host.
-  // Show host-appropriate steps: Vercel env vars in production, `.env` in local dev.
-  const notConfiguredCard = available === false && (
+  // Shown only when there's no cloud key AND no WebGPU (so on-device isn't possible either).
+  const notConfiguredCard = engine === 'none' && (
     <Card className="p-4 flex gap-3">
       <Info size={18} className="text-brand-500 shrink-0 mt-0.5" />
       <div className="text-sm">
         <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on Kai (the AI companion) — free</p>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">
+          Your browser doesn’t support on-device AI (WebGPU). Open this in <span className="font-medium text-slate-700 dark:text-slate-200">Chrome or Edge</span> to
+          chat with Kai privately with no setup — or add a free cloud key:
+        </p>
         {import.meta.env.PROD ? (
           <>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
@@ -173,6 +199,39 @@ export function SpeakingPage() {
         )}
       </div>
     </Card>
+  );
+
+  const pct = modelProgress ? Math.round(modelProgress.progress * 100) : 0;
+
+  // On-device mode: shown until the model has produced its first reply this session.
+  const browserModeBanner = engine === 'browser' && !modelReady && (
+    <Card className="p-4 flex gap-3">
+      <Cpu size={18} className="text-brand-500 shrink-0 mt-0.5" />
+      <div className="text-sm flex-1 min-w-0">
+        <p className="font-semibold text-slate-800 dark:text-slate-100">Kai runs on your device — private &amp; free</p>
+        {modelProgress ? (
+          <>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 truncate">{modelProgress.text || 'Preparing Kai…'}</p>
+            <div className="mt-2 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="h-full rounded-full bg-brand-500 transition-[width] duration-300" style={{ width: `${pct}%` }} />
+            </div>
+            <p className="text-xs text-slate-400 mt-1 tabular-nums">{pct}% — one-time download</p>
+          </>
+        ) : (
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            No API key needed. Your first message downloads Kai’s model once (~1&nbsp;GB), then it runs locally and works
+            offline. Replies are a bit slower than the cloud.
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+
+  const aiBanners = (notConfiguredCard || browserModeBanner) && (
+    <div className="space-y-3">
+      {notConfiguredCard}
+      {browserModeBanner}
+    </div>
   );
 
   // ── Scenario picker ──
@@ -220,7 +279,7 @@ export function SpeakingPage() {
           </>
         ) : (
           <>
-            {notConfiguredCard}
+            {aiBanners}
 
             <div className="grid gap-3 sm:grid-cols-2">
               {SCENARIOS.map((s) => (
@@ -273,7 +332,7 @@ export function SpeakingPage() {
         </button>
       </div>
 
-      {available === false && <div className="mb-3">{notConfiguredCard}</div>}
+      {aiBanners && <div className="mb-3">{aiBanners}</div>}
 
       <div className="flex items-center gap-2 mb-2 text-xs">
         <span className="text-slate-400 font-medium">Show:</span>
@@ -349,7 +408,8 @@ export function SpeakingPage() {
         )}
         {loading && (
           <div className="flex items-center gap-2 text-slate-400 text-sm mr-6">
-            <Loader2 size={16} className="animate-spin" /> Kai is thinking…
+            <Loader2 size={16} className="animate-spin" />
+            {modelProgress ? `Preparing Kai… ${pct}% (one-time download)` : 'Kai is thinking…'}
           </div>
         )}
       </div>
@@ -380,20 +440,22 @@ export function SpeakingPage() {
           onChange={(e) => setDraft(e.target.value)}
           readOnly={speech.listening}
           placeholder={
-            available === false
-              ? 'Add your API key to start talking…'
-              : speech.listening
-                ? 'Listening… tap the mic when you finish'
-                : speech.supported
-                  ? 'Speak with the mic, or type here…'
-                  : 'Type your reply in Japanese…'
+            engine === 'none'
+              ? 'Use Chrome/Edge or add a key to chat…'
+              : engine === 'browser' && !modelReady
+                ? 'Type to start — first reply prepares Kai on your device…'
+                : speech.listening
+                  ? 'Listening… tap the mic when you finish'
+                  : speech.supported
+                    ? 'Speak with the mic, or type here…'
+                    : 'Type your reply in Japanese…'
           }
-          disabled={available === false || loading}
+          disabled={engine === 'none' || engine === null || loading}
           className="jp-text flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-[15px] outline-none focus:border-brand-500 disabled:opacity-60"
         />
         <button
           type="submit"
-          disabled={!liveTranscript.trim() || loading || available === false}
+          disabled={!liveTranscript.trim() || loading || engine === 'none' || engine === null}
           aria-label="Send"
           className="shrink-0 rounded-full bg-brand-600 p-3 text-white hover:bg-brand-700 disabled:opacity-40"
         >
