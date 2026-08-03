@@ -2720,3 +2720,25 @@ test-sections and pass-mark pages), keeping our own original questions (official
 desktop and mobile, light + dark: lobby (official format), runtime (listening play + transcript fallback,
 visible timer), and the official score report (scaled 10/180 example, sectional "needs 38 / needs 19"
 chips). Zero runtime console errors (earlier PASS_THRESHOLD entries were stale mid-edit HMR).
+
+### Deploy + SPA-routing fix (2026-08-03)
+
+Shipped the session's 8 commits to production: fast-forwarded `main` to `n3-extension-batch-1` (a3eb11a
+→ e411ffc) so Vercel auto-deployed the kanji expansion, KanjiVG stroke order, the 4 readings + roadmap
+wiring, and the Mock Exam. Verified the new bundle live (contains the "Mock Exam"/"Proefexamen" nav).
+
+Found a **pre-existing SPA-routing bug**: every non-root deep link (`/mock`, `/kanji`, `/grammar`, …)
+returned Vercel's 404 — the app only worked when entered at `/` and navigated client-side; refresh /
+bookmark / share broke. Added `vercel.json` rewriting all non-`/api` paths to `index.html` (commit
+6b68de6). After redeploy, verified live: all 10 routes → 200 serving the app shell, `/api/chat/status`
+still 200 (functions preserved), and `/mock` loads the exam directly in-browser. Production URL:
+`https://test-ten-jade-63.vercel.app`.
+
+### Fix — live login (2026-08-03)
+
+Login was dead on production: the Vercel build lacked `VITE_SUPABASE_*` env vars (only in the gitignored
+local `.env`), so the deployed Supabase client was `null`. User chose the committed-fallback fix — baked the
+public project URL + `sb_publishable_` anon key into `src/lib/supabase.ts` as a fallback (safe: RLS-gated,
+ships client-side anyway; a real `.env` still overrides). Commit 458e726, deployed. Verified live: config in
+the bundle, login page renders functional with no "account service" error, zero console errors. (Google
+OAuth may still need enabling in the Supabase dashboard per earlier notes; email/password works.)
