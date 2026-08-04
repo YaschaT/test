@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, XCircle, RotateCcw, Headphones, Target } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { Celebration } from '../../components/Celebration';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { VoiceModeSelector } from '../../components/tts/VoiceModeSelector';
 import { BrowserVoiceSelector } from '../../components/tts/BrowserVoiceSelector';
-import { ListeningHero } from '../../components/listening/ListeningHero';
+import { ModuleHeader } from '../../components/learning/ModuleHeader';
+import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
 import { BigPlayButton } from '../../components/listening/BigPlayButton';
 import { ListeningSessionProgress } from '../../components/listening/ListeningSessionProgress';
 import { useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
@@ -54,9 +55,34 @@ export function ListeningHome() {
   const playbackAvailable =
     voiceMode === 'browser' ? browserVoiceAvailable : voiceMode === 'neural' ? neuralAvailable === true : googleAvailable === true;
 
+  // Real listening stats, derived from recorded session results.
+  const listeningResults = progress.quizResults.filter((r) => r.skill === 'listening');
+  const sessionsDone = listeningResults.length;
+  const totalCorrect = listeningResults.reduce((n, r) => n + r.correct, 0);
+  const totalAnswered = listeningResults.reduce((n, r) => n + r.total, 0);
+  const accuracyPct = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+
   return (
-    <div className="space-y-5 max-w-4xl">
-      <ListeningHero />
+    <div className="space-y-6">
+      <ModuleHeader
+        skill="listening"
+        title="Listening"
+        subtitle="Practice with text-to-speech, using your browser's voice or a natural neural voice."
+      />
+      <ModuleStatsHero
+        ringProgress={totalAnswered > 0 ? totalCorrect / totalAnswered : 0}
+        ringIcon={Headphones}
+        headlineValue={sessionsDone}
+        headlineLabel={sessionsDone === 1 ? 'Session completed' : 'Sessions completed'}
+        mascotSrc="/assets/dashboard/mascots/mascot-greeting.png"
+        mascotWidth={84}
+        mascotHeight={84}
+        stats={[
+          { icon: CheckCircle2, iconBg: 'bg-emerald-500/20', iconColor: 'text-emerald-300', value: totalCorrect, label: 'Correct answers', helper: 'so far' },
+          { icon: Headphones, iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300', value: totalAnswered, label: 'Items heard', helper: 'total' },
+          { icon: Target, iconBg: 'bg-violet-500/20', iconColor: 'text-violet-300', value: accuracyPct, label: 'Accuracy', helper: 'correct', suffix: '%' },
+        ]}
+      />
 
       {voiceMode === 'browser' && !browserVoiceAvailable && (
         <Card className="p-4 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30">

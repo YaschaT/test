@@ -8,9 +8,11 @@ interface LearningStatItemProps {
   value: number;
   label: string;
   helper: string;
+  /** Optional unit appended to the counted-up value, e.g. "%". */
+  suffix?: string;
 }
 
-export function LearningStatItem({ icon: Icon, iconBg, iconColor, value, label, helper }: LearningStatItemProps) {
+export function LearningStatItem({ icon: Icon, iconBg, iconColor, value, label, helper, suffix }: LearningStatItemProps) {
   const displayValue = useCountUp(value);
 
   return (
@@ -19,7 +21,7 @@ export function LearningStatItem({ icon: Icon, iconBg, iconColor, value, label, 
         <Icon size={20} className={iconColor} aria-hidden="true" />
       </div>
       <div className="min-w-0">
-        <p className="text-2xl font-bold text-white leading-tight">{displayValue}</p>
+        <p className="text-2xl font-bold text-white leading-tight tabular-nums">{displayValue}{suffix}</p>
         <p className="text-sm font-semibold text-slate-200 leading-snug">{label}</p>
         <p className="text-xs text-slate-400 leading-snug">{helper}</p>
       </div>

@@ -11,9 +11,8 @@ import {
   ChevronRight,
   Check,
 } from 'lucide-react';
-import { RingStat } from '../../components/dashboard/RingStat';
-import { LearningStatItem } from '../../components/learning/LearningStatItem';
-import { useCountUp } from '../../lib/useCountUp';
+import { ModuleHeader } from '../../components/learning/ModuleHeader';
+import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
 import { READINGS, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
 import { useProgress } from '../../lib/progressStore';
 import type { ReadingPassage, TadokuLevel } from '../../types';
@@ -76,19 +75,24 @@ export function ReadingList() {
     shelves.filter((s) => s.books.some((b) => doneSet.has(b.id))).map((s) => s.level).pop() ?? 0;
 
   const visibleShelves = filter === 'all' ? shelves : shelves.filter((s) => s.level === filter);
-  const wordsPct = totalWords > 0 ? Math.round((stats.wordsRead / totalWords) * 100) : 0;
 
   return (
     <div className="space-y-6">
-      <ReadingHero
-        wordsRead={stats.wordsRead}
-        totalWords={totalWords}
-        wordsPct={wordsPct}
-        booksRead={stats.booksRead}
-        totalBooks={stats.totalBooks}
-        shelvesCleared={shelvesCleared}
-        shelfCount={shelves.length}
-        levelReached={levelReached}
+      <ModuleHeader skill="reading" title="Reading" subtitle="Read a lot, read easy — the words add up." />
+      <ModuleStatsHero
+        ringProgress={stats.totalBooks > 0 ? stats.booksRead / stats.totalBooks : 0}
+        ringIcon={BookOpen}
+        headlineValue={stats.wordsRead}
+        headlineTotal={totalWords}
+        headlineLabel="Words read"
+        mascotSrc="/assets/dashboard/mascots/mascot-reading-map.png"
+        mascotWidth={84}
+        mascotHeight={75}
+        stats={[
+          { icon: BookOpen, iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300', value: stats.booksRead, label: 'Books read', helper: `of ${stats.totalBooks}` },
+          { icon: Trophy, iconBg: 'bg-amber-500/20', iconColor: 'text-amber-300', value: shelvesCleared, label: 'Shelves cleared', helper: `of ${shelves.length}` },
+          { icon: Sparkles, iconBg: 'bg-violet-500/20', iconColor: 'text-violet-300', value: levelReached, label: 'Level reached', helper: 'keep climbing' },
+        ]}
       />
 
       <GoldenRules />
@@ -113,89 +117,6 @@ export function ReadingList() {
         ))}
       </div>
     </div>
-  );
-}
-
-// ── Hero ──────────────────────────────────────────────────────────────────────
-interface HeroProps {
-  wordsRead: number;
-  totalWords: number;
-  wordsPct: number;
-  booksRead: number;
-  totalBooks: number;
-  shelvesCleared: number;
-  shelfCount: number;
-  levelReached: number;
-}
-
-function ReadingHero({
-  wordsRead,
-  totalWords,
-  wordsPct,
-  booksRead,
-  totalBooks,
-  shelvesCleared,
-  shelfCount,
-  levelReached,
-}: HeroProps) {
-  const displayWords = useCountUp(wordsRead);
-  const nextMilestone = Math.max(1000, Math.ceil((wordsRead + 1) / 1000) * 1000);
-  const milestonePct = Math.min(100, Math.round((wordsRead / nextMilestone) * 100));
-
-  return (
-    <section className="relative overflow-hidden rounded-3xl bg-slate-950">
-      <img
-        src="/assets/kotobox-dashboard/generated/hero-background.png"
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/55 to-slate-950/30" aria-hidden="true" />
-
-      <div className="relative z-10 flex flex-wrap items-center gap-x-8 gap-y-6 p-5 sm:p-6">
-        {/* Ring + headline */}
-        <div className="flex shrink-0 items-center gap-4">
-          <RingStat progress={totalWords > 0 ? wordsRead / totalWords : 0} color="#38bdf8" trackColor="#ffffff" size={80} strokeWidth={7}>
-            <BookOpen size={22} className="text-white/85" aria-hidden="true" />
-          </RingStat>
-          <div>
-            <p className="text-3xl font-bold leading-tight text-white tabular-nums">
-              {displayWords.toLocaleString()}
-              <span className="text-base font-medium text-slate-400"> / {totalWords.toLocaleString()}</span>
-            </p>
-            <p className="text-sm font-semibold leading-tight text-slate-200">Words read</p>
-            {/* Milestone bar */}
-            <div className="mt-2 w-[180px] max-w-full">
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
-                <div
-                  className="h-full rounded-full bg-sky-400 transition-[width] duration-700 ease-out"
-                  style={{ width: `${milestonePct}%` }}
-                />
-              </div>
-              <p className="mt-1 text-[11px] text-slate-400 tabular-nums">
-                {(nextMilestone - wordsRead).toLocaleString()} to {nextMilestone.toLocaleString()} · {wordsPct}% of library
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <img
-          src="/assets/dashboard/mascots/mascot-reading-map.png"
-          alt=""
-          aria-hidden="true"
-          width={78}
-          height={94}
-          className="hidden shrink-0 drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] sm:block"
-        />
-
-        {/* Stat chips */}
-        <div className="grid basis-full grid-cols-2 gap-x-4 gap-y-5 sm:flex sm:basis-auto sm:flex-1 sm:flex-wrap sm:gap-x-8 sm:border-l sm:border-white/10 sm:pl-6">
-          <LearningStatItem icon={BookOpen} iconBg="bg-sky-500/20" iconColor="text-sky-300" value={booksRead} label="Books read" helper={`of ${totalBooks}`} />
-          <LearningStatItem icon={Trophy} iconBg="bg-amber-500/20" iconColor="text-amber-300" value={shelvesCleared} label="Shelves cleared" helper={`of ${shelfCount}`} />
-          <LearningStatItem icon={Sparkles} iconBg="bg-violet-500/20" iconColor="text-violet-300" value={levelReached} label="Level reached" helper="keep climbing" />
-        </div>
-      </div>
-    </section>
   );
 }
 

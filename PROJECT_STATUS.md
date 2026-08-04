@@ -384,6 +384,43 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Batch — unified module banner + hierarchy across all 5 skill pages (2026-08-04)
+
+User asked to make the top banner "exactly the same" on Reading / Listening / Kanji / Vocabulary /
+Grammar, fill every page (no width-constrained/empty pages), and give them all the same hierarchy as
+the Grammar/Vocab reference. The five pages had drifted apart: Vocab/Kanji used a shared night-sky
+stats panel; Grammar used a plain title + progress bar (no icon); Reading used a bespoke sky-accent
+hero with the title *inside* it; Listening used a CSS-starfield hero with no stats and was locked to
+`max-w-4xl` (visibly narrow).
+
+Unified them onto **two shared components** (`src/components/learning/`):
+- **`ModuleHeader`** — skill badge (`CategoryIcon`) + title + subtitle + optional right slot (CTA or
+  readout). Now the single header on all five pages.
+- **`ModuleStatsHero`** — the one night-sky banner: violet progress ring + counted-up headline +
+  mascot + three stat chips (`LearningStatItem`, extended with an optional `%` suffix). Generalises
+  the old `LearningStatsPanel` so it's no longer coupled to the SRS `LearningStats` type.
+
+Every banner shows **real** data (per the "real data, always" principle — nothing fabricated):
+Vocab/Kanji keep their SRS learned/new/due/mastered; Reading = words read + books/shelves/level;
+**Grammar** = points completed / 42 with real per-JLPT-level chips (N5/N4/N3); **Listening** = real
+session results derived from `quizResults` (sessions completed, correct answers, items heard,
+accuracy %). Listening's `max-w-4xl` cap was removed so it fills the content column like the others.
+
+Deleted the five now-orphaned components (`LearningStatsPanel`, `VocabularyHeader`, `KanjiHeader`,
+`ListeningHero`, `GrammarOverviewHeader`) — each was single-page. Grammar keeps its Continue card and
+lesson list below the new banner. `tsc`/`eslint`/`build` clean; `vitest` 54/54. Verified in-browser:
+all five pages open to the identical header + banner, Listening now full-width, no page overflow,
+zero console errors (a lingering Vite HMR warning for the deleted `ListeningHero` was a stale
+dev-client artifact — a fresh tab and the production build are both clean).
+
+### Batch — premium Apple-Books-style Reading library UI (2026-08-04)
+
+Elevated the Tadoku library to award-winning polish (`/impeccable`): shelves became horizontal
+cover-card **rails** (scroll-snap + right-edge mask fade + desktop scroll arrows), each Tadoku level
+with its own colour identity, book cards as real 3:4 covers (faux spine, emoji cover art, level
+badge, read-check). Verified light/dark/mobile, no overflow, 54/54 tests. (Banner from this pass was
+subsequently replaced by the shared `ModuleStatsHero` in the unification batch above.)
+
 ### Batch — Reading reshaped into a Tadoku extensive-reading library (2026-08-04)
 
 Reworked Reading from *intensive* study (flat grid of 11 passages, each gated on a comprehension

@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Layers } from 'lucide-react';
-import { VocabularyHeader } from '../../components/vocabulary/VocabularyHeader';
-import { LearningStatsPanel } from '../../components/learning/LearningStatsPanel';
+import { Link } from 'react-router-dom';
+import { Layers, Clock, CheckCircle2, Sparkles } from 'lucide-react';
+import { ModuleHeader } from '../../components/learning/ModuleHeader';
+import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
 import { LearningControls } from '../../components/learning/LearningControls';
+import { PRIMARY_BUTTON_CLASSES } from '../../lib/buttonStyles';
+import { playPrimaryAction } from '../../lib/sound';
 import { VocabularyCardGrid } from '../../components/vocabulary/VocabularyCardGrid';
 import { VOCABULARY, VOCAB_CATEGORIES } from '../../data/vocabulary';
 import { getSrsCard, useProgress } from '../../lib/progressStore';
@@ -52,17 +55,35 @@ export function VocabularyHome() {
 
   return (
     <div className="space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
-      <VocabularyHeader ctaLabel={ctaLabel} />
-      <LearningStatsPanel
-        stats={stats}
-        learnedLabel="Words Learned"
-        unitLabelPlural="words"
+      <ModuleHeader
+        skill="vocabulary"
+        title="Vocabulary"
+        subtitle="Build your Japanese word bank step by step."
+        right={
+          ctaLabel ? (
+            <Link to="/vocabulary/review" onClick={() => playPrimaryAction()} className={PRIMARY_BUTTON_CLASSES}>
+              <Sparkles size={16} />
+              {ctaLabel}
+            </Link>
+          ) : (
+            <span className="self-center text-sm text-slate-400">All caught up for now</span>
+          )
+        }
+      />
+      <ModuleStatsHero
+        ringProgress={stats.learnedPercent / 100}
         ringIcon={Layers}
+        headlineValue={stats.learnedCount}
+        headlineTotal={stats.totalCount}
+        headlineLabel="Words learned"
         mascotSrc="/assets/dashboard/mascots/mascot-vocabulary.png"
         mascotWidth={84}
         mascotHeight={100}
-        showLongestStreak={false}
-        showLearnedPercent={false}
+        stats={[
+          { icon: Layers, iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300', value: stats.newCount, label: 'New to learn', helper: 'Ready to start' },
+          { icon: Clock, iconBg: 'bg-amber-500/20', iconColor: 'text-amber-300', value: stats.reviewDueCount, label: 'Review due', helper: 'Keep your streak' },
+          { icon: CheckCircle2, iconBg: 'bg-emerald-500/20', iconColor: 'text-emerald-300', value: stats.masteredCount, label: 'Mastered', helper: 'Solid knowledge' },
+        ]}
       />
       <LearningControls
         level={level}

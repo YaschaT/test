@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GrammarOverviewHeader } from '../../components/grammar/GrammarOverviewHeader';
+import { BookOpenText } from 'lucide-react';
+import { ModuleHeader } from '../../components/learning/ModuleHeader';
+import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
 import { GrammarContinueCard } from '../../components/grammar/GrammarContinueCard';
 import {
   GrammarLessonList,
@@ -59,13 +61,46 @@ export function GrammarList() {
     (p) => p.level === level && completedIds.includes(p.id),
   ).length;
 
+  // Real per-level completion for the banner's stat chips.
+  const levelBreakdown = useMemo(
+    () =>
+      (['N5', 'N4', 'N3'] as const).map((l) => {
+        const pts = GRAMMAR_POINTS.filter((p) => p.level === l);
+        return { level: l, done: pts.filter((p) => completedIds.includes(p.id)).length, total: pts.length };
+      }),
+    [completedIds],
+  );
+  const LEVEL_CHIP_STYLE = {
+    N5: { iconBg: 'bg-emerald-500/20', iconColor: 'text-emerald-300' },
+    N4: { iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300' },
+    N3: { iconBg: 'bg-amber-500/20', iconColor: 'text-amber-300' },
+  } as const;
+
   function openLesson(id: string) {
     navigate(`/grammar/${id}`);
   }
 
   return (
     <div className="space-y-6">
-      <GrammarOverviewHeader completedCount={completedIds.length} totalCount={GRAMMAR_POINTS.length} />
+      <ModuleHeader skill="grammar" title="Grammar" subtitle="Master Japanese sentence patterns step by step." />
+      <ModuleStatsHero
+        ringProgress={GRAMMAR_POINTS.length > 0 ? completedIds.length / GRAMMAR_POINTS.length : 0}
+        ringIcon={BookOpenText}
+        headlineValue={completedIds.length}
+        headlineTotal={GRAMMAR_POINTS.length}
+        headlineLabel="Grammar learned"
+        mascotSrc="/assets/dashboard/mascots/mascot-greeting.png"
+        mascotWidth={84}
+        mascotHeight={84}
+        stats={levelBreakdown.map((b) => ({
+          icon: BookOpenText,
+          iconBg: LEVEL_CHIP_STYLE[b.level].iconBg,
+          iconColor: LEVEL_CHIP_STYLE[b.level].iconColor,
+          value: b.done,
+          label: b.level,
+          helper: `of ${b.total} points`,
+        }))}
+      />
 
       <SegmentedTabs
         value={level}
