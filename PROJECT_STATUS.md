@@ -384,6 +384,45 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Batch — Reading reshaped into a Tadoku extensive-reading library (2026-08-04)
+
+Reworked Reading from *intensive* study (flat grid of 11 passages, each gated on a comprehension
+quiz) into a **Tadoku-style graded-reader library** modelled on tadoku.org/japanese — read a lot of
+easy material, no dictionary, no test, track **volume** (books & words read). Three user-approved
+decisions: quiz becomes **optional**, author **~20 new books**, grade on Tadoku's own **Level 0–5**
+scale (finer than JLPT at the beginner end).
+
+- **Data model** (`src/types/index.ts`): `ReadingPassage` gained `tadokuLevel: TadokuLevel` (new
+  `0..5` type + `TADOKU_LEVELS`), authored `wordCount`, `coverEmoji`, optional `genre`; `questions`
+  now optional in the UI (L0–L1 ship `[]`). Re-leveled the existing 11 passages (N5-easy→L1,
+  N4→L2, N3→L3) and word-counted them by a reproducible non-punctuation-segment metric.
+- **+20 original graded readers** (`src/data/readingsExtra.ts`, `READINGS_EXTRA` spread into
+  `READINGS` — same pattern as vocab/kanji extras): L0×6, L1×5, L2×6, L3×3. Full furigana/kana/
+  romaji/EN/NL per sentence, emoji covers, verified word counts; L2+ carry a short optional quiz
+  (4 options each), L0–L1 none. Every vocab/grammar highlight id verified to resolve (script check).
+  Readings **11 → 31** (L0 6 / L1 8 / L2 10 / L3 7).
+- **Library page** (`ReadingList.tsx`, rebuilt): volume hero (total **words read** + 千語 milestone
+  bar + books-read), the **three golden rules** (辞書を引かない · わからない所は飛ばす · つまらな
+  ければ別の本へ), Tadoku **Level 0–5 filter** + colour-accented **shelves** (books sorted easiest-
+  first by word count), emoji-cover book cards with word count + JLPT pill + read ✓. New
+  `readingStats()` / `TADOKU_LEVEL_INFO` in `readings.ts` derive volume from `completedReadingIds`
+  (no `ProgressState` schema change; XP unchanged).
+- **Reading experience** (`ReadingDetail.tsx`): primary **"Mark as read"** (→ `markReadingCompleted`,
+  words counted into the total) with a "Read" confirmation; the quiz demoted to an **optional
+  "Check your understanding"** disclosure rendered only when the book has questions; hero shows the
+  book's Tadoku level + word count + library words-read; a dictionary-free reading nudge; "More
+  books at Level N" lists same-shelf siblings.
+- **Pre-existing bug found & fixed:** grammar `ba-conditional` q1 listed `行けば` **twice** (only 3
+  unique options); the mock-exam builder pulls these through, so its "exactly 4 options" test was
+  silently flaky (random `shuffle`). Replaced the duplicate with `行きば`.
+- **Tests** (`src/data/readings.test.ts`, new): every book has a valid Tadoku level, positive word
+  count, a cover, unique book/question ids, in-range `correctIndex`, and resolving vocab/grammar
+  highlights. `tsc`/`eslint`/`build` clean; `vitest` **54/54** stable across 3 runs (was flaky).
+  Verified in-browser at :5199 — library hero/rules/filter/shelves; a L0 book shows **no** quiz and
+  "Mark as read" bumps the counter to "11 words · 1/31 books" (persists across navigation); a L2
+  book shows the optional quiz + mark-as-read; Level-2 filter narrows to the "Building up" shelf;
+  furigana/toggles/vocab links render; zero console errors.
+
 ---
 
 **App renamed from "Kotoba Do" to "Kotobox"** (user's choice, from a shortlist of catchy original names

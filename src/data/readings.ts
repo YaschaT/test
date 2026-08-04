@@ -1,5 +1,6 @@
 import type { ReadingPassage } from '../types';
 import { s } from './textHelpers';
+import { READINGS_EXTRA } from './readingsExtra';
 
 function rs(segments: { text: string; reading?: string }[], kana: string, romaji: string, en: string, nl: string) {
   return { segments, kana, romaji, en, nl };
@@ -10,6 +11,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-my-day',
     level: 'N5',
+    tadokuLevel: 1,
+    coverEmoji: '🌅',
+    wordCount: 31,
+    genre: 'Daily life',
     title: { en: 'My Day', nl: 'Mijn Dag' },
     description: { en: 'A short passage about daily routines.', nl: 'Een korte tekst over dagelijkse routines.' },
     difficulty: 'easy',
@@ -80,6 +85,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-weekend-plans',
     level: 'N5',
+    tadokuLevel: 1,
+    coverEmoji: '📅',
+    wordCount: 30,
+    genre: 'Daily life',
     title: { en: 'Weekend Plans', nl: 'Weekendplannen' },
     description: { en: 'Making plans and saying what you want to do.', nl: 'Plannen maken en zeggen wat je wilt doen.' },
     difficulty: 'easy',
@@ -150,6 +159,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-promise',
     level: 'N4',
+    tadokuLevel: 2,
+    coverEmoji: '🤝',
+    wordCount: 30,
+    genre: 'Friendship',
     title: { en: 'A Promise with a Friend', nl: 'Een belofte aan een vriend(in)' },
     description: { en: 'Plans, conditions and keeping your word.', nl: 'Plannen, voorwaarden en je woord houden.' },
     difficulty: 'medium',
@@ -220,6 +233,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-japan-weather',
     level: 'N4',
+    tadokuLevel: 2,
+    coverEmoji: '🌦️',
+    wordCount: 31,
+    genre: 'Culture',
     title: { en: 'Japan’s Weather', nl: 'Het weer in Japan' },
     description: { en: 'The four seasons and describing how things seem.', nl: 'De vier seizoenen en beschrijven hoe iets lijkt.' },
     difficulty: 'hard',
@@ -290,6 +307,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-ryuugaku',
     level: 'N3',
+    tadokuLevel: 3,
+    coverEmoji: '✈️',
+    wordCount: 57,
+    genre: 'Life story',
     title: { en: 'Deciding to Study Abroad', nl: 'De keuze om in het buitenland te studeren' },
     description: {
       en: 'An original N3 passage about preparing to study overseas — reuses this level’s new vocabulary and grammar.',
@@ -381,6 +402,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-birthday',
     level: 'N4',
+    tadokuLevel: 2,
+    coverEmoji: '🎂',
+    wordCount: 44,
+    genre: 'Daily life',
     title: { en: 'My Birthday', nl: 'Mijn Verjaardag' },
     description: {
       en: 'An original N4 passage that puts giving/receiving verbs, quoting and the potential form to work.',
@@ -472,6 +497,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-kanji-study',
     level: 'N3',
+    tadokuLevel: 3,
+    coverEmoji: '✍️',
+    wordCount: 60,
+    genre: 'Study',
     title: { en: 'Studying Kanji', nl: 'Kanji Studeren' },
     description: {
       en: 'An original N3 passage weaving together the causative, passive, ば〜ほど and おかげで.',
@@ -563,6 +592,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-my-town',
     level: 'N5',
+    tadokuLevel: 1,
+    coverEmoji: '🏘️',
+    wordCount: 37,
+    genre: 'Daily life',
     title: { en: 'My Town', nl: 'Mijn Stad' },
     description: { en: 'A short tour of the places in a small town.', nl: 'Een korte rondleiding langs de plekken in een klein stadje.' },
     difficulty: 'easy',
@@ -644,6 +677,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-studying-japanese',
     level: 'N4',
+    tadokuLevel: 2,
+    coverEmoji: '📚',
+    wordCount: 45,
+    genre: 'Study',
     title: { en: 'Studying Japanese', nl: 'Japans Studeren' },
     description: { en: 'A learner reflects on studying kanji and reading.', nl: 'Een student blikt terug op het leren van kanji en lezen.' },
     difficulty: 'medium',
@@ -725,6 +762,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-healthy-life',
     level: 'N3',
+    tadokuLevel: 3,
+    coverEmoji: '🏃',
+    wordCount: 37,
+    genre: 'Health',
     title: { en: 'A Healthy Life', nl: 'Een Gezond Leven' },
     description: { en: 'How daily exercise changed one person’s habits.', nl: 'Hoe dagelijkse beweging iemands gewoonten veranderde.' },
     difficulty: 'medium',
@@ -806,6 +847,10 @@ export const READINGS: ReadingPassage[] = [
   {
     id: 'r-part-time-job',
     level: 'N3',
+    tadokuLevel: 3,
+    coverEmoji: '💼',
+    wordCount: 42,
+    genre: 'Work',
     title: { en: 'My Part-Time Job', nl: 'Mijn Bijbaan' },
     description: { en: 'A student describes a busy convenience-store job.', nl: 'Een student beschrijft een drukke baan in een buurtwinkel.' },
     difficulty: 'hard',
@@ -884,8 +929,51 @@ export const READINGS: ReadingPassage[] = [
       },
     ],
   },
+  ...READINGS_EXTRA,
 ];
 
 export function getReading(id: string): ReadingPassage | undefined {
   return READINGS.find((r) => r.id === id);
 }
+
+/** Volume read so far — the Tadoku motivator. Derived from completed book ids. */
+export function readingStats(completedIds: string[]) {
+  const doneSet = new Set(completedIds);
+  const done = READINGS.filter((r) => doneSet.has(r.id));
+  return {
+    booksRead: done.length,
+    totalBooks: READINGS.length,
+    wordsRead: done.reduce((n, r) => n + r.wordCount, 0),
+  };
+}
+
+/** Shelf metadata for each Tadoku level, low→high. */
+export const TADOKU_LEVEL_INFO: Record<
+  number,
+  { name: { en: string; nl: string }; blurb: { en: string; nl: string } }
+> = {
+  0: {
+    name: { en: 'First words', nl: 'Eerste woorden' },
+    blurb: { en: 'Tiny all-kana books.', nl: 'Piepkleine boekjes in kana.' },
+  },
+  1: {
+    name: { en: 'Getting started', nl: 'Op weg' },
+    blurb: { en: 'Short books, basic kanji with furigana.', nl: 'Korte boekjes, basiskanji met furigana.' },
+  },
+  2: {
+    name: { en: 'Building up', nl: 'Opbouwen' },
+    blurb: { en: 'Past tense and everyday stories.', nl: 'Verleden tijd en alledaagse verhalen.' },
+  },
+  3: {
+    name: { en: 'Stretching out', nl: 'Uitbreiden' },
+    blurb: { en: 'Longer stories with richer grammar.', nl: 'Langere verhalen met rijkere grammatica.' },
+  },
+  4: {
+    name: { en: 'Reading freely', nl: 'Vrij lezen' },
+    blurb: { en: 'Fuller texts on wider topics.', nl: 'Vollere teksten over bredere onderwerpen.' },
+  },
+  5: {
+    name: { en: 'Advanced', nl: 'Gevorderd' },
+    blurb: { en: 'Native-like extended reading.', nl: 'Uitgebreid lezen op moedertaalniveau.' },
+  },
+};

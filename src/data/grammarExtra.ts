@@ -468,7 +468,7 @@ export const GRAMMAR_EXTRA: GrammarPoint[] = [
         skill: 'grammar',
         level: 'N4',
         prompt: { en: 'The ば-form of 行く is…', nl: 'De ば-vorm van 行く is…' },
-        options: ['行けば', '行けば', '行くば', '行ければ'],
+        options: ['行けば', '行きば', '行くば', '行ければ'],
         correctIndex: 0,
         explanation: { en: '行く → 行けば (change -u to -eba).', nl: '行く → 行けば (-u wordt -eba).' },
       },

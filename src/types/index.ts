@@ -101,16 +101,35 @@ export interface ReadingQuestion {
   correctIndex: number;
 }
 
+/**
+ * Tadoku ("extensive reading") grade, 0–5. Finer than JLPT at the beginner end,
+ * where most extensive reading lives. Rough word-count bands used to place a book:
+ * L0 ~20–120 · L1 ~120–400 · L2 ~400–800 · L3 ~800–1500 · L4/L5 longer.
+ */
+export type TadokuLevel = 0 | 1 | 2 | 3 | 4 | 5;
+
+/** Ordered Tadoku shelves, low→high. */
+export const TADOKU_LEVELS: TadokuLevel[] = [0, 1, 2, 3, 4, 5];
+
 export interface ReadingPassage {
   id: string;
   level: JlptLevel;
+  /** Primary grade for the library shelves — Tadoku's own 0–5 scale. */
+  tadokuLevel: TadokuLevel;
   title: Translatable;
-  /** One-line summary shown in the "About this passage" panel. */
+  /** One-line summary shown in the "About this book" panel. */
   description: Translatable;
   difficulty: 'easy' | 'medium' | 'hard';
+  /** Cover glyph shown on the shelf card (e.g. "🍙"). */
+  coverEmoji: string;
+  /** Authored word count (Japanese words) — drives the "words read" volume tracker. */
+  wordCount: number;
+  /** Optional theme label shown as a small tag (e.g. "Daily life"). */
+  genre?: string;
   sentences: ReadingSentence[];
   vocabHighlightIds: string[];
   grammarHighlightIds: string[];
+  /** Optional comprehension check. Empty for pure extensive-reading books (L0–L1). */
   questions: ReadingQuestion[];
 }
 

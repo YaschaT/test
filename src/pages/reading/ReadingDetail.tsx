@@ -4,9 +4,11 @@ import {
   ArrowLeft,
   Bookmark,
   BookOpen,
+  Check,
   ChevronDown,
   ClipboardList,
   Copy,
+  Info,
   MoreHorizontal,
   Pause,
   Play,
@@ -18,7 +20,7 @@ import { JapaneseText } from '../../components/JapaneseText';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { RingStat } from '../../components/dashboard/RingStat';
 import { ReadingQuestionPlayer } from '../../components/ReadingQuestionPlayer';
-import { getReading, READINGS } from '../../data/readings';
+import { getReading, readingStats, READINGS } from '../../data/readings';
 import { getVocabWord } from '../../data/vocabulary';
 import { getGrammarPoint } from '../../data/grammar';
 import { markReadingCompleted, recordQuizResult, useProgress } from '../../lib/progressStore';
@@ -31,13 +33,6 @@ interface ReadingPrefs {
   english: boolean;
   dutch: boolean;
 }
-
-const DIFFICULTY_STYLES: Record<string, string> = {
-  easy: 'text-emerald-300 bg-emerald-500/15 ring-emerald-400/30',
-  medium: 'text-amber-300 bg-amber-500/15 ring-amber-400/30',
-  hard: 'text-red-300 bg-red-500/15 ring-red-400/30',
-};
-
 
 export function ReadingDetail() {
   const { id } = useParams<{ id: string }>();
@@ -64,11 +59,13 @@ export function ReadingDetail() {
 
   if (!passage) return <Navigate to="/reading" replace />;
 
-  const completedCount = progress.completedReadingIds.length;
-  const totalPassages = READINGS.length;
-  const progressPct = totalPassages > 0 ? Math.round((completedCount / totalPassages) * 100) : 0;
+  const read = progress.completedReadingIds.includes(passage.id);
+  const stats = readingStats(progress.completedReadingIds);
   const grammarLabel = grammarPoints.map((g) => g.title).join(' · ') || '—';
-  const otherPassages = READINGS.filter((r) => r.id !== passage.id);
+  // "More books at this level" — same Tadoku shelf, easiest first.
+  const otherPassages = READINGS.filter(
+    (r) => r.id !== passage.id && r.tadokuLevel === passage.tadokuLevel,
+  ).sort((a, b) => a.wordCount - b.wordCount);
 
   function playSentence(index: number) {
     if (!voiceAvailable) return;
@@ -97,6 +94,11 @@ export function ReadingDetail() {
     setResult({ correct, total });
     markReadingCompleted(passage!.id);
     recordQuizResult({ quizId: `reading-${passage!.id}`, skill: 'reading', level: progress.level, correct, total });
+  }
+
+  // Extensive reading: finishing a book is the goal, not passing a quiz.
+  function markAsRead() {
+    markReadingCompleted(passage!.id);
   }
 
   function copyText() {
@@ -156,15 +158,21 @@ export function ReadingDetail() {
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/40 to-slate-950/20" aria-hidden="true" />
         <div className="relative z-10 grid gap-6 p-6 md:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white ring-1 ring-inset ring-white/20">
+                <span aria-hidden="true">{passage.coverEmoji}</span> Tadoku Level {passage.tadokuLevel}
+              </span>
               <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
                 {passage.level}
               </span>
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-1 ring-inset ${DIFFICULTY_STYLES[passage.difficulty]}`}
-              >
-                {passage.difficulty}
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-bold text-white/70 ring-1 ring-inset ring-white/15">
+                <BookOpen size={12} aria-hidden="true" /> {passage.wordCount} words
               </span>
+              {passage.genre && (
+                <span className="rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-white/60 ring-1 ring-inset ring-white/15">
+                  {passage.genre}
+                </span>
+              )}
             </div>
             <h1 className="mt-3 text-4xl font-bold text-white">{passage.title.en}</h1>
             <p className="mt-1 text-lg text-white/60">{passage.title.nl}</p>
@@ -191,17 +199,17 @@ export function ReadingDetail() {
             </div>
           </div>
 
-          {/* Passage progress */}
+          {/* Library volume so far */}
           <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm lg:w-[300px]">
-            <RingStat progress={totalPassages > 0 ? completedCount / totalPassages : 0} color="var(--color-brand-400)" trackColor="white" size={96} strokeWidth={8} displaySize="84px">
-              <span className="text-lg font-bold text-white tabular-nums">{progressPct}%</span>
+            <RingStat progress={stats.totalBooks > 0 ? stats.booksRead / stats.totalBooks : 0} color="var(--color-brand-400)" trackColor="white" size={96} strokeWidth={8} displaySize="84px">
+              <span className="text-lg font-bold text-white tabular-nums">{stats.booksRead}</span>
             </RingStat>
             <div className="min-w-0">
-              <p className="text-sm text-white/60">Passage progress</p>
-              <p className="mt-0.5 text-2xl font-bold text-white">
-                {completedCount} of {totalPassages}
+              <p className="text-sm text-white/60">You’ve read</p>
+              <p className="mt-0.5 text-2xl font-bold text-white tabular-nums">
+                {stats.wordsRead.toLocaleString()} words
               </p>
-              <p className="text-sm text-white/60">passages completed</p>
+              <p className="text-sm text-white/60 tabular-nums">across {stats.booksRead} of {stats.totalBooks} books</p>
             </div>
           </div>
         </div>
@@ -211,6 +219,10 @@ export function ReadingDetail() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Passage */}
         <div className="space-y-5">
+          <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+            <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p>Read for enjoyment — no dictionary. Guess unknown words from context, and skip anything that slows you down.</p>
+          </div>
           <Card className="overflow-hidden p-2 sm:p-3">
             <ul>
               {passage.sentences.map((sentence, i) => {
@@ -261,79 +273,119 @@ export function ReadingDetail() {
               })}
             </ul>
 
-            <div className="border-t border-slate-100 p-3 dark:border-white/[0.06]">
-              <button
-                type="button"
-                onClick={() => setShowMore((v) => !v)}
-                aria-expanded={showMore}
-                className="mx-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-              >
-                {showMore ? 'Hide other passages' : 'Show more passages'}
-                <ChevronDown size={16} className={`transition-transform ${showMore ? 'rotate-180' : ''}`} aria-hidden="true" />
-              </button>
-              {showMore && (
-                <ul className="mt-2 space-y-1">
-                  {otherPassages.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        to={`/reading/${r.id}`}
-                        className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.03]"
-                      >
-                        <span className="font-medium text-slate-800 dark:text-slate-100">{r.title.en}</span>
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{r.level}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            {otherPassages.length > 0 && (
+              <div className="border-t border-slate-100 p-3 dark:border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => setShowMore((v) => !v)}
+                  aria-expanded={showMore}
+                  className="mx-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                >
+                  {showMore ? 'Hide other books' : `More books at Level ${passage.tadokuLevel}`}
+                  <ChevronDown size={16} className={`transition-transform ${showMore ? 'rotate-180' : ''}`} aria-hidden="true" />
+                </button>
+                {showMore && (
+                  <ul className="mt-2 space-y-1">
+                    {otherPassages.map((r) => (
+                      <li key={r.id}>
+                        <Link
+                          to={`/reading/${r.id}`}
+                          className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.03]"
+                        >
+                          <span className="flex items-center gap-2 font-medium text-slate-800 dark:text-slate-100">
+                            <span aria-hidden="true">{r.coverEmoji}</span>
+                            {r.title.en}
+                          </span>
+                          <span className="text-xs font-semibold tabular-nums text-slate-400">{r.wordCount} words</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </Card>
 
-          {showQuiz ? (
-            <div ref={quizRef} className="scroll-mt-4">
-              <Card className="p-5">
-                <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Comprehension questions</h2>
-                {result ? (
-                  <Celebration
-                    correct={result.correct}
-                    total={result.total}
-                    onRetry={() => {
-                      setResult(null);
-                      setShowQuiz(true);
-                    }}
-                  />
-                ) : (
-                  <ReadingQuestionPlayer questions={passage.questions} onComplete={handleQuizComplete} />
-                )}
-              </Card>
+          {/* Finishing the book is the goal — not passing a quiz. */}
+          <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+                <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> Finished reading?
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {read
+                  ? `Nice — this book's ${passage.wordCount} words are counted in your total.`
+                  : `Mark it read to add ${passage.wordCount} words to your total.`}
+              </p>
             </div>
-          ) : (
-            <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                  <ClipboardList size={18} className="text-brand-500" aria-hidden="true" /> Check your understanding
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {passage.questions.length} comprehension question{passage.questions.length === 1 ? '' : 's'} on this passage.
-                </p>
-              </div>
-              <PrimaryButton onClick={openQuiz} className="w-full shrink-0 sm:w-auto">
-                Take the quiz
+            {read ? (
+              <span className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200 sm:w-auto dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30">
+                <Check size={16} aria-hidden="true" /> Read
+              </span>
+            ) : (
+              <PrimaryButton onClick={markAsRead} className="w-full shrink-0 sm:w-auto">
+                Mark as read
               </PrimaryButton>
-            </Card>
-          )}
+            )}
+          </Card>
+
+          {/* Optional comprehension check — only for books that carry one. */}
+          {passage.questions.length > 0 &&
+            (showQuiz ? (
+              <div ref={quizRef} className="scroll-mt-4">
+                <Card className="p-5">
+                  <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Check your understanding</h2>
+                  {result ? (
+                    <Celebration
+                      correct={result.correct}
+                      total={result.total}
+                      onRetry={() => {
+                        setResult(null);
+                        setShowQuiz(true);
+                      }}
+                    />
+                  ) : (
+                    <ReadingQuestionPlayer questions={passage.questions} onComplete={handleQuizComplete} />
+                  )}
+                </Card>
+              </div>
+            ) : (
+              <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
+                    <ClipboardList size={18} className="text-slate-400" aria-hidden="true" /> Check your understanding
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      Optional
+                    </span>
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {passage.questions.length} quick question{passage.questions.length === 1 ? '' : 's'}, if you’d like to test yourself.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openQuiz}
+                  className="w-full shrink-0 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 sm:w-auto dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  Take the quiz
+                </button>
+              </Card>
+            ))}
         </div>
 
         {/* Side panels */}
         <aside className="space-y-5">
           <Card className="p-5">
             <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-              <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> About this passage
+              <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> About this book
             </h2>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{passage.description.en}</p>
             <dl className="mt-4 grid grid-cols-3 gap-4">
-              <AboutStat label="Level" value={passage.level} />
-              <AboutStat label="Sentences" value={String(passage.sentences.length)} />
+              <AboutStat label="Tadoku" value={`Level ${passage.tadokuLevel}`} />
+              <AboutStat label="Words" value={String(passage.wordCount)} />
+              <AboutStat label="JLPT" value={passage.level} />
+            </dl>
+            <dl className="mt-4 border-t border-slate-100 pt-4 dark:border-white/[0.06]">
               <AboutStat label="Grammar" value={grammarLabel} jp />
             </dl>
           </Card>
@@ -341,7 +393,7 @@ export function ReadingDetail() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-                <ClipboardList size={18} className="text-brand-500" aria-hidden="true" /> Vocabulary in this passage
+                <ClipboardList size={18} className="text-brand-500" aria-hidden="true" /> Vocabulary in this book
               </h2>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 {passage.vocabHighlightIds.length}
