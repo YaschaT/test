@@ -384,6 +384,51 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Fix — cross-device progress sync lost/mismatched data (2026-08-05)
+
+User report: "when I log in to my account the saved data does not appear the same when I'm also logged
+in desktop or iPad." Diagnosed three compounding bugs in `src/lib/progressSync.ts`, all data-losing:
+
+1. **The cloud copy was never pulled on a restored session.** `syncProgressAfterSignIn` was only called
+   from `LoginForm` / `RegisterForm` / `AuthCallback` — i.e. only when someone actively submitted the
+   login form. Reopening an already-signed-in device (Supabase persists the session) skipped the pull
+   entirely, so it showed stale `localStorage` progress *and* `useProgressSync` then pushed that stale
+   copy over the newer cloud data. This is the main cause of the two devices disagreeing.
+2. **Sync was last-write-wins.** Even when it did run, it called `replaceProgress(remote)`, discarding
+   whatever this device had done.
+3. **A failed read looked identical to "no data".** `fetchRemoteProgress` returned `null` both when the
+   row was missing and on any error, and the caller responded by seeding the cloud from local — so one
+   transient network/RLS failure could overwrite a good cloud copy.
+
+Fixes:
+- **New `src/lib/progressMerge.ts`** — `mergeProgress(a, b)` keeps the best of both. Learning progress
+  is monotonic, so it unions completed grammar/kanji/reading ids and quiz history (by id), takes the
+  most-recently-reviewed SRS card per key, max per-day minutes, best checkpoint accuracy, best mock
+  score (with `passed` tied to that score), longest streak + most recent current streak, the higher
+  JLPT level, and merges the same day's plan. Deliberately **commutative and idempotent** — both
+  devices run it and push the result, so anything accumulating (e.g. summing minutes) would inflate
+  forever; hence max, not sum.
+- **`progressSync.ts` rewritten**: `useProgressSync` now pulls+merges on *every* signed-in mount
+  (including restored sessions), **blocks pushes until that merge completes** so a stale device can't
+  clobber the cloud, and re-merges on tab focus (throttled 30s) so a device left open picks up the
+  other's work. `fetchRemoteProgress` now distinguishes `found` / `missing` / `error`, and an error
+  aborts without writing.
+- **Account isolation** (a risk the merge introduced): a new `progress-owner` localStorage key records
+  which account the local copy belongs to. Guest → sign-in still merges (guest progress migrates, as
+  designed), same account across devices merges, but a *different* account replaces instead — and
+  starts clean if that account has no cloud row — so one user's progress can't bleed into another's on
+  a shared device.
+
+Tests **54 → 69**: new `progressMerge.test.ts` (10 — union/commutative/idempotent/no-minute-inflation/
+SRS recency/quiz dedup/best scores/streak/level/session) and `progressSync.test.ts` (5, against a
+mocked Supabase client — merge-not-replace, no-write-on-error, seed-when-missing, and the two
+account-isolation cases). `tsc`/`eslint`/`build` clean; app verified loading with zero console errors
+and guest mode unaffected.
+
+**Coverage gap, stated honestly:** the true end-to-end flow (real account, real Supabase, two physical
+devices) is not testable from here — it needs the user's credentials. The logic is covered by the
+tests above; the user should confirm on their own desktop + iPad.
+
 ### Batch — banner simplified (info overload) + Reading overflow fix (2026-08-04)
 
 User feedback: the unified banner "feels like some info overload with reviewed, done etc", and it
