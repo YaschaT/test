@@ -1,36 +1,43 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ReviewCard } from './ReviewCard';
-import type { DisplayPrefs } from '../../DisplayToggles';
-import type { VocabWord } from '../../../types';
 
-interface ReviewCarouselProps {
-  word: VocabWord;
-  prevWord?: VocabWord;
-  nextWord?: VocabWord;
-  revealed: boolean;
-  prefs: DisplayPrefs;
-  onReveal: () => void;
+interface ReviewCarouselProps<T> {
+  item: T;
+  prevItem?: T;
+  nextItem?: T;
+  /** Stable key so the active card remounts cleanly on commit. */
+  itemKey: (item: T) => string;
+  /**
+   * The card face. `isActive` is true for the card the learner is answering and false for the one
+   * stepping in behind it — the incoming card must always render unanswered.
+   */
+  renderCard: (item: T, isActive: boolean) => ReactNode;
+  /** The blurred silhouette shown either side at rest — visual context only. */
+  renderGhost: (item: T) => ReactNode;
   /** True while the graded card is sliding out and the next card is stepping in. */
   exiting: boolean;
   className?: string;
 }
 
 /**
- * Stacked-card carousel. At rest the active card is centred with the previous/next cards peeking behind
- * it as blurred silhouettes. On grade it advances like a filmstrip: the active card slides off to the
- * left while the next card simultaneously steps forward from the right silhouette slot into the centre —
- * the two move at once, so it reads as a slide, not a crossfade. Adjacent cards are visual context only.
+ * Stacked-card carousel shared by every review mode (vocabulary, kanji). At rest the active card is
+ * centred with the previous/next cards peeking behind it as blurred silhouettes. On grade it advances
+ * like a filmstrip: the active card slides off to the left while the next card simultaneously steps
+ * forward from the right silhouette slot into the centre — the two move at once, so it reads as a
+ * slide, not a crossfade.
+ *
+ * Generic over the reviewed item: each mode supplies its own card face and ghost via render props, so
+ * the motion and layout stay identical across modes instead of being reimplemented per deck.
  */
-export function ReviewCarousel({
-  word,
-  prevWord,
-  nextWord,
-  revealed,
-  prefs,
-  onReveal,
+export function ReviewCarousel<T>({
+  item,
+  prevItem,
+  nextItem,
+  itemKey,
+  renderCard,
+  renderGhost,
   exiting,
   className,
-}: ReviewCarouselProps) {
+}: ReviewCarouselProps<T>) {
   return (
     <div className={`relative isolate w-full max-w-[760px] mx-auto ${className ?? ''}`} style={{ perspective: '1600px' }}>
       <div
@@ -39,24 +46,22 @@ export function ReviewCarousel({
       />
 
       {/* Silhouettes are hidden while advancing so the incoming card owns the right slot. */}
-      {!exiting && prevWord && <GhostCard word={prevWord} side="left" />}
-      {!exiting && nextWord && <GhostCard word={nextWord} side="right" />}
+      {!exiting && prevItem !== undefined && <GhostCard side="left">{renderGhost(prevItem)}</GhostCard>}
+      {!exiting && nextItem !== undefined && <GhostCard side="right">{renderGhost(nextItem)}</GhostCard>}
 
-      <OutgoingCard key={word.id} exiting={exiting}>
-        <ReviewCard word={word} revealed={revealed} prefs={prefs} onReveal={onReveal} />
+      <OutgoingCard key={itemKey(item)} exiting={exiting}>
+        {renderCard(item, true)}
       </OutgoingCard>
 
-      {exiting && nextWord && (
-        <IncomingCard key={`in-${nextWord.id}`}>
-          <ReviewCard word={nextWord} revealed={false} prefs={prefs} onReveal={() => {}} />
-        </IncomingCard>
+      {exiting && nextItem !== undefined && (
+        <IncomingCard key={`in-${itemKey(nextItem)}`}>{renderCard(nextItem, false)}</IncomingCard>
       )}
     </div>
   );
 }
 
 /**
- * Active card. Keyed by word id in the parent so it remounts fresh (centred, no animation) on commit —
+ * Active card. Keyed by item id in the parent so it remounts fresh (centred, no animation) on commit —
  * which lines up exactly with where the incoming card just arrived, making the swap seamless. The
  * transition is always present, so it never fires on that fresh mount, only when `exiting` flips true.
  */
@@ -104,7 +109,7 @@ function IncomingCard({ children }: { children: ReactNode }) {
   );
 }
 
-function GhostCard({ word, side }: { word: VocabWord; side: 'left' | 'right' }) {
+function GhostCard({ side, children }: { side: 'left' | 'right'; children: ReactNode }) {
   return (
     <div
       aria-hidden="true"
@@ -117,12 +122,7 @@ function GhostCard({ word, side }: { word: VocabWord; side: 'left' | 'right' }) 
         })`,
       }}
     >
-      <p className="jp-text text-4xl font-semibold text-slate-500/80 dark:text-slate-400/60 truncate max-w-full">
-        {word.japanese}
-      </p>
-      {word.kana !== word.japanese && (
-        <p className="jp-text text-base text-slate-400/80 dark:text-slate-500/70 truncate max-w-full">{word.kana}</p>
-      )}
+      {children}
     </div>
   );
 }

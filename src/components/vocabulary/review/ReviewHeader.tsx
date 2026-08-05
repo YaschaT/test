@@ -7,16 +7,19 @@ interface ReviewHeaderProps {
   total: number;
   railOpen: boolean;
   onToggleRail: () => void;
+  /** Where "Exit review" returns to — the deck this session came from. */
+  exitTo: string;
+  title: string;
 }
 
 /** Quiet session header: exit on the left, centred title, count + minimal progress on the right. */
-export function ReviewHeader({ position, total, railOpen, onToggleRail }: ReviewHeaderProps) {
+export function ReviewHeader({ position, total, railOpen, onToggleRail, exitTo, title }: ReviewHeaderProps) {
   const pct = total > 0 ? (position / total) * 100 : 0;
 
   return (
     <header className="relative flex items-center justify-between gap-3 h-12">
       <Link
-        to="/vocabulary"
+        to={exitTo}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
       >
         <ArrowLeft size={16} aria-hidden="true" />
@@ -24,7 +27,7 @@ export function ReviewHeader({ position, total, railOpen, onToggleRail }: Review
       </Link>
 
       <h1 className="absolute left-1/2 -translate-x-1/2 hidden sm:block text-base font-semibold text-slate-700 dark:text-slate-200">
-        Vocabulary review
+        {title}
       </h1>
 
       <div className="flex items-center gap-3">

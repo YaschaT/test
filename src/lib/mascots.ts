@@ -29,8 +29,14 @@ export const MASCOTS: Record<MascotName, string> = {
   'mock-exam': '/assets/mascots/mock-exam.png',
 };
 
-/** Shared display size for a mascot in a page banner, in px. */
-export const MASCOT_BANNER_SIZE = 92;
+/**
+ * Shared display size for a mascot in a page banner, in px.
+ *
+ * Note this is the *canvas* size, and each 512x512 file centres artwork that is rarely square — a
+ * landscape pose only fills ~72% of the box's height — so the drawn mascot always reads smaller than
+ * this number. Sized up from an initial 92 because that made them look undersized on the page.
+ */
+export const MASCOT_BANNER_SIZE = 128;
 
 export function mascotSrc(name: MascotName): string {
   return MASCOTS[name];

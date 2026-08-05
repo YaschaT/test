@@ -49,7 +49,9 @@ export function KanjiList() {
   }, [query, level]);
 
   const ctaLabel = reviewQueue.length > 0 ? formatReviewLabel(dueCount, reviewQueue.length - dueCount) : null;
-  const ctaHref = reviewQueue.length > 0 ? `/kanji/${reviewQueue[0].id}` : '/kanji';
+  // Opens the carousel session rather than a single character's detail page — reviewing a queue no
+  // longer means going back to the grid between every kanji.
+  const ctaHref = reviewQueue.length > 0 ? '/kanji/review' : '/kanji';
 
   return (
     <div className="space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">

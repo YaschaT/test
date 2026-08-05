@@ -384,6 +384,38 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Batch — Kanji review carousel + bigger mascots (2026-08-05)
+
+Two asks: make Kanji work like the Vocabulary review (card carousel, no going back to the grid between
+characters), and size the mascots up.
+
+**Kanji review session** (new `/kanji/review`, `src/pages/kanji/KanjiReview.tsx`). Previously the Kanji
+CTA opened `/kanji/:id` — one character per page, back to the grid, repeat. It now opens a session with
+the same header, carousel, grading controls and session rail as Vocabulary.
+- **`ReviewCarousel` generalised** into `src/components/review/` — generic over the reviewed item with
+  `renderCard` / `renderGhost` render props. **Vocabulary was migrated onto it too**, so the filmstrip
+  motion has one implementation rather than a copy per deck (the old
+  `vocabulary/review/ReviewCarousel.tsx` is deleted). `ReviewHeader` gained `title` / `exitTo`.
+- **`KanjiReviewCard`** — front is the character alone (recall meaning + reading, which is what the JLPT
+  asks); reveal shows meaning, on/kun readings and one example word.
+- **`KanjiStudyPanel`** — the "extra info underneath" the user suggested: example words, example
+  sentence and the full See→Trace→Copy→Recall `WritingPractice`, in a disclosure below the card.
+  **Collapsed by default and keyed per card**, because an always-open stroke canvas would push the
+  grading buttons off screen and slow the session. This is what removes the old round trip.
+- Grading writes through `reviewItem('kanji', …)` + `markKanjiLearned`, same as the detail page, so SRS
+  scheduling is unchanged. `/kanji/:id` is kept for deep links; the new route is declared before it so
+  "review" isn't parsed as an id.
+
+**Mascots sized up** — `MASCOT_BANNER_SIZE` 92 → 128. Each 512x512 file centres artwork that is rarely
+square, so a landscape pose only fills ~72% of the box and read as undersized on the page.
+
+`tsc`/`eslint`/`build` clean; `vitest` 69/69. Verified in-browser: reveal shows meaning + both readings,
+the study panel opens inline with stroke-order SVG rendering, grading advances the carousel (2/10, 9
+remaining, Good count 1), **Vocabulary review still works unchanged** after the shared-carousel
+refactor, and mobile has no overflow. (Pre-existing, untouched: `src/index.css` design-hook findings for
+`9999px` pill radii and `rgba(0,0,0,0.35)` shadows — not part of this change; the dev-console 502s are
+the local `/api/*` endpoints with no server running.)
+
 ### Batch — per-category mascots, normalised to one consistent size (2026-08-05)
 
 The user supplied 9 mascot illustrations in an untracked `Mascottes/` folder and asked to link each to

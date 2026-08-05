@@ -3,25 +3,30 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { ReviewHeader } from '../../components/vocabulary/review/ReviewHeader';
 import { ReviewCarousel } from '../../components/review/ReviewCarousel';
-import { ReviewCard } from '../../components/vocabulary/review/ReviewCard';
 import { ReviewAnswerControls } from '../../components/vocabulary/review/ReviewAnswerControls';
 import { ReviewSessionRail, type ReviewSessionCounts } from '../../components/vocabulary/review/ReviewSessionRail';
 import { GRADE_META, GRADE_ORDER } from '../../components/vocabulary/review/gradeTheme';
 import { Kbd } from '../../components/vocabulary/review/Kbd';
+import { KanjiReviewCard } from '../../components/kanji/review/KanjiReviewCard';
+import { KanjiStudyPanel } from '../../components/kanji/review/KanjiStudyPanel';
 import type { DisplayPrefs } from '../../components/DisplayToggles';
-import { VOCABULARY } from '../../data/vocabulary';
-import { getSrsCard, reviewItem, useProgress } from '../../lib/progressStore';
+import { KANJI_LIST } from '../../data/kanji';
+import { getSrsCard, markKanjiLearned, reviewItem, useProgress } from '../../lib/progressStore';
 import { buildReviewQueue } from '../../lib/reviewQueue';
 import { readStorage, writeStorage } from '../../lib/storage';
 import { playCorrect, playSoftClick, playWrong } from '../../lib/sound';
-import { speakJapaneseBrowser } from '../../lib/tts/browserTts';
 import type { SrsRating } from '../../types';
 
-const DISPLAY_PREFS_KEY = 'vocab-review-display';
+const DISPLAY_PREFS_KEY = 'kanji-review-display';
 /** Assumed pace before any card in this session has been graded; replaced by the measured average after. */
-const DEFAULT_SECONDS_PER_CARD = 20;
+const DEFAULT_SECONDS_PER_CARD = 25;
 
-export function VocabReview() {
+/**
+ * Kanji study session — the same carousel, controls and session rail as the vocabulary review, so the
+ * two decks are one experience. Replaces the old flow of opening `/kanji/:id`, reading it, then
+ * navigating back to the grid for every single character.
+ */
+export function KanjiReview() {
   const progress = useProgress();
   const navigate = useNavigate();
   const [position, setPosition] = useState(0);
@@ -33,16 +38,15 @@ export function VocabReview() {
   const [prefs, setPrefs] = useState<DisplayPrefs>(() =>
     readStorage<DisplayPrefs>(DISPLAY_PREFS_KEY, { furigana: true, romaji: true }),
   );
-  // Measured session pace, clamped so one long think (or a coffee break) can't blow up the estimate.
   const [secondsPerCard, setSecondsPerCard] = useState(DEFAULT_SECONDS_PER_CARD);
   const sessionStartRef = useRef(0);
   const advanceTimerRef = useRef<number | undefined>(undefined);
   const touchStartXRef = useRef<number | null>(null);
 
   // Queue is captured once per mount so it doesn't reshuffle mid-session as cards update.
-  const queue = useMemo(() => buildReviewQueue(VOCABULARY, 'vocabulary', progress, 10), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const queue = useMemo(() => buildReviewQueue(KANJI_LIST, 'kanji', progress, 10), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const word = queue[position];
+  const kanji = queue[position];
   const reviewedCount = counts.again + counts.hard + counts.good + counts.easy;
   const transitioning = pressedRating !== null;
 
@@ -62,21 +66,18 @@ export function VocabReview() {
     setPosition((p) => p + 1);
   }
 
-  // Reveal the answer and read the example sentence aloud (the kana rendering, so pronunciation is
-  // unambiguous). Triggered directly by a user gesture (click / Space / swipe), which browsers require
-  // for speech to start. speakJapaneseBrowser cancels any in-flight utterance first.
   function reveal() {
-    if (!word || revealed) return;
+    if (!kanji || revealed) return;
     setRevealed(true);
-    speakJapaneseBrowser(word.example.kana);
   }
 
   function rate(rating: SrsRating) {
-    if (!word || !revealed || transitioning) return;
-    reviewItem('vocabulary', word.id, rating);
+    if (!kanji || !revealed || transitioning) return;
+    reviewItem('kanji', kanji.id, rating);
+    markKanjiLearned(kanji.id);
     const graded = reviewedCount + 1;
     const elapsed = (Date.now() - sessionStartRef.current) / 1000;
-    setSecondsPerCard(Math.min(45, Math.max(8, elapsed / graded)));
+    setSecondsPerCard(Math.min(60, Math.max(8, elapsed / graded)));
     setCounts((c) => ({ ...c, [rating]: c[rating] + 1 }));
     setCorrectStreak((s) => (rating === 'again' ? 0 : rating === 'hard' ? s : s + 1));
     if (rating === 'good' || rating === 'easy') playCorrect();
@@ -94,7 +95,7 @@ export function VocabReview() {
   // Space reveals, 1–4 grade — skipped when a button/link has focus so native activation wins.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || !word) return;
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || !kanji) return;
       if (e.code === 'Space') {
         if (e.target instanceof HTMLElement && e.target.closest('button, a, input, [role="button"]')) return;
         e.preventDefault();
@@ -116,8 +117,8 @@ export function VocabReview() {
       <div className="max-w-lg mx-auto text-center py-16">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Nothing to review right now</h1>
         <p className="text-slate-500 dark:text-slate-400 mb-4">Come back later, or browse the full deck.</p>
-        <Link to="/vocabulary" className="text-brand-600 dark:text-brand-300 font-semibold hover:underline">
-          Back to vocabulary
+        <Link to="/kanji" className="text-brand-600 dark:text-brand-300 font-semibold hover:underline">
+          Back to kanji
         </Link>
       </div>
     );
@@ -128,7 +129,7 @@ export function VocabReview() {
       <div className="max-w-lg mx-auto text-center py-16">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">Review complete</h1>
         <p className="text-slate-500 dark:text-slate-400 mb-6">
-          You reviewed {reviewedCount} {reviewedCount === 1 ? 'word' : 'words'}.
+          You reviewed {reviewedCount} {reviewedCount === 1 ? 'kanji' : 'kanji'}.
         </p>
         <ul className="flex justify-center gap-5 mb-8">
           {GRADE_ORDER.map((rating) => (
@@ -139,7 +140,7 @@ export function VocabReview() {
             </li>
           ))}
         </ul>
-        <PrimaryButton onClick={() => navigate('/vocabulary')}>Back to vocabulary</PrimaryButton>
+        <PrimaryButton onClick={() => navigate('/kanji')}>Back to kanji</PrimaryButton>
       </div>
     );
   }
@@ -164,18 +165,16 @@ export function VocabReview() {
         total={queue.length}
         railOpen={railOpen}
         onToggleRail={() => setRailOpen((o) => !o)}
-        exitTo="/vocabulary"
-        title="Vocabulary review"
+        exitTo="/kanji"
+        title="Kanji review"
       />
 
       {railOpen && <ReviewSessionRail {...railProps} className="xl:hidden mt-4" />}
 
-      <div className="flex-1 flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_288px] xl:gap-12 xl:items-stretch xl:pt-6 xl:pb-2">
+      <div className="flex-1 flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_288px] xl:gap-12 xl:items-start xl:pt-6 xl:pb-2">
         <section
           aria-label="Flashcard"
           className="flex-1 flex flex-col justify-center py-8 md:py-12 xl:py-0 xl:justify-start"
-          // Touch swipe reveals the answer; grading stays on the answer controls, and the adjacent
-          // cards are deliberately not swipe-navigable.
           onTouchStart={(e) => {
             touchStartXRef.current = e.touches[0].clientX;
           }}
@@ -188,37 +187,26 @@ export function VocabReview() {
           }}
         >
           <ReviewCarousel
-            className="xl:flex-1"
-            item={word}
+            item={kanji}
             prevItem={queue[position - 1]}
             nextItem={queue[position + 1]}
-            itemKey={(w) => w.id}
+            itemKey={(k) => k.id}
             exiting={pressedRating !== null}
-            renderCard={(w, isActive) => (
-              <ReviewCard
-                word={w}
+            renderCard={(k, isActive) => (
+              <KanjiReviewCard
+                kanji={k}
                 revealed={isActive && revealed}
-                prefs={prefs}
                 onReveal={isActive ? reveal : () => {}}
               />
             )}
-            renderGhost={(w) => (
-              <>
-                <p className="jp-text text-4xl font-semibold text-slate-500/80 dark:text-slate-400/60 truncate max-w-full">
-                  {w.japanese}
-                </p>
-                {w.kana !== w.japanese && (
-                  <p className="jp-text text-base text-slate-400/80 dark:text-slate-500/70 truncate max-w-full">
-                    {w.kana}
-                  </p>
-                )}
-              </>
+            renderGhost={(k) => (
+              <p className="jp-text text-6xl font-semibold text-slate-500/80 dark:text-slate-400/60">{k.character}</p>
             )}
           />
 
           <div className="w-full max-w-[760px] mx-auto mt-7 md:mt-9 sticky bottom-16 md:static z-20 max-md:bg-slate-50 max-md:dark:bg-slate-950 max-md:py-3 max-md:-my-3">
             <ReviewAnswerControls
-              card={getSrsCard(progress, 'vocabulary', word.id)}
+              card={getSrsCard(progress, 'kanji', kanji.id)}
               onRate={rate}
               disabled={!revealed || transitioning}
               pressedRating={pressedRating}
@@ -226,6 +214,11 @@ export function VocabReview() {
             <p className="hidden md:flex xl:hidden items-center justify-center gap-1.5 mt-5 text-xs text-slate-500 dark:text-slate-400">
               Press <Kbd>Space</Kbd> to reveal, then <Kbd>1</Kbd>–<Kbd>4</Kbd> to grade
             </p>
+          </div>
+
+          {/* Everything you'd previously have left the session to read — keyed so it collapses per card. */}
+          <div className="w-full max-w-[760px] mx-auto mt-5">
+            <KanjiStudyPanel key={kanji.id} kanji={kanji} prefs={prefs} />
           </div>
         </section>
 
