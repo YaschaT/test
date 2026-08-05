@@ -13,14 +13,29 @@ import { isCardDue } from '../../lib/srs';
 import { todayIso } from '../../lib/date';
 import { buildReviewQueue } from '../../lib/reviewQueue';
 import { getLearningStats } from '../../lib/learningState';
-import type { JlptLevel } from '../../types';
+import {
+  filterKanji,
+  loadKanjiFilters,
+  saveKanjiFilters,
+  KANJI_STATUS_OPTIONS,
+  type KanjiFilters,
+  type KanjiStatus,
+} from '../../lib/kanjiFilter';
 
 export function KanjiList() {
   const progress = useProgress();
-  const [query, setQuery] = useState('');
-  const [level, setLevel] = useState<JlptLevel | 'all'>('all');
+  const [filters, setFilters] = useState<KanjiFilters>(() => loadKanjiFilters());
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const today = todayIso();
+
+  // Persisted (level/status only) so the card session opened from a card rebuilds the same deck.
+  function updateFilters(next: Partial<KanjiFilters>) {
+    setFilters((f) => {
+      const merged = { ...f, ...next };
+      saveKanjiFilters(merged);
+      return merged;
+    });
+  }
 
   const reviewQueue = buildReviewQueue(KANJI_LIST, 'kanji', progress, 10, today);
   const dueCount = reviewQueue.filter((k) => {
@@ -33,20 +48,7 @@ export function KanjiList() {
     [progress, today],
   );
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return KANJI_LIST.filter((k) => {
-      if (level !== 'all' && k.level !== level) return false;
-      if (!q) return true;
-      return (
-        k.character.includes(q) ||
-        k.onyomi.some((r) => r.toLowerCase().includes(q)) ||
-        k.kunyomi.some((r) => r.toLowerCase().includes(q)) ||
-        k.meaning.en.toLowerCase().includes(q) ||
-        k.meaning.nl.toLowerCase().includes(q)
-      );
-    });
-  }, [query, level]);
+  const filtered = useMemo(() => filterKanji(KANJI_LIST, filters, progress), [filters, progress]);
 
   const ctaLabel = reviewQueue.length > 0 ? formatReviewLabel(dueCount, reviewQueue.length - dueCount) : null;
   // Opens the carousel session rather than a single character's detail page — reviewing a queue no
@@ -83,15 +85,30 @@ export function KanjiList() {
         ]}
       />
       <LearningControls
-        level={level}
-        onLevelChange={setLevel}
-        query={query}
-        onQueryChange={setQuery}
+        level={filters.level}
+        onLevelChange={(level) => updateFilters({ level })}
+        query={filters.query}
+        onQueryChange={(query) => updateFilters({ query })}
         searchPlaceholder="Search kanji..."
+        status={filters.status}
+        onStatusChange={(status) => updateFilters({ status: status as KanjiStatus })}
+        statusOptions={KANJI_STATUS_OPTIONS}
         layout={layout}
         onLayoutChange={setLayout}
       />
-      <KanjiCardGrid key={level} entries={filtered} progress={progress} layout={layout} />
+
+      {filtered.length === 0 ? (
+        <p className="rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          No kanji match these filters.
+        </p>
+      ) : (
+        <KanjiCardGrid
+          key={`${filters.level}-${filters.status}`}
+          entries={filtered}
+          progress={progress}
+          layout={layout}
+        />
+      )}
     </div>
   );
 }

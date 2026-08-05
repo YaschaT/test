@@ -384,6 +384,29 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Batch — status filter on the Kanji page (2026-08-05)
+
+Kanji only had level tabs + search; the category dropdown Vocabulary shows is deliberately hidden there
+because kanji carries no category data (a dropdown with nothing real behind it would be a dead control).
+Added the filter that kanji *does* have real data for: **study status**.
+
+- **`src/lib/kanjiFilter.ts`** — `KanjiStatus` (`all` / `new` / `learning` / `due` / `mastered`), each
+  mapped to a genuine SRS state via `getLearningState`, plus `filterKanji()` as the single source of
+  truth for "which kanji are showing".
+- **`LearningControls`** gained an optional, deck-agnostic status dropdown (`status` /
+  `onStatusChange` / `statusOptions`), so Vocabulary can adopt it later without a rewrite.
+- **The card session honours the filter.** Filters (level + status, not the search query) persist to
+  localStorage and `KanjiDetail` rebuilds the same deck, so narrowing to N4 and tapping a kanji pages
+  through those 38 — not all 130. Rebuilt from storage rather than navigation state so a refresh or a
+  shared link still lands on a sensible deck, and it falls back to the full list if the filters would
+  exclude the kanji you opened. The deck is captured once per session so grading a card (which changes
+  its status) can't reshuffle the deck mid-session.
+- Added a real empty state ("No kanji match these filters") instead of a blank grid.
+
+`tsc`/`eslint`/`build` clean; `vitest` 69/69. Verified: "Learning" narrows 130 → 1 and the session opens
+"1 of 1"; N4 gives 38 cards and "1 of 38" and survives a reload; "Mastered" shows the empty state; mobile
+has no overflow.
+
 ### Fix — the Kanji *detail* page now IS the carousel (2026-08-05)
 
 The previous batch put the carousel behind a new `/kanji/review` route, reachable only from the

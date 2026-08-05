@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { KanjiSession } from '../../components/kanji/review/KanjiSession';
 import { KANJI_LIST } from '../../data/kanji';
+import { useProgress } from '../../lib/progressStore';
+import { filterKanji, loadKanjiFilters } from '../../lib/kanjiFilter';
 
 /**
  * Opening a kanji from the grid.
@@ -13,8 +15,21 @@ import { KANJI_LIST } from '../../data/kanji';
  */
 export function KanjiDetail() {
   const { id } = useParams<{ id: string }>();
+  const progress = useProgress();
 
-  const startIndex = useMemo(() => KANJI_LIST.findIndex((k) => k.id === id), [id]);
+  // Page through exactly what the grid was showing. Rebuilt from the persisted filters rather than
+  // passed through navigation state so a refresh (or a shared link) still lands on a sensible deck.
+  // Falls back to the whole list when the filters would exclude the kanji you actually opened.
+  const { deck, startIndex } = useMemo(() => {
+    const filtered = filterKanji(KANJI_LIST, loadKanjiFilters(), progress);
+    const inFiltered = filtered.findIndex((k) => k.id === id);
+    if (inFiltered !== -1) return { deck: filtered, startIndex: inFiltered };
+    return { deck: KANJI_LIST, startIndex: KANJI_LIST.findIndex((k) => k.id === id) };
+    // Deliberately keyed on `id` only: the deck is captured when the session opens so grading a card
+    // (which changes its status) can't reshuffle the deck out from under you mid-session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
   if (startIndex === -1) return <Navigate to="/kanji" replace />;
 
   return (
@@ -22,7 +37,7 @@ export function KanjiDetail() {
       // Remount when arriving at a different kanji from outside (e.g. a link on another page), so the
       // session restarts at that character instead of keeping the previous position.
       key={id}
-      queue={KANJI_LIST}
+      queue={deck}
       initialIndex={startIndex}
       mode="browse"
       title="Kanji"
