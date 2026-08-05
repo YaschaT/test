@@ -1,3 +1,5 @@
+import { MASCOTS } from '../../lib/mascots';
+
 interface BottomJourneyStripProps {
   message: string;
   subMessage: string;
@@ -22,12 +24,13 @@ export function BottomJourneyStrip({ message, subMessage, xpToNextLevel }: Botto
       />
       <div className="relative z-10 flex items-center gap-4 min-w-0 sm:flex-1">
         <img
-          src="/assets/dashboard/mascots/mascot-reading-map.png"
+          src={MASCOTS['learning-path']}
           alt=""
           aria-hidden="true"
           width={84}
-          height={75}
-          className="shrink-0"
+          height={84}
+          className="shrink-0 object-contain"
+          style={{ width: 84, height: 84 }}
         />
         <div className="min-w-0">
           <p className="jp-text text-fluid-section-title font-semibold text-white">{message}</p>

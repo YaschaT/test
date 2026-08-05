@@ -74,9 +74,7 @@ export function ReadingList() {
         headlineValue={stats.wordsRead}
         headlineTotal={totalWords}
         headlineLabel="Words read"
-        mascotSrc="/assets/dashboard/mascots/mascot-reading-map.png"
-        mascotWidth={84}
-        mascotHeight={75}
+        mascot="reading"
         facts={[
           { value: stats.booksRead, label: 'Books' },
           { value: levelReached, label: 'Level' },

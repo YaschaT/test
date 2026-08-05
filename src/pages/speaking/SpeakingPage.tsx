@@ -16,6 +16,7 @@ import { COMPANION_SYSTEM } from '../../lib/companionPrompt';
 import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
 import { getNeuralTtsStatus, playNeural, type NeuralVoice } from '../../lib/tts/neuralTts';
 import { SCENARIOS, type Scenario } from '../../data/scenarios';
+import { MASCOTS, MASCOT_BANNER_SIZE } from '../../lib/mascots';
 
 type Msg =
   | { id: string; role: 'user'; text: string }
@@ -239,7 +240,17 @@ export function SpeakingPage() {
     return (
       <div className="space-y-5 max-w-3xl">
         <header className="flex items-center gap-4">
-          <AiCore size={56} />
+          {/* Page identity uses the Speaking mascot like every other section; AiCore stays as Kai's
+              own avatar inside the live conversation below. */}
+          <img
+            src={MASCOTS.speaking}
+            alt=""
+            aria-hidden="true"
+            width={MASCOT_BANNER_SIZE}
+            height={MASCOT_BANNER_SIZE}
+            style={{ width: MASCOT_BANNER_SIZE, height: MASCOT_BANNER_SIZE }}
+            className="shrink-0 object-contain"
+          />
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Speaking with Kai</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">

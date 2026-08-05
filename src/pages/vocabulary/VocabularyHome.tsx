@@ -76,9 +76,7 @@ export function VocabularyHome() {
         headlineValue={stats.learnedCount}
         headlineTotal={stats.totalCount}
         headlineLabel="Words learned"
-        mascotSrc="/assets/dashboard/mascots/mascot-vocabulary.png"
-        mascotWidth={84}
-        mascotHeight={100}
+        mascot="vocabulary"
         facts={[
           { value: stats.reviewDueCount, label: 'Due', actionable: true },
           { value: stats.masteredCount, label: 'Mastered' },

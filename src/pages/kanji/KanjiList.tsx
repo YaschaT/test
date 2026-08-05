@@ -74,9 +74,7 @@ export function KanjiList() {
         headlineValue={stats.learnedCount}
         headlineTotal={stats.totalCount}
         headlineLabel="Kanji learned"
-        mascotSrc="/assets/dashboard/mascots/mascot-reading-map.png"
-        mascotWidth={84}
-        mascotHeight={75}
+        mascot="kanji"
         facts={[
           { value: stats.reviewDueCount, label: 'Due', actionable: true },
           { value: stats.masteredCount, label: 'Mastered' },

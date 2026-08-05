@@ -6,6 +6,7 @@ import { EXAM_CONFIG, MOCK_SECTIONS, SCORING, SECTION_LABEL, examTotal } from '.
 import { SECTION_THEME } from './examTheme';
 import { PrimaryButton } from '../PrimaryButton';
 import { playPrimaryAction, playSoftClick } from '../../lib/sound';
+import { MASCOTS, MASCOT_BANNER_SIZE } from '../../lib/mascots';
 
 interface ExamLobbyProps {
   level: JlptLevel;
@@ -23,6 +24,15 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
   return (
     <div className="mx-auto max-w-2xl">
       <header className="text-center">
+        <img
+          src={MASCOTS['mock-exam']}
+          alt=""
+          aria-hidden="true"
+          width={MASCOT_BANNER_SIZE}
+          height={MASCOT_BANNER_SIZE}
+          style={{ width: MASCOT_BANNER_SIZE, height: MASCOT_BANNER_SIZE }}
+          className="mx-auto mb-2 object-contain"
+        />
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Mock Exam</h1>
         <p className="mt-2 text-slate-500 dark:text-slate-400">
           A timed practice exam, scored on the official JLPT scale.

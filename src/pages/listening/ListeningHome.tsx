@@ -74,9 +74,7 @@ export function ListeningHome() {
         ringIcon={Headphones}
         headlineValue={sessionsDone}
         headlineLabel={sessionsDone === 1 ? 'Session completed' : 'Sessions completed'}
-        mascotSrc="/assets/dashboard/mascots/mascot-greeting.png"
-        mascotWidth={84}
-        mascotHeight={84}
+        mascot="listening"
         facts={totalAnswered > 0 ? [{ value: accuracyPct, label: 'Accuracy', suffix: '%' }] : []}
       />
 

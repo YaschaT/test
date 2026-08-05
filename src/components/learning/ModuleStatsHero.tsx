@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { RingStat } from '../dashboard/RingStat';
 import { useCountUp } from '../../lib/useCountUp';
+import { MASCOTS, MASCOT_BANNER_SIZE, type MascotName } from '../../lib/mascots';
 
 /** A quiet supporting number. Deliberately just a value + a short label — no icon, no helper line. */
 export interface HeroFact {
@@ -22,9 +23,8 @@ interface ModuleStatsHeroProps {
   headlineLabel: string;
   /** Optional unit appended to the headline value, e.g. "%". */
   headlineSuffix?: string;
-  mascotSrc: string;
-  mascotWidth: number;
-  mascotHeight: number;
+  /** Which mascot to show. Size is fixed by the component so every module banner matches. */
+  mascot: MascotName;
   /**
    * Up to two supporting facts. Optional on purpose — a page with nothing else worth saying (or whose
    * breakdown already appears elsewhere on screen) passes none rather than padding the banner out.
@@ -50,9 +50,7 @@ export function ModuleStatsHero({
   headlineTotal,
   headlineLabel,
   headlineSuffix,
-  mascotSrc,
-  mascotWidth,
-  mascotHeight,
+  mascot,
   facts = [],
 }: ModuleStatsHeroProps) {
   const displayValue = useCountUp(headlineValue);
@@ -101,13 +99,15 @@ export function ModuleStatsHero({
           </div>
         )}
 
+        {/* Fixed square box + object-contain: identical footprint on every module page. */}
         <img
-          src={mascotSrc}
+          src={MASCOTS[mascot]}
           alt=""
           aria-hidden="true"
-          width={mascotWidth}
-          height={mascotHeight}
-          className="hidden shrink-0 drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] md:block"
+          width={MASCOT_BANNER_SIZE}
+          height={MASCOT_BANNER_SIZE}
+          style={{ width: MASCOT_BANNER_SIZE, height: MASCOT_BANNER_SIZE }}
+          className="hidden shrink-0 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] md:block"
         />
       </div>
     </div>

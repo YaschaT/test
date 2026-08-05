@@ -384,6 +384,38 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Batch — per-category mascots, normalised to one consistent size (2026-08-05)
+
+The user supplied 9 mascot illustrations in an untracked `Mascottes/` folder and asked to link each to
+its category at a consistent size.
+
+**The sizing problem wasn't CSS — it was the source files.** They arrived at 7 different aspect ratios
+(473x381 landscape through 1024x1536 portrait) with wildly different transparent padding: `reading.png`
+was 77% empty space vs `Grammar.png` at 48%. Rendered in one fixed box they'd have appeared at visibly
+different scales. So each was **cropped to its alpha bounding box, scaled to fit, and centred on a
+shared 512x512 transparent canvas** (`public/assets/mascots/`), which also cut the two 2.3 MB files to
+~110 KB. A single fixed CSS box now renders every mascot identically.
+
+- **`src/lib/mascots.ts`** — one registry mapping category → file (`MASCOTS`, `MascotName`) plus
+  `MASCOT_BANNER_SIZE` (92), so filenames live in exactly one place.
+- **`ModuleStatsHero`** — replaced the per-page `mascotSrc`/`mascotWidth`/`mascotHeight` props (which
+  had drifted to 84x100 / 84x75 / 84x84) with a single `mascot` key; size is now fixed by the component
+  and can't diverge. All images use `object-contain` so nothing distorts.
+- **Wired:** grammar / vocabulary / kanji / reading / listening banners (previously grammar+listening
+  both showed the greeting pose and kanji+reading both showed the map pose — now each is its own),
+  Dashboard hero bubble, the dashboard journey strip (→ learning-path), plus new mascots on the
+  **Learning Path**, **Mock Exam** and **Speaking** page headers.
+- **Speaking judgement call:** the page header now uses the Speaking mascot for category identity, but
+  `AiCore` is deliberately kept as Kai's avatar *inside* the live conversation — Kai is an AI assistant,
+  not the bird. Easy to revert if the user prefers AiCore in the header.
+- Removed the now-orphaned `ListeningMascotImage.tsx` and the unused `mascot-reading-map.png` /
+  `mascot-vocabulary.png`. `mascot-greeting.png` (LevelUpDialog), `mascot-level-card.png` (sidebar) and
+  `mascotte-grammar.png` (the Grammar continue-card scene) are still referenced and untouched.
+
+`tsc`/`eslint`/`build` clean; `vitest` 69/69. Verified in-browser: every mascot loads (200/304), all
+render at exactly 92x92, and each page shows its own correct artwork. (The `/api/*` 502s in the dev
+console are the local AI/TTS endpoints with no server running — pre-existing, unrelated.)
+
 ### Fix — cross-device progress sync lost/mismatched data (2026-08-05)
 
 User report: "when I log in to my account the saved data does not appear the same when I'm also logged

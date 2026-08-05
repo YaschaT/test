@@ -9,6 +9,7 @@ import { srsKey } from '../../lib/srs';
 import { hasCheckpoint } from '../../lib/checkpoint';
 import { WeeklyCheckpoint } from '../../components/path/WeeklyCheckpoint';
 import type { RoadmapPhase, RoadmapWeek } from '../../types';
+import { MASCOTS, MASCOT_BANNER_SIZE } from '../../lib/mascots';
 
 type WeekStatus = 'mastered' | 'current' | 'upcoming';
 
@@ -92,8 +93,19 @@ export function LearningPath() {
   return (
     <div className="space-y-6 max-w-3xl">
       <header>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Learning Path</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <div className="flex items-center gap-3">
+          <img
+            src={MASCOTS['learning-path']}
+            alt=""
+            aria-hidden="true"
+            width={MASCOT_BANNER_SIZE}
+            height={MASCOT_BANNER_SIZE}
+            style={{ width: MASCOT_BANNER_SIZE, height: MASCOT_BANNER_SIZE }}
+            className="shrink-0 object-contain"
+          />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Learning Path</h1>
+        </div>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">
           A 22-week route that starts from <strong>N5 basics</strong> (weeks 1–6), completes <strong>N4</strong>
           (weeks 7–14) for a strong N4, then adds an optional <strong>N3</strong> stretch (weeks 15–20) before
           consolidation. Weeks are guided by mastery — you’re ready to move on once you’ve <em>shown</em> the

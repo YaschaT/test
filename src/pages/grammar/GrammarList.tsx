@@ -74,9 +74,7 @@ export function GrammarList() {
         headlineValue={completedIds.length}
         headlineTotal={GRAMMAR_POINTS.length}
         headlineLabel="Grammar learned"
-        mascotSrc="/assets/dashboard/mascots/mascot-greeting.png"
-        mascotWidth={84}
-        mascotHeight={84}
+        mascot="grammar"
       />
 
       <SegmentedTabs
