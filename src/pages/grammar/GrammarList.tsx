@@ -61,21 +61,6 @@ export function GrammarList() {
     (p) => p.level === level && completedIds.includes(p.id),
   ).length;
 
-  // Real per-level completion for the banner's stat chips.
-  const levelBreakdown = useMemo(
-    () =>
-      (['N5', 'N4', 'N3'] as const).map((l) => {
-        const pts = GRAMMAR_POINTS.filter((p) => p.level === l);
-        return { level: l, done: pts.filter((p) => completedIds.includes(p.id)).length, total: pts.length };
-      }),
-    [completedIds],
-  );
-  const LEVEL_CHIP_STYLE = {
-    N5: { iconBg: 'bg-emerald-500/20', iconColor: 'text-emerald-300' },
-    N4: { iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300' },
-    N3: { iconBg: 'bg-amber-500/20', iconColor: 'text-amber-300' },
-  } as const;
-
   function openLesson(id: string) {
     navigate(`/grammar/${id}`);
   }
@@ -92,14 +77,6 @@ export function GrammarList() {
         mascotSrc="/assets/dashboard/mascots/mascot-greeting.png"
         mascotWidth={84}
         mascotHeight={84}
-        stats={levelBreakdown.map((b) => ({
-          icon: BookOpenText,
-          iconBg: LEVEL_CHIP_STYLE[b.level].iconBg,
-          iconColor: LEVEL_CHIP_STYLE[b.level].iconColor,
-          value: b.done,
-          label: b.level,
-          helper: `of ${b.total} points`,
-        }))}
       />
 
       <SegmentedTabs

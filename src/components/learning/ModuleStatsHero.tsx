@@ -1,23 +1,21 @@
 import type { LucideIcon } from 'lucide-react';
 import { RingStat } from '../dashboard/RingStat';
-import { LearningStatItem } from './LearningStatItem';
 import { useCountUp } from '../../lib/useCountUp';
 
-export interface StatChip {
-  icon: LucideIcon;
-  iconBg: string;
-  iconColor: string;
+/** A quiet supporting number. Deliberately just a value + a short label — no icon, no helper line. */
+export interface HeroFact {
   value: number;
   label: string;
-  helper: string;
   suffix?: string;
+  /** Highlights the number amber when there's something waiting to be done. */
+  actionable?: boolean;
 }
 
 interface ModuleStatsHeroProps {
   /** 0..1 — fills the progress ring. */
   ringProgress: number;
   ringIcon: LucideIcon;
-  /** Big counted-up headline number. */
+  /** The one number this page is about. */
   headlineValue: number;
   /** Optional denominator shown muted after the headline (omit for open-ended metrics). */
   headlineTotal?: number;
@@ -27,14 +25,23 @@ interface ModuleStatsHeroProps {
   mascotSrc: string;
   mascotWidth: number;
   mascotHeight: number;
-  stats: StatChip[];
+  /**
+   * Up to two supporting facts. Optional on purpose — a page with nothing else worth saying (or whose
+   * breakdown already appears elsewhere on screen) passes none rather than padding the banner out.
+   */
+  facts?: HeroFact[];
 }
 
 /**
- * The single night-sky "banner" shared by every skill module. Same background, ring, mascot slot and
- * stat-chip row on Grammar, Vocabulary, Kanji, Reading and Listening — only the numbers and mascot pose
- * change, so all five pages open to the same panel rather than five one-off designs. Every value is
- * real, derived from actual progress (never a fabricated placeholder).
+ * The single night-sky banner shared by every skill module.
+ *
+ * Built around ONE primary number (ring + headline), with at most two quiet supporting facts. An
+ * earlier version carried three icon-chips each with a value, a label AND a helper line, which read as
+ * information overload and buried the number that actually mattered. Helper copy ("Ready to start",
+ * "Keep your streak") was filler and is gone; anything already shown elsewhere on the page (e.g.
+ * Grammar's per-level counts, which the level tabs below repeat) is not restated here.
+ *
+ * Every value is real, derived from actual progress — never a fabricated placeholder.
  */
 export function ModuleStatsHero({
   ringProgress,
@@ -46,34 +53,53 @@ export function ModuleStatsHero({
   mascotSrc,
   mascotWidth,
   mascotHeight,
-  stats,
+  facts = [],
 }: ModuleStatsHeroProps) {
   const displayValue = useCountUp(headlineValue);
 
   return (
-    <div className="relative flex min-h-[150px] items-center overflow-hidden rounded-3xl bg-slate-950">
+    <div className="relative flex min-h-[132px] items-center overflow-hidden rounded-3xl bg-slate-950">
       <img
         src="/assets/kotobox-dashboard/generated/hero-background.png"
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
       />
-      <div className="relative z-10 flex w-full flex-wrap items-center gap-x-8 gap-y-5 p-5 sm:p-6">
-        <div className="flex shrink-0 items-center gap-4">
-          <RingStat progress={ringProgress} color="#8b7cf6" trackColor="#ffffff" size={72} strokeWidth={7}>
-            <RingIcon size={22} className="text-white/80" aria-hidden="true" />
-          </RingStat>
-          <div>
-            <p className="text-2xl font-bold leading-tight text-white tabular-nums sm:text-[1.75rem]">
-              {displayValue.toLocaleString()}
-              {headlineSuffix}
-              {headlineTotal != null && (
-                <span className="text-base font-medium text-slate-400"> / {headlineTotal.toLocaleString()}</span>
-              )}
-            </p>
-            <p className="text-sm font-semibold leading-tight text-slate-200">{headlineLabel}</p>
-          </div>
+      <div className="relative z-10 flex w-full items-center gap-5 p-5 sm:gap-6 sm:p-6">
+        {/* Primary: the one number this page is about */}
+        <RingStat progress={ringProgress} color="#8b7cf6" trackColor="#ffffff" size={72} strokeWidth={7}>
+          <RingIcon size={22} className="text-white/80" aria-hidden="true" />
+        </RingStat>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-[1.75rem] font-bold leading-none text-white tabular-nums sm:text-4xl">
+            {displayValue.toLocaleString()}
+            {headlineSuffix}
+            {headlineTotal != null && (
+              <span className="text-base font-medium text-slate-400"> / {headlineTotal.toLocaleString()}</span>
+            )}
+          </p>
+          <p className="mt-1.5 text-sm font-medium text-slate-300">{headlineLabel}</p>
         </div>
+
+        {/* Secondary: quiet supporting facts */}
+        {facts.length > 0 && (
+          <div className="flex shrink-0 items-center gap-5 border-l border-white/10 pl-5 sm:gap-7 sm:pl-7">
+            {facts.map((f) => (
+              <div key={f.label}>
+                <p
+                  className={`text-lg font-bold leading-none tabular-nums sm:text-xl ${
+                    f.actionable && f.value > 0 ? 'text-amber-300' : 'text-white'
+                  }`}
+                >
+                  {f.value.toLocaleString()}
+                  {f.suffix}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">{f.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         <img
           src={mascotSrc}
@@ -81,23 +107,8 @@ export function ModuleStatsHero({
           aria-hidden="true"
           width={mascotWidth}
           height={mascotHeight}
-          className="hidden shrink-0 drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] sm:block"
+          className="hidden shrink-0 drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] md:block"
         />
-
-        <div className="grid basis-full grid-cols-2 gap-x-4 gap-y-5 sm:flex sm:basis-auto sm:flex-1 sm:flex-wrap sm:gap-x-8 sm:border-l sm:border-white/10 sm:pl-6">
-          {stats.map((s) => (
-            <LearningStatItem
-              key={s.label}
-              icon={s.icon}
-              iconBg={s.iconBg}
-              iconColor={s.iconColor}
-              value={s.value}
-              label={s.label}
-              helper={s.helper}
-              suffix={s.suffix}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );

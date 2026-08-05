@@ -1,16 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  BookOpen,
-  BookMarked,
-  Ban,
-  Wind,
-  Trophy,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-} from 'lucide-react';
+import { BookOpen, BookMarked, Ban, Wind, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { ModuleHeader } from '../../components/learning/ModuleHeader';
 import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
 import { READINGS, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
@@ -70,7 +60,6 @@ export function ReadingList() {
     [],
   );
 
-  const shelvesCleared = shelves.filter((s) => s.books.every((b) => doneSet.has(b.id))).length;
   const levelReached =
     shelves.filter((s) => s.books.some((b) => doneSet.has(b.id))).map((s) => s.level).pop() ?? 0;
 
@@ -88,10 +77,9 @@ export function ReadingList() {
         mascotSrc="/assets/dashboard/mascots/mascot-reading-map.png"
         mascotWidth={84}
         mascotHeight={75}
-        stats={[
-          { icon: BookOpen, iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300', value: stats.booksRead, label: 'Books read', helper: `of ${stats.totalBooks}` },
-          { icon: Trophy, iconBg: 'bg-amber-500/20', iconColor: 'text-amber-300', value: shelvesCleared, label: 'Shelves cleared', helper: `of ${shelves.length}` },
-          { icon: Sparkles, iconBg: 'bg-violet-500/20', iconColor: 'text-violet-300', value: levelReached, label: 'Level reached', helper: 'keep climbing' },
+        facts={[
+          { value: stats.booksRead, label: 'Books' },
+          { value: levelReached, label: 'Level' },
         ]}
       />
 
@@ -121,11 +109,13 @@ export function ReadingList() {
 }
 
 // ── Golden rules ────────────────────────────────────────────────────────────
+// Each rule needs `min-w-0`: its Japanese line is `truncate` (white-space: nowrap), so without it the
+// grid column's min-content becomes the full unbreakable string and widens the entire page.
 function GoldenRules() {
   return (
     <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-900">
       {GOLDEN_RULES.map((rule) => (
-        <div key={rule.en} className="flex items-center gap-3 rounded-xl px-2 py-1.5">
+        <div key={rule.en} className="flex min-w-0 items-center gap-3 rounded-xl px-2 py-1.5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300">
             <rule.icon size={17} aria-hidden="true" />
           </span>

@@ -155,7 +155,10 @@ export function Layout() {
         </div>
       </aside>
 
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+      {/* min-w-0: as a flex item this defaults to min-width:auto, so a page whose content has a wide
+          minimum (e.g. Reading's shelves) pushes it past the viewport and scrolls the whole page
+          sideways instead of staying inside its column. */}
+      <div className="flex-1 min-w-0 md:ml-64 flex flex-col min-h-screen">
         <header className="md:hidden flex items-center justify-between px-4 h-14 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-30">
           <span className="flex items-center gap-2 text-lg font-semibold text-brand-700 dark:text-brand-300">
             <Logo size={26} />

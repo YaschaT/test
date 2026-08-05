@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, XCircle, RotateCcw, Headphones, Target } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, XCircle, RotateCcw, Headphones } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { Celebration } from '../../components/Celebration';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
@@ -77,11 +77,7 @@ export function ListeningHome() {
         mascotSrc="/assets/dashboard/mascots/mascot-greeting.png"
         mascotWidth={84}
         mascotHeight={84}
-        stats={[
-          { icon: CheckCircle2, iconBg: 'bg-emerald-500/20', iconColor: 'text-emerald-300', value: totalCorrect, label: 'Correct answers', helper: 'so far' },
-          { icon: Headphones, iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300', value: totalAnswered, label: 'Items heard', helper: 'total' },
-          { icon: Target, iconBg: 'bg-violet-500/20', iconColor: 'text-violet-300', value: accuracyPct, label: 'Accuracy', helper: 'correct', suffix: '%' },
-        ]}
+        facts={totalAnswered > 0 ? [{ value: accuracyPct, label: 'Accuracy', suffix: '%' }] : []}
       />
 
       {voiceMode === 'browser' && !browserVoiceAvailable && (

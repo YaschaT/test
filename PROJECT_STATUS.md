@@ -384,6 +384,35 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Batch — banner simplified (info overload) + Reading overflow fix (2026-08-04)
+
+User feedback: the unified banner "feels like some info overload with reviewed, done etc", and it
+shouldn't be a heavy identical block on every page. It was carrying ~17 competing elements: ring +
+headline + denominator + label + mascot + **3 chips each with an icon circle, a value, a label AND a
+helper line**.
+
+Distilled it to **one primary number + at most two quiet facts**:
+- `ModuleStatsHero` rewritten: headline is now the clear focal point (text-4xl); `stats: StatChip[]`
+  → `facts?: HeroFact[]` (value + short label only — no icon circles, no helper copy). `facts` is
+  optional, so a page with nothing else worth saying shows none.
+- Helper copy ("Ready to start", "Keep your streak", "Solid knowledge") deleted as filler.
+- Per page: **Grammar 3 → 0** (its N5/N4/N3 chips duplicated the level tabs directly below —
+  redundancy, not information), Vocabulary/Kanji 3 → 2 (Due + Mastered; "New" is implied by
+  learned/total), Reading 3 → 2 (Books + Level), Listening 3 → 1 (Accuracy, and none until a session
+  exists). A non-zero "Due" renders amber — the one actionable signal.
+- Deleted the now-orphaned `LearningStatItem`.
+
+**Bug found while verifying** (a real one, worth recording): `/reading` scrolled the whole page
+sideways at ~1120px — content clipped, mascot and the third golden rule cut off. Root cause was the
+app shell, not the banner: `Layout.tsx`'s content wrapper is a flex item, so it defaulted to
+`min-width: auto` and refused to shrink below its content, overflowing its column by 160px. Fixed
+with `min-w-0` on that wrapper (the canonical flex fix); also added `min-w-0` to each golden-rule
+grid item, whose `truncate` (white-space: nowrap) Japanese line inflated the column's min-content.
+Verified all five pages plus `/dashboard` at 1120px and 375px: no overflow anywhere. (`/dashboard`
+has a pre-existing 2px sub-pixel rounding overflow, unrelated and untouched.)
+
+`tsc`/`eslint`/`build` clean; `vitest` 54/54; zero console errors.
+
 ### Batch — unified module banner + hierarchy across all 5 skill pages (2026-08-04)
 
 User asked to make the top banner "exactly the same" on Reading / Listening / Kanji / Vocabulary /

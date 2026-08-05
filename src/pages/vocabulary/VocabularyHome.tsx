@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Clock, CheckCircle2, Sparkles } from 'lucide-react';
+import { Layers, Sparkles } from 'lucide-react';
 import { ModuleHeader } from '../../components/learning/ModuleHeader';
 import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
 import { LearningControls } from '../../components/learning/LearningControls';
@@ -79,10 +79,9 @@ export function VocabularyHome() {
         mascotSrc="/assets/dashboard/mascots/mascot-vocabulary.png"
         mascotWidth={84}
         mascotHeight={100}
-        stats={[
-          { icon: Layers, iconBg: 'bg-blue-500/20', iconColor: 'text-blue-300', value: stats.newCount, label: 'New to learn', helper: 'Ready to start' },
-          { icon: Clock, iconBg: 'bg-amber-500/20', iconColor: 'text-amber-300', value: stats.reviewDueCount, label: 'Review due', helper: 'Keep your streak' },
-          { icon: CheckCircle2, iconBg: 'bg-emerald-500/20', iconColor: 'text-emerald-300', value: stats.masteredCount, label: 'Mastered', helper: 'Solid knowledge' },
+        facts={[
+          { value: stats.reviewDueCount, label: 'Due', actionable: true },
+          { value: stats.masteredCount, label: 'Mastered' },
         ]}
       />
       <LearningControls
