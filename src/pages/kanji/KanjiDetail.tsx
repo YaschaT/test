@@ -1,108 +1,32 @@
-import { useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { Card } from '../../components/Card';
-import { Bilingual } from '../../components/Bilingual';
-import { WritingPractice } from '../../components/kanji/WritingPractice';
-import { SrsRatingButtons } from '../../components/SrsRatingButtons';
-import { DisplayToggles, type DisplayPrefs } from '../../components/DisplayToggles';
-import { ExampleSentenceCard } from '../../components/ExampleSentenceCard';
-import { getKanji } from '../../data/kanji';
-import { markKanjiLearned, reviewItem, useProgress } from '../../lib/progressStore';
-import type { SrsRating } from '../../types';
+import { useMemo } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
+import { KanjiSession } from '../../components/kanji/review/KanjiSession';
+import { KANJI_LIST } from '../../data/kanji';
 
+/**
+ * Opening a kanji from the grid.
+ *
+ * This used to be a static detail page — read one character, press Back, pick the next. It now runs the
+ * same card session as the vocabulary review, opened at the kanji you tapped with the whole deck behind
+ * it, so you can page (or swipe) straight through and grade in place. The readings, example words,
+ * example sentence and the See→Trace→Copy→Recall writing practice all live in the panel under the card.
+ */
 export function KanjiDetail() {
   const { id } = useParams<{ id: string }>();
-  const progress = useProgress();
-  const [prefs, setPrefs] = useState<DisplayPrefs>({ furigana: true, romaji: true });
-  const [rated, setRated] = useState<SrsRating | null>(null);
 
-  const kanji = id ? getKanji(id) : undefined;
-  if (!kanji) return <Navigate to="/kanji" replace />;
-
-  const done = progress.learnedKanjiIds.includes(kanji.id);
-
-  function handleRate(rating: SrsRating) {
-    reviewItem('kanji', kanji!.id, rating);
-    markKanjiLearned(kanji!.id);
-    setRated(rating);
-  }
+  const startIndex = useMemo(() => KANJI_LIST.findIndex((k) => k.id === id), [id]);
+  if (startIndex === -1) return <Navigate to="/kanji" replace />;
 
   return (
-    <div className="space-y-5 max-w-2xl">
-      <Link to="/kanji" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-        <ArrowLeft size={16} /> Back to kanji
-      </Link>
-
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <span className="jp-text text-6xl font-semibold text-slate-900 dark:text-white">{kanji.character}</span>
-          <div>
-            <Bilingual text={kanji.meaning} />
-            <p className="text-sm text-slate-400 mt-1">{kanji.strokeCount} strokes · {kanji.level}</p>
-          </div>
-        </div>
-        {done && (
-          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400 shrink-0">
-            <CheckCircle2 size={18} /> Learned
-          </span>
-        )}
-      </div>
-
-      <Card className="p-5 grid grid-cols-2 gap-4">
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">Onyomi</h2>
-          <p className="jp-text text-slate-800 dark:text-slate-100">{kanji.onyomi.join('、 ')}</p>
-        </div>
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">Kunyomi</h2>
-          <p className="jp-text text-slate-800 dark:text-slate-100">{kanji.kunyomi.join('、 ')}</p>
-        </div>
-      </Card>
-
-      <Card className="p-5">
-        <h2 className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">Example words</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {kanji.exampleWords.map((w, i) => (
-            <div key={i}>
-              <p className="jp-text font-medium text-slate-900 dark:text-white">
-                {w.word} <span className="text-xs text-slate-400">{w.kana}</span>
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{w.meaning.en}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Example sentence</h2>
-          <DisplayToggles prefs={prefs} onChange={setPrefs} />
-        </div>
-        <ExampleSentenceCard example={kanji.exampleSentence} prefs={prefs} />
-      </div>
-
-      <Card className="p-5">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Writing practice</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-          Learn {kanji.character} in four steps — See the stroke order, Trace it, Copy it, then Recall it from memory.
-        </p>
-        <WritingPractice
-          character={kanji.character}
-          meaning={kanji.meaning}
-          reading={[...kanji.kunyomi, ...kanji.onyomi][0] ?? ''}
-        />
-      </Card>
-
-      <Card className="p-5">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Self-rating</h2>
-        <SrsRatingButtons onRate={handleRate} />
-        {rated && (
-          <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-            Saved — this kanji is scheduled for review based on your rating.
-          </p>
-        )}
-      </Card>
-    </div>
+    <KanjiSession
+      // Remount when arriving at a different kanji from outside (e.g. a link on another page), so the
+      // session restarts at that character instead of keeping the previous position.
+      key={id}
+      queue={KANJI_LIST}
+      initialIndex={startIndex}
+      mode="browse"
+      title="Kanji"
+      exitTo="/kanji"
+    />
   );
 }

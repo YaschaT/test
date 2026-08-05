@@ -384,6 +384,30 @@ auto-plays its stroke order: the writing SVG (viewBox 0 0 100 100) renders exact
 the "not available" note is gone, zero console errors. The font-outline fallback path stays in the
 UI for any future kanji added without stroke data.
 
+### Fix — the Kanji *detail* page now IS the carousel (2026-08-05)
+
+The previous batch put the carousel behind a new `/kanji/review` route, reachable only from the
+"Learn/Review" CTA. Tapping a kanji in the grid still opened the **old static `/kanji/:id` page** — so
+from the user's point of view nothing had changed, which is exactly what they reported. Their original
+ask said "the Kanji **detailled** page", and that page was the one left untouched.
+
+Reworked so both entry points run the same session:
+- **`KanjiSession`** (`src/components/kanji/review/KanjiSession.tsx`) holds the shared session — carousel,
+  grading, rail, study panel — with a `mode`:
+  - `review` (`/kanji/review`): finite SRS queue, answer hidden until revealed, graded to advance.
+  - `browse` (`/kanji/:id`): the **whole 130-kanji deck opened at the character you tapped**, answer
+    shown, with Previous/Next (plus ←/→ keys and swipe) so you page straight through instead of going
+    back to the grid. Grading still works in place.
+- `KanjiReview.tsx` and `KanjiDetail.tsx` are now thin wrappers; the old static detail layout is gone.
+
+**Bug caught while building:** browse mode initially synced the URL to the current card, but the page is
+keyed on `:id`, so every page-turn remounted the session mid-slide and reset its counts. Dropped the
+sync — the route param seeds the starting kanji and the URL stays on the one you opened.
+
+`tsc`/`eslint`/`build` clean; `vitest` 69/69. Verified from the grid: tapping 日 opens the card session
+(1 of 130), Next → 月 (2 of 130), Previous → 日, the study panel opens inline with stroke-order SVG, and
+`/kanji/review` still behaves as the hidden-answer SRS queue. No mobile overflow.
+
 ### Batch — Kanji review carousel + bigger mascots (2026-08-05)
 
 Two asks: make Kanji work like the Vocabulary review (card carousel, no going back to the grid between
