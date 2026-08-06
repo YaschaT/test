@@ -46,11 +46,19 @@ export function GrammarLessonList({
         </span>
       </div>
 
-      <ul className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-slate-900/40 divide-y divide-slate-100 dark:divide-white/[0.05] overflow-hidden">
-        {items.map((item) => (
-          <GrammarLessonRow key={item.id} item={item} onOpen={onOpen} />
-        ))}
-      </ul>
+      {/* A level with no points yet would otherwise render as a blank bordered frame that reads as a
+          failed load. Not reachable today, but this list is driven by data that is still being written. */}
+      {items.length === 0 ? (
+        <p className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-600 dark:border-white/[0.06] dark:bg-slate-900/40 dark:text-slate-300">
+          No {levelLabel} grammar yet — it's still being written.
+        </p>
+      ) : (
+        <ul className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-slate-900/40 divide-y divide-slate-100 dark:divide-white/[0.05] overflow-hidden">
+          {items.map((item) => (
+            <GrammarLessonRow key={item.id} item={item} onOpen={onOpen} />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

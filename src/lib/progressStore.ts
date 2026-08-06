@@ -23,6 +23,12 @@ export interface QuizResult {
   date: string;
   correct: number;
   total: number;
+  /**
+   * False when the learner left partway through — the answers they did give still count toward accuracy
+   * and per-answer XP, but the completion bonus is not awarded. Absent on results saved before this
+   * field existed, which are all completions, so `!== false` is the correct test.
+   */
+  completed?: boolean;
 }
 
 export interface ProgressState {

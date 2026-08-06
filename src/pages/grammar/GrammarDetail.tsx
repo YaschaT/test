@@ -34,7 +34,9 @@ export function GrammarDetail() {
   const lessonNumber = point ? lessonNumberInLevel(point) : 0;
   const levelTotal = point ? levelPoints(point.level).length : 0;
 
-  if (!point) return <Navigate to="/grammar" replace />;
+  // Carries a reason rather than bouncing silently: a stale bookmark or a link to a lesson that has since
+  // been renamed used to dump the learner back on the list with nothing said, so it read as a misclick.
+  if (!point) return <Navigate to="/grammar" replace state={{ missingLessonId: id }} />;
 
   function finishPractice() {
     markGrammarCompleted(point!.id);

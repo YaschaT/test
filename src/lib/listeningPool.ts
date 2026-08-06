@@ -1,5 +1,6 @@
 import { VOCABULARY, VOCABULARY_VERIFIED_ROMAJI } from '../data/vocabulary';
 import { GRAMMAR_POINTS } from '../data/grammar';
+import type { JlptLevel } from '../types';
 
 export interface ListeningItem {
   id: string;
@@ -13,18 +14,20 @@ function joinText(segments: { text: string }[]): string {
   return segments.map((s) => s.text).join('');
 }
 
-function vocabItems(words: typeof VOCABULARY): ListeningItem[] {
-  return words.map((w) => ({
-    id: `lv-${w.id}`,
-    japanese: joinText(w.example.segments),
-    kana: w.example.kana,
-    romaji: w.example.romaji,
-    en: w.example.en,
-  }));
+function vocabItems(words: typeof VOCABULARY, level?: JlptLevel): ListeningItem[] {
+  return words
+    .filter((w) => !level || w.level === level)
+    .map((w) => ({
+      id: `lv-${w.id}`,
+      japanese: joinText(w.example.segments),
+      kana: w.example.kana,
+      romaji: w.example.romaji,
+      en: w.example.en,
+    }));
 }
 
-function grammarItems(): ListeningItem[] {
-  return GRAMMAR_POINTS.flatMap((g) =>
+function grammarItems(level?: JlptLevel): ListeningItem[] {
+  return GRAMMAR_POINTS.filter((g) => !level || g.level === level).flatMap((g) =>
     g.examples.map((ex, i) => ({
       id: `lg-${g.id}-${i}`,
       japanese: joinText(ex.segments),
@@ -35,9 +38,14 @@ function grammarItems(): ListeningItem[] {
   );
 }
 
-/** Reuses the same original sentences already authored for vocab/grammar — no separate content to keep in sync. */
-export function buildListeningPool(): ListeningItem[] {
-  return [...vocabItems(VOCABULARY), ...grammarItems()];
+/**
+ * Reuses the same original sentences already authored for vocab/grammar — no separate content to keep in
+ * sync. Scoped to one JLPT level: the exercise previously drew from every level at once, so an N5 learner
+ * could be handed an N3 sentence and have the result filed against N5, which made the accuracy figure
+ * measure something other than what it claimed. Omitting `level` returns everything.
+ */
+export function buildListeningPool(level?: JlptLevel): ListeningItem[] {
+  return [...vocabItems(VOCABULARY, level), ...grammarItems(level)];
 }
 
 /**
@@ -47,8 +55,8 @@ export function buildListeningPool(): ListeningItem[] {
  * the learner's typing against `romaji`, so it can only use sentences where that field is a real
  * transcription — see VOCABULARY_VERIFIED_ROMAJI for why the bulk-imported sets are excluded.
  */
-export function buildDictationPool(): ListeningItem[] {
-  return [...vocabItems(VOCABULARY_VERIFIED_ROMAJI), ...grammarItems()];
+export function buildDictationPool(level?: JlptLevel): ListeningItem[] {
+  return [...vocabItems(VOCABULARY_VERIFIED_ROMAJI, level), ...grammarItems(level)];
 }
 
 export function shuffle<T>(items: T[]): T[] {

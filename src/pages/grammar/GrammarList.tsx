@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { BookOpenText, Lock } from 'lucide-react';
 import { ModuleHeader } from '../../components/learning/ModuleHeader';
 import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
@@ -20,6 +20,8 @@ import type { JlptLevel } from '../../types';
 export function GrammarList() {
   const progress = useProgress();
   const navigate = useNavigate();
+  // Set when GrammarDetail redirected here because the lesson id in the URL no longer resolves.
+  const missingLessonId = (useLocation().state as { missingLessonId?: string } | null)?.missingLessonId;
   // Starts on the learner's own level rather than always N5, so the page opens where they left off.
   const [level, setLevel] = useState<JlptLevel>(progress.level);
 
@@ -62,6 +64,13 @@ export function GrammarList() {
         headlineLabel="Grammar learned, all levels"
         mascot="grammar"
       />
+
+      {missingLessonId && (
+        <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          That lesson isn't here any more — it may have been renamed since you saved the link. The full
+          list is below.
+        </p>
+      )}
 
       <SegmentedTabs
         value={level}

@@ -34,7 +34,9 @@ export interface LevelInfo {
  */
 export function calculateXp(progress: ProgressState): number {
   const learnedVocab = Object.keys(progress.srsCards).filter((k) => k.startsWith('vocabulary:')).length;
-  const listeningSessions = progress.quizResults.filter((r) => r.skill === 'listening').length;
+  // Only finished sessions earn the completion bonus. Abandoned ones still contribute their correct
+  // answers below — otherwise leaving after one question would pay the same as sitting through eight.
+  const listeningSessions = progress.quizResults.filter((r) => r.skill === 'listening' && r.completed !== false).length;
   const quizCorrectTotal = progress.quizResults.reduce((sum, r) => sum + r.correct, 0);
 
   return (

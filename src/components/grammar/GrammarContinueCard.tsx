@@ -25,10 +25,12 @@ export function GrammarContinueCard({ point, onContinue }: GrammarContinueCardPr
         className="pointer-events-none select-none absolute inset-y-0 right-0 h-full w-[58%] object-cover object-center opacity-90 [mask-image:linear-gradient(to_right,transparent,black_38%)]"
       />
 
-      {/* Mascot, sitting on the scene. */}
+      {/* Mascot, sitting on the scene. Decorative: it carries nothing the text doesn't already say, so
+          naming it would only put noise between the lesson title and the button. */}
       <img
         src="/assets/grammar/mascotte-grammar.png"
-        alt="Kotobox mascot"
+        alt=""
+        aria-hidden="true"
         className="pointer-events-none select-none hidden md:block absolute right-6 lg:right-10 top-1/2 -translate-y-[58%] h-[150px] lg:h-[168px] w-auto drop-shadow-[0_10px_24px_rgba(0,0,0,0.45)]"
       />
 
