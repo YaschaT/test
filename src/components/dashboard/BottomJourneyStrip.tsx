@@ -1,46 +1,18 @@
-import { MASCOTS } from '../../lib/mascots';
+import { Sparkles } from 'lucide-react';
 
-interface BottomJourneyStripProps {
-  message: string;
-  subMessage: string;
-  xpToNextLevel: number;
-}
-
-/**
- * The closing strip's mountains/dotted-path/torii scene — the reference-provided illustration
- * (public/assets/kotobox-dashboard/generated/footer-background.png, sourced from
- * `kotobox_dashboard_claude_ready_assets/Rework images/background footer.png`). Sits as a background
- * behind the text at high opacity since it's already composed with a dark, low-contrast left side for the
- * mascot/text to sit on.
- */
-export function BottomJourneyStrip({ message, subMessage, xpToNextLevel }: BottomJourneyStripProps) {
+/** The closing motivational strip: deliberately the quietest surface on the page — low contrast, no
+ * action, and the supplied mascot tucked into the right edge. */
+export function BottomJourneyStrip({ message }: { message: string }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 to-brand-900 px-8 py-6 min-h-[125px] flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+    <aside className="relative flex min-h-16 items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-3 pr-28 dark:border-ink-line dark:bg-ink-900">
+      <Sparkles size={22} className="shrink-0 text-iris-400" aria-hidden="true" />
+      <p className="text-sm text-slate-500 sm:text-base dark:text-slate-400">{message}</p>
       <img
-        src="/assets/kotobox-dashboard/generated/footer-background.png"
+        src="/assets/dashboard/redesign/footer-mascot.webp"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="pointer-events-none absolute inset-y-0 right-4 h-full w-auto object-contain"
       />
-      <div className="relative z-10 flex items-center gap-4 min-w-0 sm:flex-1">
-        <img
-          src={MASCOTS['learning-path']}
-          alt=""
-          aria-hidden="true"
-          width={84}
-          height={84}
-          className="shrink-0 object-contain"
-          style={{ width: 84, height: 84 }}
-        />
-        <div className="min-w-0">
-          <p className="jp-text text-fluid-section-title font-semibold text-white">{message}</p>
-          <p className="text-fluid-hero-sub text-brand-200 mt-1">{subMessage}</p>
-        </div>
-      </div>
-      <div className="relative z-10 shrink-0 text-left sm:text-right">
-        <p className="text-xs text-brand-300">Next milestone</p>
-        <p className="text-fluid-milestone font-bold text-white">{xpToNextLevel} XP to go</p>
-      </div>
-    </div>
+    </aside>
   );
 }

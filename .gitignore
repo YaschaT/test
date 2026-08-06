@@ -28,3 +28,7 @@ server/credentials/*.json
 *.njsproj
 *.sln
 *.sw?
+
+# Design source for the dashboard redesign (46MB of reference PNGs). The build only needs the
+# converted, web-sized copies in public/assets/dashboard/redesign/.
+Dashboard-redesign/

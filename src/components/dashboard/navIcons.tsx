@@ -1,103 +1,79 @@
 /**
- * Inline copies of the new asset pack's line-icon navigation SVGs (kotobox_dashboard_claude_ready_assets/
- * 02_svg_icons/navigation/*.svg). Kept as plain JSX rather than <img> so they inherit `currentColor` the
- * same way the lucide icons they replace did — the sidebar's active/inactive nav color logic needs that.
+ * The sidebar's navigation icons.
+ *
+ * Eight of them are the supplied illustrated assets (Dashboard-redesign/Navigation Icons), each trimmed
+ * and centred on one square canvas at build-prep time so a single CSS box renders every icon at the same
+ * visual size. They carry their own per-section colour (green Grammar, blue Vocabulary, pink Listening,
+ * orange Reading …), so unlike the line icons they replace they do *not* inherit `currentColor`.
+ *
+ * Speaking has no supplied asset, so it keeps its original line icon, tinted to the same blue the
+ * reference gives it.
  */
 interface NavIconProps {
   size?: number;
   className?: string;
 }
 
-export function DashboardNavIcon({ size = 18, className }: NavIconProps) {
+const NAV_ICON_BASE = '/assets/dashboard/redesign/nav/';
+
+function IllustratedNavIcon({ file, size = 22, className }: NavIconProps & { file: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
-    </svg>
+    <img
+      src={`${NAV_ICON_BASE}${file}`}
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
+      className={`shrink-0 object-contain ${className ?? ''}`}
+    />
   );
 }
 
-export function GrammarNavIcon({ size = 18, className }: NavIconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4.5 5.5c0-1 .8-1.7 1.8-1.5 2.5.3 4.2 1.1 5.7 2.6 1.5-1.5 3.2-2.3 5.7-2.6 1-.2 1.8.5 1.8 1.5v13c0 1-.6 1.6-1.5 1.7-2.4.3-4.1 1-6 2.5-1.9-1.5-3.6-2.2-6-2.5-.9-.1-1.5-.7-1.5-1.7v-13Z"
-      />
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M12 6.6v16" />
-    </svg>
-  );
+export function DashboardNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="dashboard.webp" {...props} />;
 }
 
-export function VocabularyNavIcon({ size = 18, className }: NavIconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 12l8 4 8-4" />
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 16l8 4 8-4" />
-    </svg>
-  );
+export function PathNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="learning-path.webp" {...props} />;
 }
 
-export function KanjiNavIcon({ size = 18, className }: NavIconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M5 16.5 16.8 4.7a2.1 2.1 0 0 1 3 3L8 19.5l-4 1 1-4Z" />
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="m14.5 7.2 2.3 2.3" />
-    </svg>
-  );
+export function GrammarNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="grammar.webp" {...props} />;
 }
 
-export function ReadingNavIcon({ size = 18, className }: NavIconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4.5 6.5c0-1 .8-1.7 1.8-1.5 2.5.3 4.2 1.1 5.7 2.6 1.5-1.5 3.2-2.3 5.7-2.6 1-.2 1.8.5 1.8 1.5v12c0 1-.6 1.6-1.5 1.7-2.4.3-4.1 1-6 2.5-1.9-1.5-3.6-2.2-6-2.5-.9-.1-1.5-.7-1.5-1.7v-12Z"
-      />
-    </svg>
-  );
+export function VocabularyNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="vocabulary.webp" {...props} />;
 }
 
-export function ListeningNavIcon({ size = 18, className }: NavIconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 13a8 8 0 0 1 16 0" />
-      <path
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 13v4a2 2 0 0 0 2 2h1v-7H6a2 2 0 0 0-2 2Zm16 0v4a2 2 0 0 1-2 2h-1v-7h1a2 2 0 0 1 2 2Z"
-      />
-    </svg>
-  );
+export function KanjiNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="kanji.webp" {...props} />;
 }
 
-export function PathNavIcon({ size = 18, className }: NavIconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <circle cx="6" cy="19" r="2.2" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="18" cy="5" r="2.2" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M8.2 19H14a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5.8"
-      />
-    </svg>
-  );
+export function ReadingNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="reading.webp" {...props} />;
 }
 
-export function SpeakingNavIcon({ size = 18, className }: NavIconProps) {
+export function ListeningNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="listening.webp" {...props} />;
+}
+
+export function MockTestNavIcon(props: NavIconProps) {
+  return <IllustratedNavIcon file="mock-exam.webp" {...props} />;
+}
+
+/** No illustrated asset was supplied for Speaking — this is the app's original line icon, fixed to the
+ * blue the reference uses for it so it reads as part of the same coloured set. */
+export function SpeakingNavIcon({ size = 22, className }: NavIconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`shrink-0 text-brand-400 ${className ?? ''}`}
+      aria-hidden="true"
+    >
       <path
         stroke="currentColor"
         strokeWidth="1.8"
@@ -106,28 +82,6 @@ export function SpeakingNavIcon({ size = 18, className }: NavIconProps) {
         d="M12 3a4 4 0 0 0-4 4v4a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4Z"
       />
       <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-    </svg>
-  );
-}
-
-export function MockTestNavIcon({ size = 18, className }: NavIconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 4h6a1 1 0 0 1 1 1 2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2 1 1 0 0 1 1-1Z"
-      />
-      <path
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M8 5.5H6.5A1.5 1.5 0 0 0 5 7v12.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V7a1.5 1.5 0 0 0-1.5-1.5H16"
-      />
-      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="m9 14 2 2 4-4.5" />
     </svg>
   );
 }

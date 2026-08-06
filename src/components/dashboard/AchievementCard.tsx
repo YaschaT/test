@@ -1,98 +1,112 @@
-import { useNavigate } from 'react-router-dom';
-import { Trophy, Lock, CheckCircle2, ArrowRight } from 'lucide-react';
-import { DashboardCard } from './DashboardCard';
-import { SECONDARY_BUTTON_CLASSES } from '../../lib/buttonStyles';
-import { ProgressBar } from '../ui/ProgressBar';
+import { useState } from 'react';
+import { Lock, Trophy } from 'lucide-react';
+import { CardAction, DashboardCard } from './DashboardCard';
 import { computeBadges, pickFeaturedBadge } from '../../lib/badges';
 import type { ProgressState } from '../../lib/progressStore';
 
-const BADGE_ASSET_BASE = '/assets/dashboard/badges/';
+const ILLUSTRATION_BASE = '/assets/dashboard/redesign/achievements/';
 
-/** Achievements section — uses the exact 8 medal-style SVG badges from the new asset pack
- * (kotobox_dashboard_claude_ready_assets/02_svg_icons/badges), one per real badge already computed from
- * progress data. No fake "Claim" reward economy: the featured slot's CTA is a real "Continue Learning"
- * link to whichever page actually earns progress toward it; once earned, the CTA is replaced by a plain
- * "Earned!" state since there's nothing left to claim. "View All"/"View All Achievements" are real (if
- * modest) actions — the grid below already shows every badge, so they focus/scroll this card into view
- * rather than linking to a separate page that doesn't exist yet. */
+/**
+ * The featured achievement: whichever real badge the learner is closest to earning, with its supplied
+ * illustration, live progress and the XP that work is worth. "View all" expands the full badge set in
+ * place — there's no separate achievements page, and a link that went nowhere would be worse than none.
+ */
 export function AchievementCard({ progress }: { progress: ProgressState }) {
-  const navigate = useNavigate();
+  const [showAll, setShowAll] = useState(false);
   const badges = computeBadges(progress);
-  const earnedCount = badges.filter((b) => b.earned).length;
   const featured = pickFeaturedBadge(badges);
-
-  function focusCard() {
-    document.getElementById('achievements-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  const earnedCount = badges.filter((b) => b.earned).length;
 
   return (
     <DashboardCard
-      title="Achievements"
-      icon={<Trophy size={20} className="text-amber-500" />}
-      action={
-        <button type="button" onClick={focusCard} className="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline shrink-0">
-          View All
-        </button>
-      }
+      id="achievements-section"
+      title="Latest Achievement"
+      icon={<Trophy size={20} className="text-amber-500" aria-hidden="true" />}
+      action={<CardAction onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : 'View all'}</CardAction>}
     >
-      <div className="rounded-xl bg-gradient-to-br from-brand-50 to-white dark:from-brand-900/40 dark:to-slate-900 border border-brand-100 dark:border-brand-900/50 p-4 space-y-3">
-        <div className="flex items-center gap-4">
-          <img src={`${BADGE_ASSET_BASE}${featured.asset}`} alt="" aria-hidden="true" className="w-[72px] h-[72px] shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-fluid-hero-sub font-bold text-slate-900 dark:text-white leading-tight">{featured.label}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{featured.description}</p>
-            <ProgressBar
-              value={Math.round((featured.current / featured.target) * 100)}
-              className="mt-2"
-              label={`${featured.label} progress`}
-            />
-            <p className="mt-1 text-xs text-slate-400">
-              {featured.current} / {featured.target}
-            </p>
-          </div>
-        </div>
-        {featured.earned ? (
-          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 py-2.5 text-sm font-bold">
-            <CheckCircle2 size={16} />
-            Earned!
-          </div>
-        ) : (
-          <button type="button" onClick={() => navigate(featured.route)} className={`${SECONDARY_BUTTON_CLASSES} w-full py-2.5`}>
-            Continue Learning
-          </button>
-        )}
-      </div>
+      <div className="mt-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-ink-line dark:bg-ink-800">
+        <img
+          src={`${ILLUSTRATION_BASE}${featured.asset}`}
+          alt={`${featured.label} achievement`}
+          width={72}
+          height={72}
+          className="h-18 w-18 shrink-0 object-contain"
+        />
 
-      <div className="grid grid-cols-4 gap-2.5 sm:gap-3.5">
-        {badges.map((badge) => (
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-bold text-slate-900 dark:text-white">{featured.label}</p>
+          <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">{featured.description}</p>
           <div
-            key={badge.id}
-            title={`${badge.label}: ${badge.description} (${badge.current}/${badge.target})`}
-            className="relative flex items-center justify-center rounded-xl border border-slate-100 dark:border-slate-800 p-2.5 aspect-square"
+            role="progressbar"
+            aria-valuenow={featured.current}
+            aria-valuemin={0}
+            aria-valuemax={featured.target}
+            aria-label={`${featured.label} progress`}
+            className="mt-2.5 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-ink-700"
           >
-            <img
-              src={`${BADGE_ASSET_BASE}${badge.asset}`}
-              alt={badge.label}
-              className={`w-full h-full object-contain ${badge.earned ? '' : 'grayscale opacity-30'}`}
+            <div
+              className="h-full rounded-full bg-iris-500 transition-[width] duration-500"
+              style={{ width: `${Math.min(100, (featured.current / featured.target) * 100)}%` }}
             />
-            {!badge.earned && (
-              <Lock size={12} className="absolute bottom-1 right-1 text-slate-400 dark:text-slate-500" aria-hidden="true" />
-            )}
           </div>
-        ))}
+          <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+            {featured.current} / {featured.target}
+          </p>
+        </div>
+
+        <XpBadge xp={featured.xp} earned={featured.earned} />
       </div>
 
-      <div className="flex items-center justify-between pt-1">
-        <p className="text-xs text-slate-400 dark:text-slate-500">{earnedCount}/{badges.length} earned</p>
-        <button
-          type="button"
-          onClick={focusCard}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline"
-        >
-          View All Achievements
-          <ArrowRight size={13} />
-        </button>
-      </div>
+      {showAll && (
+        <>
+          <ul className="mt-4 grid grid-cols-4 gap-3">
+            {badges.map((badge) => (
+              <li
+                key={badge.id}
+                className="relative flex aspect-square items-center justify-center rounded-2xl border border-slate-200 p-2 dark:border-ink-line"
+              >
+                <img
+                  src={`${ILLUSTRATION_BASE}${badge.asset}`}
+                  alt={`${badge.label} — ${badge.description} (${badge.current} of ${badge.target}${badge.earned ? ', earned' : ''})`}
+                  className={`h-full w-full object-contain ${badge.earned ? '' : 'opacity-30 grayscale'}`}
+                />
+                {!badge.earned && (
+                  <Lock
+                    size={12}
+                    className="absolute bottom-1.5 right-1.5 text-slate-400 dark:text-slate-500"
+                    aria-hidden="true"
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            {earnedCount} of {badges.length} earned
+          </p>
+        </>
+      )}
     </DashboardCard>
+  );
+}
+
+/**
+ * The supplied blank hexagon badge with the XP value rendered as real HTML on top — the number stays
+ * dynamic and readable by a screen reader instead of being baked into the artwork.
+ */
+function XpBadge({ xp, earned }: { xp: number; earned: boolean }) {
+  return (
+    <div className="relative hidden h-[82px] w-[70px] shrink-0 sm:block">
+      <img
+        src={`${ILLUSTRATION_BASE}xp-badge.webp`}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-contain"
+      />
+      <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+        <span className="text-xl font-extrabold text-white">+{xp}</span>
+        <span className="mt-1 text-[13px] font-bold tracking-wide text-white/80">XP</span>
+        <span className="sr-only">{earned ? 'earned' : 'reward for earning this achievement'}</span>
+      </span>
+    </div>
   );
 }

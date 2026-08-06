@@ -35,6 +35,13 @@ const INACTIVE_TEXT_CLASSES: Record<'light' | 'glass', string> = {
   glass: 'text-slate-300 hover:text-white',
 };
 
+/** The sliding pill. 'glass' sits on the Dashboard hero's night scene, which is built on the violet iris
+ * accent — the app-wide blue reads as a different system there. */
+const INDICATOR_CLASSES: Record<'light' | 'glass', string> = {
+  light: 'bg-brand-600 shadow-[0_0_0_1px_rgba(58,84,214,0.3),0_0_16px_-2px_rgba(58,84,214,0.7)]',
+  glass: 'bg-iris-500 shadow-[0_0_0_1px_rgba(88,87,231,0.35),0_0_16px_-2px_rgba(88,87,231,0.75)]',
+};
+
 /**
  * A single-select segmented control with a sliding "pill" indicator that glides to the active option
  * (measured from the real DOM node, so it lines up exactly even though options can have different widths)
@@ -102,7 +109,7 @@ export function SegmentedTabs<T extends string>({
       {indicator && (
         <span
           aria-hidden="true"
-          className="absolute inset-y-1 rounded-lg bg-brand-600 shadow-[0_0_0_1px_rgba(58,84,214,0.3),0_0_16px_-2px_rgba(58,84,214,0.7)] transition-all duration-200 ease-out"
+          className={`absolute inset-y-1 rounded-lg ${INDICATOR_CLASSES[variant]} transition-all duration-200 ease-out`}
           style={{ left: indicator.left, width: indicator.width }}
         />
       )}

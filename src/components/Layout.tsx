@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Flame, Moon, Sun, Volume2, VolumeX, Music2, RotateCcw, Trophy, CalendarDays, LogIn, LogOut } from 'lucide-react';
+import { Flame, Moon, Sun, Volume2, VolumeX, Music2, LogIn, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/nav';
+import { levelProgressPercent } from '../lib/dashboardStats';
 import { useProgress } from '../lib/progressStore';
 import { displayedStreak } from '../lib/streak';
 import { todayIso } from '../lib/date';
@@ -22,26 +23,14 @@ import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Logo } from './Logo';
 
+/** Exactly one nav row is filled at a time, in the redesign's violet; every other row stays quiet so the
+ * illustrated icons carry the colour instead of the chrome. */
 const NAV_ITEM_CLASSES = (isActive: boolean) =>
-  `flex items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-medium transition-colors ${
+  `flex min-h-12 items-center gap-3 rounded-xl px-3.5 py-2.5 text-base font-medium transition-colors ${
     isActive
-      ? 'bg-brand-600 text-white shadow-sm'
-      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+      ? 'bg-brand-600 text-white shadow-sm dark:bg-gradient-to-r dark:from-iris-800 dark:to-iris-900'
+      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/60'
   }`;
-
-/**
- * Real shortcuts into content that already exists on the Dashboard — not top-level routes, so they never
- * get the NavLink "active" highlight (that's reserved for NAV_ITEMS). Every entry genuinely navigates
- * somewhere real; nothing here is a placeholder or "coming soon" link.
- */
-function useSecondaryNavItems() {
-  const navigate = useNavigate();
-  return [
-    { key: 'review', label: 'Review', icon: RotateCcw, onClick: () => navigate('/vocabulary') },
-    { key: 'achievements', label: 'Achievements', icon: Trophy, onClick: () => navigate('/dashboard#achievements-section') },
-    { key: 'study-plan', label: 'Study Plan', icon: CalendarDays, onClick: () => navigate('/dashboard#study-plan-section') },
-  ];
-}
 
 export function Layout() {
   const progress = useProgress();
@@ -64,7 +53,7 @@ export function Layout() {
     location.pathname === '/vocabulary/review' ||
     location.pathname.startsWith('/grammar') ||
     location.pathname.startsWith('/reading/');
-  const secondaryNavItems = useSecondaryNavItems();
+  const levelPercent = levelProgressPercent(progress);
   const auth = useAuth();
   const navigate = useNavigate();
   useStudyTimer();
@@ -88,45 +77,34 @@ export function Layout() {
         Skip to content
       </a>
 
-      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2.5 px-6 h-16 border-b border-slate-200 dark:border-slate-800">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-slate-200 dark:border-ink-line bg-white dark:bg-slate-950">
+        <div className="flex items-center gap-2.5 px-6 h-16">
           <Logo size={32} />
-          <span className="text-xl font-semibold text-brand-700 dark:text-brand-300">Kotobox</span>
+          <span className="text-lg font-extrabold tracking-wide text-brand-700 dark:text-white">KOTOBOX</span>
         </div>
         <ScrollArea className="flex-1">
-          <nav className="px-3 py-4 space-y-1" aria-label="Main navigation">
+          <nav className="px-3 pb-4 space-y-0.5" aria-label="Main navigation">
             {NAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === '/'}
-                className={({ isActive }) => NAV_ITEM_CLASSES(isActive)}
-              >
-                <item.icon size={19} aria-hidden="true" />
-                {item.label.en}
-              </NavLink>
-            ))}
-
-            <Separator className="my-2 bg-slate-100 dark:bg-slate-800" />
-
-            {secondaryNavItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={item.onClick}
-                className={`w-full ${NAV_ITEM_CLASSES(false)}`}
-              >
-                <item.icon size={19} aria-hidden="true" />
-                <span className="flex-1 text-left">{item.label}</span>
-              </button>
+              <div key={item.path}>
+                {item.group && (
+                  <p className="px-3.5 pt-5 pb-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                    {item.group}
+                  </p>
+                )}
+                <NavLink to={item.path} end={item.path === '/'} className={({ isActive }) => NAV_ITEM_CLASSES(isActive)}>
+                  <item.icon size={24} aria-hidden="true" />
+                  {item.label.en}
+                </NavLink>
+              </div>
             ))}
           </nav>
         </ScrollArea>
-        <div className="px-3 pb-1">
+        <Separator className="bg-slate-100 dark:bg-ink-line" />
+        <div className="px-3 pt-2 pb-1">
           <AccountNavItem />
         </div>
         <div className="px-3 pb-3">
-          <SidebarLevelCard levelInfo={levelInfo} />
+          <SidebarLevelCard level={progress.level} percent={levelPercent} />
         </div>
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className={`flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 ${streakPulsing ? 'animate-pop' : ''}`}>
