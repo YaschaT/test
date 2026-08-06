@@ -79,7 +79,7 @@ export function Layout() {
 
       <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-slate-200 dark:border-ink-line bg-white dark:bg-slate-950">
         <div className="flex items-center gap-2.5 px-6 h-16">
-          <Logo size={32} />
+          <Logo size={40} />
           <span className="text-lg font-extrabold tracking-wide text-brand-700 dark:text-white">KOTOBOX</span>
         </div>
         <ScrollArea className="flex-1">
