@@ -9,6 +9,7 @@ import { playPrimaryAction } from '../../lib/sound';
 import { VocabularyCardGrid } from '../../components/vocabulary/VocabularyCardGrid';
 import { VOCABULARY, VOCAB_CATEGORIES } from '../../data/vocabulary';
 import { getSrsCard, useProgress } from '../../lib/progressStore';
+import { filterVocabulary, loadVocabFilters, saveVocabFilters } from '../../lib/vocabFilter';
 import { isCardDue } from '../../lib/srs';
 import { todayIso } from '../../lib/date';
 import { buildReviewQueue } from '../../lib/reviewQueue';
@@ -17,11 +18,24 @@ import type { JlptLevel } from '../../types';
 
 export function VocabularyHome() {
   const progress = useProgress();
-  const [query, setQuery] = useState('');
-  const [level, setLevel] = useState<JlptLevel | 'all'>('all');
-  const [category, setCategory] = useState<string>('all');
+  // Seeded from (and written back to) the persisted filters, so opening a word pages through the deck
+  // that was on screen rather than all 1000 words. Same contract as the kanji grid.
+  const saved = loadVocabFilters();
+  const [query, setQuery] = useState(saved.query);
+  const [level, setLevel] = useState<JlptLevel | 'all'>(saved.level);
+  const [category, setCategory] = useState<string>(saved.category);
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const today = todayIso();
+
+  function changeLevel(next: JlptLevel | 'all') {
+    setLevel(next);
+    saveVocabFilters({ level: next, category, query });
+  }
+
+  function changeCategory(next: string) {
+    setCategory(next);
+    saveVocabFilters({ level, category: next, query });
+  }
 
   const reviewQueue = buildReviewQueue(VOCABULARY, 'vocabulary', progress, 10, today);
   const dueCount = reviewQueue.filter((w) => {
@@ -35,21 +49,8 @@ export function VocabularyHome() {
     [progress, today],
   );
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return VOCABULARY.filter((w) => {
-      if (level !== 'all' && w.level !== level) return false;
-      if (category !== 'all' && w.category !== category) return false;
-      if (!q) return true;
-      return (
-        w.japanese.toLowerCase().includes(q) ||
-        w.kana.toLowerCase().includes(q) ||
-        w.romaji.toLowerCase().includes(q) ||
-        w.meaning.en.toLowerCase().includes(q) ||
-        w.meaning.nl.toLowerCase().includes(q)
-      );
-    });
-  }, [query, level, category]);
+  // Shared with the card session so both show exactly the same deck.
+  const filtered = useMemo(() => filterVocabulary(VOCABULARY, { level, category, query }), [query, level, category]);
 
   const ctaLabel = reviewQueueSize > 0 ? formatReviewLabel(dueCount, reviewQueueSize - dueCount) : null;
 
@@ -84,12 +85,12 @@ export function VocabularyHome() {
       />
       <LearningControls
         level={level}
-        onLevelChange={setLevel}
+        onLevelChange={changeLevel}
         query={query}
         onQueryChange={setQuery}
         searchPlaceholder="Search vocabulary..."
         category={category}
-        onCategoryChange={setCategory}
+        onCategoryChange={changeCategory}
         categories={VOCAB_CATEGORIES}
         layout={layout}
         onLayoutChange={setLayout}

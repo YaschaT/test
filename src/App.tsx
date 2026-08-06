@@ -18,6 +18,7 @@ const GrammarList = lazy(() => import('./pages/grammar/GrammarList').then((m) =>
 const GrammarDetail = lazy(() => import('./pages/grammar/GrammarDetail').then((m) => ({ default: m.GrammarDetail })));
 const VocabularyHome = lazy(() => import('./pages/vocabulary/VocabularyHome').then((m) => ({ default: m.VocabularyHome })));
 const VocabReview = lazy(() => import('./pages/vocabulary/VocabReview').then((m) => ({ default: m.VocabReview })));
+const VocabularyDetail = lazy(() => import('./pages/vocabulary/VocabularyDetail').then((m) => ({ default: m.VocabularyDetail })));
 const KanjiList = lazy(() => import('./pages/kanji/KanjiList').then((m) => ({ default: m.KanjiList })));
 const KanjiDetail = lazy(() => import('./pages/kanji/KanjiDetail').then((m) => ({ default: m.KanjiDetail })));
 const KanjiReview = lazy(() => import('./pages/kanji/KanjiReview').then((m) => ({ default: m.KanjiReview })));
@@ -82,6 +83,7 @@ function App() {
           <Route path="/grammar/:id" element={page(GrammarDetail)} />
           <Route path="/vocabulary" element={page(VocabularyHome)} />
           <Route path="/vocabulary/review" element={page(VocabReview)} />
+          <Route path="/vocabulary/:id" element={page(VocabularyDetail)} />
           <Route path="/kanji" element={page(KanjiList)} />
           {/* Must precede /kanji/:id so "review" isn't parsed as a kanji id. */}
           <Route path="/kanji/review" element={page(KanjiReview)} />
