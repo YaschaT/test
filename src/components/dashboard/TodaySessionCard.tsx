@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { Check, ChevronRight, Map, Sparkles } from 'lucide-react';
 import { DashboardCard } from './DashboardCard';
 import { SKILL_THEME } from '../../lib/skillTheme';
@@ -73,15 +74,23 @@ function SessionRow({
 
   const content = (
     <>
-      {/* Numbered rail: the connector is drawn behind the marker so it never crosses the digit. */}
-      <span className="relative flex w-10 shrink-0 justify-center self-stretch">
+      {/* Numbered rail. The marker centres on the row like the icon and text beside it, and the connector
+          runs from its bottom edge to the next marker's top edge — `100%` here is the row's own height, so
+          the line still meets both markers if a step's text wraps to another line. */}
+      <span
+        className="relative flex w-10 shrink-0 items-center justify-center self-stretch"
+        style={{ '--step-accent': accent } as CSSProperties}
+      >
         {!isLast && (
-          <span className="absolute left-1/2 top-10 bottom-0 w-px -translate-x-1/2 bg-slate-200 dark:bg-ink-700" aria-hidden="true" />
+          <span
+            className="absolute left-1/2 top-[calc(50%+1.25rem)] h-[calc(100%-1rem)] w-px -translate-x-1/2 bg-slate-200 dark:bg-ink-line"
+            aria-hidden="true"
+          />
         )}
-        <span
-          className="relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
-          style={{ backgroundColor: `color-mix(in srgb, ${accent} 32%, transparent)`, color: accent }}
-        >
+        {/* Tinted with the step's own skill colour: a pale wash under a dark numeral on white, and the
+            reverse on the dark card, so the marker stays clearly legible without competing with the
+            saturated icon next to it. */}
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--step-accent)_16%,transparent)] text-sm font-bold text-[color-mix(in_srgb,var(--step-accent)_85%,black)] dark:bg-[color-mix(in_srgb,var(--step-accent)_52%,transparent)] dark:text-[color-mix(in_srgb,var(--step-accent)_20%,white)]">
           {step.done ? <Check size={18} aria-hidden="true" /> : index + 1}
         </span>
       </span>
