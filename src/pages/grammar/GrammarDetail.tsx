@@ -3,12 +3,9 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { GrammarLessonIntro } from '../../components/grammar/GrammarLessonIntro';
 import { GrammarLessonRail, type GrammarRailItem } from '../../components/grammar/GrammarLessonRail';
 import { GrammarPractice } from '../../components/grammar/GrammarPractice';
-import type { GrammarLessonState } from '../../components/grammar/GrammarLessonList';
 import { GRAMMAR_POINTS, getGrammarPoint } from '../../data/grammar';
 import { markGrammarCompleted, useProgress } from '../../lib/progressStore';
-
-/** How many points beyond the current one are previewable before the path locks (mirrors the overview). */
-const LOOKAHEAD = 2;
+import { currentPointIndex, lessonNumberInLevel, lessonState, levelPoints } from '../../lib/grammarPath';
 
 type Phase = 'lesson' | 'practice';
 
@@ -21,37 +18,21 @@ export function GrammarDetail() {
   const point = id ? getGrammarPoint(id) : undefined;
   const completedIds = progress.completedGrammarIds;
 
-  const currentIndex = useMemo(
-    () => GRAMMAR_POINTS.findIndex((p) => !completedIds.includes(p.id)),
-    [completedIds],
-  );
-
-  function stateFor(index: number, pid: string): GrammarLessonState {
-    if (completedIds.includes(pid)) return 'completed';
-    if (currentIndex === -1) return 'completed';
-    if (index === currentIndex) return 'current';
-    if (index > currentIndex && index <= currentIndex + LOOKAHEAD) return 'available';
-    return 'locked';
-  }
-
-  const pointIndex = point ? GRAMMAR_POINTS.findIndex((p) => p.id === point.id) : -1;
+  const currentIndex = useMemo(() => currentPointIndex(completedIds), [completedIds]);
 
   const railItems: GrammarRailItem[] = useMemo(() => {
     if (!point) return [];
-    return GRAMMAR_POINTS.map((p, index) => ({ p, index }))
-      .filter(({ p }) => p.level === point.level)
-      .map(({ p, index }) => ({
-        id: p.id,
-        number: index + 1,
-        title: p.title,
-        state: stateFor(index, p.id),
-      }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return levelPoints(point.level).map((p, indexInLevel) => ({
+      id: p.id,
+      number: indexInLevel + 1,
+      title: p.title,
+      state: lessonState(GRAMMAR_POINTS.indexOf(p), p.id, currentIndex, completedIds),
+    }));
   }, [point, completedIds, currentIndex]);
 
-  // Lesson number within its level, and the level's total (e.g. "Lesson 5 of 10").
-  const levelBefore = point ? GRAMMAR_POINTS.slice(0, pointIndex).filter((p) => p.level === point.level).length : 0;
-  const levelTotal = point ? GRAMMAR_POINTS.filter((p) => p.level === point.level).length : 0;
+  // "Lesson 5 of 18" — both numbers scoped to the point's own level.
+  const lessonNumber = point ? lessonNumberInLevel(point) : 0;
+  const levelTotal = point ? levelPoints(point.level).length : 0;
 
   if (!point) return <Navigate to="/grammar" replace />;
 
@@ -80,7 +61,7 @@ export function GrammarDetail() {
 
           <GrammarLessonIntro
             point={point}
-            lessonNumber={levelBefore + 1}
+            lessonNumber={lessonNumber}
             levelTotal={levelTotal}
             onStart={() => setPhase('practice')}
           />

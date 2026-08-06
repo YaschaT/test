@@ -14,7 +14,7 @@ import { useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
 import { getSavedVoiceMode, saveVoiceMode, useGoogleTtsAvailability, useTtsPlayer, type VoiceMode } from '../../lib/tts/ttsService';
 import { useNeuralTtsAvailability } from '../../lib/tts/neuralTts';
 import { getAutoPlayEnabled, setAutoPlayEnabled } from '../../lib/listeningPrefs';
-import { buildListeningPool, normalizeForCompare, shuffle, type ListeningItem } from '../../lib/listeningPool';
+import { buildDictationPool, buildListeningPool, matchesDictation, shuffle, type ListeningItem } from '../../lib/listeningPool';
 import { recordQuizResult, useProgress } from '../../lib/progressStore';
 import type { JlptLevel } from '../../types';
 import { XP_RULES } from '../../lib/xp';
@@ -103,6 +103,7 @@ export function ListeningHome() {
         <SegmentedTabs
           value={mode}
           onChange={setMode}
+          groupLabel="Exercise type"
           options={[
             { value: 'select', label: 'Listen & Select' },
             { value: 'dictation', label: 'Dictation' },
@@ -121,9 +122,12 @@ export function ListeningHome() {
         </div>
       </div>
 
+      {/* Keyed on the session counter only. Voice is a playback preference, not part of what the session
+          is — keying on it too meant that switching voice mid-session (the most likely reason anyone
+          touches that control) silently threw the learner's answers away and restarted at item 1. */}
       {mode === 'select' ? (
         <ListenSelect
-          key={`select-${sessionKey}-${voiceMode}`}
+          key={`select-${sessionKey}`}
           speed={speed}
           voiceMode={voiceMode}
           playbackAvailable={playbackAvailable}
@@ -134,7 +138,7 @@ export function ListeningHome() {
         />
       ) : (
         <Dictation
-          key={`dictation-${sessionKey}-${voiceMode}`}
+          key={`dictation-${sessionKey}`}
           speed={speed}
           voiceMode={voiceMode}
           playbackAvailable={playbackAvailable}
@@ -148,8 +152,15 @@ export function ListeningHome() {
   );
 }
 
-function useSession() {
-  return useMemo(() => shuffle(buildListeningPool()).slice(0, SESSION_SIZE), []);
+/**
+ * Dictation draws from the narrower pool of hand-written romaji, because it grades typing against that
+ * field. Listen & Select only ever compares English meanings, so it can use every sentence.
+ */
+function useSession(mode: 'select' | 'dictation') {
+  return useMemo(
+    () => shuffle(mode === 'dictation' ? buildDictationPool() : buildListeningPool()).slice(0, SESSION_SIZE),
+    [mode],
+  );
 }
 
 interface ModeProps {
@@ -174,8 +185,8 @@ function AutoPlayToggle({ checked, onChange }: { checked: boolean; onChange: (ne
 function PlaybackError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
-      <AlertTriangle size={14} /> {message}
+    <p role="alert" className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
+      <AlertTriangle size={14} aria-hidden="true" /> {message}
     </p>
   );
 }
@@ -191,7 +202,7 @@ function SessionScoreReadout({ correctCount }: { correctCount: number }) {
 
 function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, onAutoPlayChange, onRestart }: ModeProps) {
   const pool = useMemo(() => buildListeningPool(), []);
-  const session = useSession();
+  const session = useSession('select');
   const { state, play } = useTtsPlayer(voiceMode);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -253,7 +264,15 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
         </div>
         {state.status === 'error' && <PlaybackError message={state.errorMessage} />}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="radiogroup" aria-label="Which meaning did you hear?">
+        {/* The prompt used to exist only as an aria-label, so the one group who could perceive it were the
+            users who couldn't see the screen. It's a real heading now, and it names the group. */}
+        <h3 id="listen-select-prompt" className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Which meaning did you hear?
+        </h3>
+
+        {/* Plain buttons in a labelled group, not radios: a quiz answer is a command, not a form value, and
+            the previous role="radio" promised arrow-key navigation the widget never implemented. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="group" aria-labelledby="listen-select-prompt">
           {options.map((opt) => {
             const showCorrect = answered && opt === item.en;
             const showWrong = answered && opt === selected && opt !== item.en;
@@ -261,9 +280,10 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
               <button
                 key={opt}
                 type="button"
-                role="radio"
-                aria-checked={selected === opt}
-                disabled={answered}
+                /* aria-disabled rather than disabled: `disabled` on the element that currently has focus
+                   destroys it, dropping the keyboard user back to the top of the document on every
+                   question. This keeps them where they are. */
+                aria-disabled={answered}
                 onClick={() => choose(opt)}
                 className={`w-full text-left rounded-xl border px-4 py-2.5 pointer-coarse:py-3.5 text-sm font-medium transition-all flex items-center justify-between gap-2 ${
                   showCorrect
@@ -274,8 +294,8 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
                 } ${answered ? 'cursor-default' : 'cursor-pointer active:scale-[0.98]'}`}
               >
                 {opt}
-                {showCorrect && <CheckCircle2 size={16} />}
-                {showWrong && <XCircle size={16} />}
+                {showCorrect && <CheckCircle2 size={16} aria-hidden="true" />}
+                {showWrong && <XCircle size={16} aria-hidden="true" />}
               </button>
             );
           })}
@@ -283,11 +303,13 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
 
         {answered && (
           <div>
-            <p className={`text-sm font-medium ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-              {isCorrect ? 'Correct!' : 'Not quite.'}
-            </p>
-            <p className="jp-text text-slate-500 dark:text-slate-400 text-sm mt-1">{item.japanese}</p>
-            <PrimaryButton onClick={next} className="mt-3">
+            <div role="status">
+              <p className={`text-sm font-medium ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {isCorrect ? 'Correct!' : `Not quite — the answer was "${item.en}".`}
+              </p>
+              <p className="jp-text text-slate-500 dark:text-slate-400 text-sm mt-1">{item.japanese}</p>
+            </div>
+            <PrimaryButton onClick={next} className="mt-3" autoFocus>
               Next
             </PrimaryButton>
           </div>
@@ -300,7 +322,7 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
 }
 
 function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAutoPlayChange, onRestart }: ModeProps) {
-  const session = useSession();
+  const session = useSession('dictation');
   const { state, play } = useTtsPlayer(voiceMode);
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState('');
@@ -326,12 +348,12 @@ function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAut
   }
 
   const item = session[index];
-  const isCorrect = checked && normalizeForCompare(input) === normalizeForCompare(item.romaji);
+  const isCorrect = checked && matchesDictation(input, item);
 
   function submit() {
     if (checked) return;
     setChecked(true);
-    if (normalizeForCompare(input) === normalizeForCompare(item.romaji)) {
+    if (matchesDictation(input, item)) {
       setCorrectCount((c) => c + 1);
       playCorrect();
     } else {
@@ -363,7 +385,7 @@ function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAut
 
         <div>
           <label htmlFor="dictation-input" className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-            Type what you heard, in romaji
+            Type what you heard — romaji or kana
           </label>
           <input
             id="dictation-input"
@@ -372,6 +394,14 @@ function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAut
             onChange={(e) => setInput(e.target.value)}
             disabled={checked}
             placeholder="e.g. Nihon ni ikitai desu"
+            /* A phone keyboard would otherwise capitalise and autocorrect romaji into English words, and
+               spellcheck underlines every one of them as a misspelling. */
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="off"
+            spellCheck={false}
+            aria-invalid={checked && !isCorrect}
+            aria-describedby="dictation-feedback"
             className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-100"
             onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
@@ -383,13 +413,17 @@ function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAut
           </PrimaryButton>
         ) : (
           <div>
-            <p className={`text-sm font-medium flex items-center gap-1.5 ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-              {isCorrect ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-              {isCorrect ? 'Correct!' : 'Not quite.'}
-            </p>
-            <p className="jp-text text-slate-700 dark:text-slate-200 mt-1">{item.japanese}</p>
-            <p className="text-sm text-brand-600 dark:text-brand-300">{item.romaji}</p>
-            <PrimaryButton onClick={next} className="mt-3">
+            {/* role="status" so the result is announced — it is the whole point of the exercise, and
+                previously it appeared silently for anyone not watching this corner of the screen. */}
+            <div id="dictation-feedback" role="status">
+              <p className={`text-sm font-medium flex items-center gap-1.5 ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {isCorrect ? <CheckCircle2 size={16} aria-hidden="true" /> : <XCircle size={16} aria-hidden="true" />}
+                {isCorrect ? 'Correct!' : 'Not quite.'}
+              </p>
+              <p className="jp-text text-slate-700 dark:text-slate-200 mt-1">{item.japanese}</p>
+              <p className="text-sm text-brand-600 dark:text-brand-300">{item.romaji}</p>
+            </div>
+            <PrimaryButton onClick={next} className="mt-3" autoFocus>
               Next
             </PrimaryButton>
           </div>

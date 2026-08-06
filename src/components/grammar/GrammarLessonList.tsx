@@ -1,6 +1,15 @@
 import { ArrowRight, Check, ChevronRight, Lock } from 'lucide-react';
+import type { GrammarLessonState } from '../../lib/grammarPath';
 
-export type GrammarLessonState = 'completed' | 'current' | 'available' | 'locked';
+export type { GrammarLessonState };
+
+/** Spoken status for each row, so it isn't carried by icon colour alone. */
+const STATE_LABEL: Record<GrammarLessonState, string> = {
+  completed: 'Completed',
+  current: 'Next up',
+  available: 'Not started',
+  locked: 'Locked',
+};
 
 export interface GrammarLessonItem {
   id: string;
@@ -32,8 +41,8 @@ export function GrammarLessonList({
     <section>
       <div className="flex items-baseline justify-between px-1 mb-3">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">{levelLabel} Grammar</h2>
-        <span className="text-sm font-medium text-slate-400 dark:text-slate-500 tabular-nums">
-          {completedInLevel} / {totalInLevel}
+        <span className="text-sm font-medium text-slate-600 dark:text-slate-400 tabular-nums">
+          {completedInLevel} / {totalInLevel} in {levelLabel}
         </span>
       </div>
 
@@ -49,62 +58,81 @@ export function GrammarLessonList({
 function GrammarLessonRow({ item, onOpen }: { item: GrammarLessonItem; onOpen: (id: string) => void }) {
   const isCurrent = item.state === 'current';
   const isLocked = item.state === 'locked';
-  const clickable = !isLocked;
 
   return (
     <li className="relative">
-      <div
-        role={clickable ? 'button' : undefined}
-        tabIndex={clickable ? 0 : undefined}
-        onClick={clickable ? () => onOpen(item.id) : undefined}
-        onKeyDown={
-          clickable
-            ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onOpen(item.id);
-                }
-              }
-            : undefined
-        }
+      {/* A real button, not a div playing one: it gets Enter/Space, a focus ring and correct semantics for
+          free. Locked rows stay focusable and use aria-disabled so a keyboard user can still read them —
+          previously they were removed from the tab order entirely and were unreachable. */}
+      <button
+        type="button"
         aria-disabled={isLocked || undefined}
-        className={`group flex items-center gap-4 px-4 py-3.5 outline-none transition-colors ${
+        onClick={isLocked ? undefined : () => onOpen(item.id)}
+        /* Note the absence of `outline-none`: that was what suppressed the app's global :focus-visible
+           ring, leaving the row with only a 3%-opacity background tint to show focus. Removing it is the
+           whole fix — the row now gets the same ring as every other control in the app. */
+        className={`group flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 text-left transition-colors ${
           isCurrent
             ? 'bg-brand-500/10 dark:bg-brand-500/[0.12] shadow-[inset_2px_0_0_var(--color-brand-500)]'
-            : clickable
-              ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] focus-visible:bg-slate-50 dark:focus-visible:bg-white/[0.03]'
-              : 'opacity-45'
+            : isLocked
+              ? 'cursor-default'
+              : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03]'
         }`}
       >
         <StatusIcon state={item.state} />
 
-        <span className="w-6 shrink-0 text-sm font-semibold tabular-nums text-slate-400 dark:text-slate-500">
+        {/* Status in words, so it isn't carried by a small coloured circle alone. */}
+        <span className="sr-only">{STATE_LABEL[item.state]}.</span>
+
+        {/* Locked rows are muted with explicit foreground colours rather than a blanket opacity, which
+            dimmed text and background together and dropped the row to 1.7:1. Both tiers now clear 4.5:1 —
+            locked reads quieter than unlocked, but "quieter" stops at the legibility floor, and the real
+            signal that a row is locked is the padlock and its label, not faint text. */}
+        <span
+          className={`w-6 shrink-0 text-sm font-semibold tabular-nums ${
+            isLocked ? 'text-slate-500 dark:text-slate-400' : 'text-slate-600 dark:text-slate-300'
+          }`}
+        >
           {String(item.number).padStart(2, '0')}
         </span>
 
         <span
           className={`jp-text shrink-0 text-base font-bold ${
-            isCurrent ? 'text-brand-700 dark:text-white' : 'text-slate-800 dark:text-slate-100'
+            isLocked
+              ? 'text-slate-500 dark:text-slate-400'
+              : isCurrent
+                ? 'text-brand-700 dark:text-white'
+                : 'text-slate-800 dark:text-slate-100'
           }`}
         >
           {item.title}
         </span>
 
-        <span className="shrink truncate text-sm text-slate-400 dark:text-slate-500">
+        {/* Wraps rather than truncating: at larger text sizes an ellipsis silently loses the meaning,
+            which is the part a beginner leans on most. */}
+        <span
+          className={`min-w-0 text-sm ${isLocked ? 'text-slate-500 dark:text-slate-400' : 'text-slate-600 dark:text-slate-300'}`}
+        >
           - {item.meaningEn}
         </span>
 
-        {/* Pattern preview fills the row's right side so it reads as a full lesson, not a hollow line. */}
-        <span className="jp-text ml-auto hidden max-w-[45%] shrink-0 truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500 sm:inline-block dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-400">
+        {/* Pattern preview fills the row's right side so it reads as a full lesson, not a hollow line.
+            Wraps rather than truncating, so enlarged text moves it onto its own line instead of cutting
+            the pattern in half. */}
+        <span className="jp-text ml-auto hidden max-w-[45%] rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 sm:inline-block dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300">
           {item.structure}
         </span>
 
-        <ChevronRight
-          size={18}
-          aria-hidden="true"
-          className="shrink-0 text-slate-300 dark:text-slate-600 transition-colors group-hover:text-slate-500 dark:group-hover:text-slate-400"
-        />
-      </div>
+        {/* The padlock already sits in the status slot on the left, so a locked row simply has no
+            trailing affordance — there is nowhere for it to go. */}
+        {!isLocked && (
+          <ChevronRight
+            size={18}
+            aria-hidden="true"
+            className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-slate-600 sm:ml-0 dark:text-slate-500 dark:group-hover:text-slate-300"
+          />
+        )}
+      </button>
     </li>
   );
 }
@@ -126,7 +154,7 @@ function StatusIcon({ state }: { state: GrammarLessonState }) {
   }
   if (state === 'locked') {
     return (
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-slate-400 dark:text-slate-600">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-slate-500 dark:text-slate-400">
         <Lock size={15} aria-hidden="true" />
       </span>
     );

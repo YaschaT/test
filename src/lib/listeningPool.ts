@@ -1,4 +1,4 @@
-import { VOCABULARY } from '../data/vocabulary';
+import { VOCABULARY, VOCABULARY_VERIFIED_ROMAJI } from '../data/vocabulary';
 import { GRAMMAR_POINTS } from '../data/grammar';
 
 export interface ListeningItem {
@@ -13,16 +13,18 @@ function joinText(segments: { text: string }[]): string {
   return segments.map((s) => s.text).join('');
 }
 
-/** Reuses the same original sentences already authored for vocab/grammar — no separate content to keep in sync. */
-export function buildListeningPool(): ListeningItem[] {
-  const fromVocab = VOCABULARY.map((w) => ({
+function vocabItems(words: typeof VOCABULARY): ListeningItem[] {
+  return words.map((w) => ({
     id: `lv-${w.id}`,
     japanese: joinText(w.example.segments),
     kana: w.example.kana,
     romaji: w.example.romaji,
     en: w.example.en,
   }));
-  const fromGrammar = GRAMMAR_POINTS.flatMap((g) =>
+}
+
+function grammarItems(): ListeningItem[] {
+  return GRAMMAR_POINTS.flatMap((g) =>
     g.examples.map((ex, i) => ({
       id: `lg-${g.id}-${i}`,
       japanese: joinText(ex.segments),
@@ -31,7 +33,22 @@ export function buildListeningPool(): ListeningItem[] {
       en: ex.en,
     })),
   );
-  return [...fromVocab, ...fromGrammar];
+}
+
+/** Reuses the same original sentences already authored for vocab/grammar — no separate content to keep in sync. */
+export function buildListeningPool(): ListeningItem[] {
+  return [...vocabItems(VOCABULARY), ...grammarItems()];
+}
+
+/**
+ * The narrower pool dictation draws from: only sentences whose romaji was written by hand.
+ *
+ * Listen & Select can use everything, because it only ever compares English meanings. Dictation grades
+ * the learner's typing against `romaji`, so it can only use sentences where that field is a real
+ * transcription — see VOCABULARY_VERIFIED_ROMAJI for why the bulk-imported sets are excluded.
+ */
+export function buildDictationPool(): ListeningItem[] {
+  return [...vocabItems(VOCABULARY_VERIFIED_ROMAJI), ...grammarItems()];
 }
 
 export function shuffle<T>(items: T[]): T[] {
@@ -43,11 +60,52 @@ export function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-/** Loose match: case/space/punctuation-insensitive, forgiving for a romaji-typing dictation exercise. */
+/** Hepburn macrons written the way this app's data spells long vowels. */
+const LONG_VOWELS: Record<string, string> = {
+  ā: 'aa',
+  ī: 'ii',
+  ū: 'uu',
+  ē: 'ee',
+  ō: 'ou',
+};
+
+/**
+ * Normalises a romaji answer down to the things that actually differ between a right and a wrong
+ * transcription, so the exercise tests listening rather than spelling convention.
+ *
+ * Three conventions vary between textbooks and are all accepted: long vowels written with a macron or
+ * doubled (ō / ou), word spacing (Japanese is unspaced, so "watashi wa" and "watashiwa" are equally
+ * defensible), and the particles は・へ・を, whose written reading differs from how they are said. The
+ * app's data spells those particles as they are written; a learner transcribing what they *heard* types
+ * the spoken form, and both are correct.
+ *
+ * Doubled vowels are deliberately *not* collapsed: おばさん (aunt) and おばあさん (grandmother) differ by
+ * exactly that, and treating them as equal would mark a real mistake correct.
+ */
 export function normalizeForCompare(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[.,!?。、]/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/[āīūēō]/g, (c) => LONG_VOWELS[c] ?? c)
+    .replace(/[.,!?'’\-–—。、！？]/g, '')
+    .replace(/\bwo\b/g, 'o')
+    .replace(/\bha\b/g, 'wa')
+    .replace(/\bhe\b/g, 'e')
+    .replace(/\s+/g, '')
     .trim();
+}
+
+/** Kana answers only need punctuation and spacing removed — the reading itself is unambiguous. */
+function normalizeKana(text: string): string {
+  return text.replace(/[\s。、！？.,!?]/g, '').trim();
+}
+
+/**
+ * Whether a typed answer matches the sentence. Kana is accepted alongside romaji: a learner far enough
+ * along to type かな should not be forced back through the romaji they are trying to leave behind.
+ */
+export function matchesDictation(input: string, item: Pick<ListeningItem, 'romaji' | 'kana'>): boolean {
+  return (
+    normalizeForCompare(input) === normalizeForCompare(item.romaji) ||
+    normalizeKana(input) === normalizeKana(item.kana)
+  );
 }

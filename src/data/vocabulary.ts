@@ -1527,6 +1527,17 @@ const VOCABULARY_CORE: VocabWord[] = [
 /** Core hand-authored words first, then the bulk-imported N5, then N4/N3 sets. */
 export const VOCABULARY: VocabWord[] = [...VOCABULARY_CORE, ...VOCAB_N5_EXTRA, ...VOCAB_N4N3_EXTRA];
 
+/**
+ * The subset whose example `romaji` was written by hand and can be trusted as an answer key.
+ *
+ * The two bulk-imported sets derive their romaji mechanically from furigana readings, which produces
+ * per-morpheme spellings rather than transcriptions of speech: 割った comes out as "wa tta", 意図的 as
+ * "ito teki", and the particles は and を keep their written readings ("ha", "wo") instead of the spoken
+ * "wa" and "o". That is fine for the reading aids those sets exist for, but grading a learner's
+ * transcription against it marks correct answers wrong — so dictation draws from here instead.
+ */
+export const VOCABULARY_VERIFIED_ROMAJI: VocabWord[] = VOCABULARY_CORE;
+
 export function getVocabWord(id: string): VocabWord | undefined {
   return VOCABULARY.find((w) => w.id === id);
 }

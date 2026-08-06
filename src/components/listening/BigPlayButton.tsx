@@ -29,7 +29,9 @@ export function BigPlayButton({ onClick, playbackAvailable, status }: BigPlayBut
           {loading ? <Loader2 size={30} className="animate-spin" aria-hidden="true" /> : <Volume2 size={30} aria-hidden="true" />}
         </button>
       </SoundRipple>
-      <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
+      {/* role="status" so "Generating audio…" is announced — otherwise a screen reader user presses play
+          and gets silence with no way to tell whether anything is happening. */}
+      <p role="status" className="text-xs font-medium text-slate-500 dark:text-slate-400">
         {loading ? 'Generating audio…' : playbackAvailable ? 'Tap to play' : 'Audio unavailable'}
       </p>
     </div>

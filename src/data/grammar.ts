@@ -1429,8 +1429,20 @@ const GRAMMAR_CORE: GrammarPoint[] = [
   },
 ];
 
-/** Hand-authored core points first, then the conversation-focused installment. */
-export const GRAMMAR_POINTS: GrammarPoint[] = [...GRAMMAR_CORE, ...GRAMMAR_EXTRA];
+const LEVEL_ORDER: Record<GrammarPoint['level'], number> = { N5: 0, N4: 1, N3: 2 };
+
+/**
+ * The teaching sequence: every N5 point, then every N4, then every N3.
+ *
+ * The two source arrays are each internally ordered but each spans several levels, so concatenating
+ * them interleaved the levels — which mattered because the learning path unlocks by position in this
+ * array. Eight N5 points sat after the whole of N4 and N3, so a beginner could not reach half of their
+ * own level without first completing intermediate material. Sorting by level fixes the sequence; the
+ * sort is stable, so the hand-authored order within each level is preserved.
+ */
+export const GRAMMAR_POINTS: GrammarPoint[] = [...GRAMMAR_CORE, ...GRAMMAR_EXTRA].sort(
+  (a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level],
+);
 
 export function getGrammarPoint(id: string): GrammarPoint | undefined {
   return GRAMMAR_POINTS.find((g) => g.id === id);

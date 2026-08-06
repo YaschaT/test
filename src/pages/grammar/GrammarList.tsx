@@ -1,65 +1,51 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpenText } from 'lucide-react';
+import { BookOpenText, Lock } from 'lucide-react';
 import { ModuleHeader } from '../../components/learning/ModuleHeader';
 import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
 import { GrammarContinueCard } from '../../components/grammar/GrammarContinueCard';
-import {
-  GrammarLessonList,
-  type GrammarLessonItem,
-  type GrammarLessonState,
-} from '../../components/grammar/GrammarLessonList';
+import { GrammarLessonList, type GrammarLessonItem } from '../../components/grammar/GrammarLessonList';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { GRAMMAR_POINTS } from '../../data/grammar';
 import { useProgress } from '../../lib/progressStore';
+import {
+  currentPoint as nextPointFor,
+  currentPointIndex,
+  lessonState,
+  levelLockedNotice,
+  levelPoints,
+} from '../../lib/grammarPath';
 import type { JlptLevel } from '../../types';
-
-/** How many points beyond the current one are previewable before the path locks. */
-const LOOKAHEAD = 2;
 
 export function GrammarList() {
   const progress = useProgress();
   const navigate = useNavigate();
-  const [level, setLevel] = useState<JlptLevel>('N5');
+  // Starts on the learner's own level rather than always N5, so the page opens where they left off.
+  const [level, setLevel] = useState<JlptLevel>(progress.level);
 
   const completedIds = progress.completedGrammarIds;
 
-  // First not-yet-completed point in the full course order — the genuine "continue learning" target and
-  // the anchor for what's unlocked next.
-  const currentIndex = useMemo(
-    () => GRAMMAR_POINTS.findIndex((p) => !completedIds.includes(p.id)),
-    [completedIds],
-  );
-  const currentPoint = currentIndex >= 0 ? GRAMMAR_POINTS[currentIndex] : GRAMMAR_POINTS[GRAMMAR_POINTS.length - 1];
-
-  function stateFor(index: number, id: string): GrammarLessonState {
-    if (completedIds.includes(id)) return 'completed';
-    if (currentIndex === -1) return 'completed';
-    if (index === currentIndex) return 'current';
-    if (index > currentIndex && index <= currentIndex + LOOKAHEAD) return 'available';
-    return 'locked';
-  }
+  const currentIndex = useMemo(() => currentPointIndex(completedIds), [completedIds]);
+  const currentPoint = nextPointFor(completedIds);
 
   const items: GrammarLessonItem[] = useMemo(
     () =>
-      GRAMMAR_POINTS.map((p, index) => ({ point: p, index }))
-        .filter(({ point }) => point.level === level)
-        .map(({ point, index }) => ({
-          id: point.id,
-          number: index + 1,
-          title: point.title,
-          meaningEn: capitalize(point.meaning.en),
-          structure: point.structure,
-          state: stateFor(index, point.id),
-        })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      levelPoints(level).map((point, indexInLevel) => ({
+        id: point.id,
+        // Numbered within the level, not within the whole course — see lessonNumberInLevel.
+        number: indexInLevel + 1,
+        title: point.title,
+        meaningEn: capitalize(point.meaning.en),
+        structure: point.structure,
+        state: lessonState(GRAMMAR_POINTS.indexOf(point), point.id, currentIndex, completedIds),
+      })),
     [level, completedIds, currentIndex],
   );
 
-  const totalInLevel = GRAMMAR_POINTS.filter((p) => p.level === level).length;
-  const completedInLevel = GRAMMAR_POINTS.filter(
-    (p) => p.level === level && completedIds.includes(p.id),
-  ).length;
+  const lockedNotice = levelLockedNotice(level, completedIds);
+  const inLevel = levelPoints(level);
+  const totalInLevel = inLevel.length;
+  const completedInLevel = inLevel.filter((p) => completedIds.includes(p.id)).length;
 
   function openLesson(id: string) {
     navigate(`/grammar/${id}`);
@@ -73,7 +59,7 @@ export function GrammarList() {
         ringIcon={BookOpenText}
         headlineValue={completedIds.length}
         headlineTotal={GRAMMAR_POINTS.length}
-        headlineLabel="Grammar learned"
+        headlineLabel="Grammar learned, all levels"
         mascot="grammar"
       />
 
@@ -85,6 +71,26 @@ export function GrammarList() {
       />
 
       <GrammarContinueCard point={currentPoint} onContinue={openLesson} />
+
+      {/* A level the learner hasn't reached yet has every row locked. Without this, that state is a screen
+          of dimmed text with no explanation — indistinguishable from a page that failed to load. */}
+      {lockedNotice && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-ink-line dark:bg-ink-900 dark:text-slate-300">
+          <Lock size={15} aria-hidden="true" className="shrink-0" />
+          <span>
+            <strong className="font-semibold text-slate-900 dark:text-white">{level} opens</strong> once you
+            finish {lockedNotice.blockingLevel} — {lockedNotice.done} of {lockedNotice.total} done. You can
+            read ahead here any time.
+          </span>
+          <button
+            type="button"
+            onClick={() => setLevel(lockedNotice.blockingLevel)}
+            className="font-semibold text-brand-600 underline-offset-2 hover:underline dark:text-iris-400"
+          >
+            Back to {lockedNotice.blockingLevel}
+          </button>
+        </p>
+      )}
 
       <GrammarLessonList
         levelLabel={level}
