@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Flame, Moon, Sun, Volume2, VolumeX, Music2, LogIn, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/nav';
+import { useAwayTitle } from '../lib/awayTitle';
 import { levelProgressPercent } from '../lib/dashboardStats';
 import { useProgress } from '../lib/progressStore';
 import { displayedStreak } from '../lib/streak';
@@ -57,6 +58,9 @@ export function Layout() {
   const auth = useAuth();
   const navigate = useNavigate();
   useStudyTimer();
+  // Scoped to the app shell rather than the whole site: a first-time visitor still reading the
+  // marketing or login page has nothing to be missed from yet.
+  useAwayTitle();
 
   useEffect(() => {
     if (streakPulsing) playMilestone();
