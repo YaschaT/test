@@ -153,32 +153,41 @@ function ReadingHero({ level, onLevelChange, next, wordsToday, booksRead }: Read
   const percent = next ? Math.round(next.percent * 100) : 0;
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-slate-950">
+    /* Deliberately a touch shorter than the Dashboard's 280/300px hero: that one is the app's front
+       door and carries the primary CTA, this one sits above a shelf that wants the room. The border
+       and the mascot's inset from the corner are what make it read as a *banner* — a framed object on
+       the page — rather than a dark background the page happens to start with. */
+    <section className="relative isolate min-h-[248px] overflow-hidden rounded-3xl border border-ink-line bg-[radial-gradient(115%_150%_at_50%_38%,#0a1040_0%,#010723_72%)] sm:min-h-[268px]">
+      {/* The same painted night scene as the Dashboard hero — moon, ridge, lanterns, torii — which is
+          what the mockup drew. It was a flat starfield first, and the banner read as a dark panel
+          rather than an illustration. Sized off the banner's *height* from `sm` so the composition
+          stays one island with its own faded edges dissolving into the navy, instead of being cropped
+          to a strip; on a phone the banner is taller than it is wide, so there it simply covers. */}
       <img
-        src="/assets/kotobox-dashboard/generated/hero-background.png"
+        src="/assets/dashboard/redesign/hero-scenery.webp"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-[64%_58%] sm:inset-auto sm:left-[52%] sm:top-[-28%] sm:h-[168%] sm:w-auto sm:max-w-none sm:-translate-x-1/2 sm:object-contain"
       />
-      {/* Keeps the copy legible over the busiest part of the scene without flattening the artwork. */}
+      {/* Keeps the copy legible where the scene's left edge reaches under it. */}
       <div
-        className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/55 to-transparent"
+        className="absolute inset-0 -z-10 bg-gradient-to-r from-[#010723] via-[#010723]/55 to-transparent"
         aria-hidden="true"
       />
       <img
         src="/assets/reading/reading-banner.png"
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-0 hidden h-[88%] w-auto object-contain object-bottom lg:block"
+        className="pointer-events-none absolute bottom-0 right-5 -z-10 hidden h-[80%] w-auto max-w-[34%] object-contain object-bottom lg:block"
       />
 
-      <div className="relative z-10 p-6 sm:p-8">
+      <div className="relative flex min-h-[inherit] flex-col justify-between gap-5 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <CategoryIcon skill="reading" size={44} />
+            <CategoryIcon skill="reading" size={40} />
             <div>
-              <h1 className="text-3xl font-bold text-white">Reading</h1>
-              <p className="mt-1 text-white/70">Read a lot, read easy — the words add up.</p>
+              <h1 className="text-2xl font-bold text-white sm:text-3xl">Reading</h1>
+              <p className="mt-0.5 text-sm text-white/70">Read a lot, read easy — the words add up.</p>
             </div>
           </div>
           <SegmentedTabs
@@ -191,12 +200,30 @@ function ReadingHero({ level, onLevelChange, next, wordsToday, booksRead }: Read
         </div>
 
         {next && (
-          <div className="mt-7 max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand-300">
-              {resuming ? 'Continue reading' : 'Start reading'}
-            </p>
-            <p className="jp-text mt-2 text-3xl font-bold text-white sm:text-4xl">{next.passage.titleJa}</p>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/60">
+          <div className="max-w-xl">
+            {/* Today's volume rides on the eyebrow's empty right side. It used to sit on a row of its
+                own, which cost the banner ~70px for two numbers. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand-300">
+                {resuming ? 'Continue reading' : 'Start reading'}
+              </p>
+              <p className="flex items-center gap-x-2 text-xs text-white/50">
+                <BookOpen size={13} aria-hidden="true" />
+                <span>
+                  <strong className="font-bold text-white/80 tabular-nums">{wordsToday.toLocaleString()}</strong>{' '}
+                  word{wordsToday === 1 ? '' : 's'} today
+                </span>
+                <Dot />
+                <Layers size={13} aria-hidden="true" />
+                <span>
+                  <strong className="font-bold text-white/80 tabular-nums">{booksRead.toLocaleString()}</strong>{' '}
+                  book{booksRead === 1 ? '' : 's'} completed
+                </span>
+              </p>
+            </div>
+
+            <p className="jp-text mt-1.5 text-2xl font-bold text-white sm:text-3xl">{next.passage.titleJa}</p>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-white/60">
               <span className="font-semibold">L{next.passage.tadokuLevel}</span>
               <Dot />
               <span className="tabular-nums">{next.passage.wordCount} words</span>
@@ -206,7 +233,7 @@ function ReadingHero({ level, onLevelChange, next, wordsToday, booksRead }: Read
               <span>{next.passage.title.en}</span>
             </p>
 
-            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               {resuming && (
                 <div className="min-w-0 flex-1">
                   <div className="h-2 overflow-hidden rounded-full bg-white/15">
@@ -215,12 +242,12 @@ function ReadingHero({ level, onLevelChange, next, wordsToday, booksRead }: Read
                       style={{ width: `${percent}%` }}
                     />
                   </div>
-                  <p className="mt-2 text-sm text-white/60 tabular-nums">{percent}% completed</p>
+                  <p className="mt-1.5 text-xs text-white/60 tabular-nums">{percent}% completed</p>
                 </div>
               )}
               <Link
                 to={`/reading/${next.passage.id}`}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
               >
                 {resuming ? 'Continue reading' : 'Start reading'}
                 <ArrowRight size={17} aria-hidden="true" />
@@ -228,12 +255,6 @@ function ReadingHero({ level, onLevelChange, next, wordsToday, booksRead }: Read
             </div>
           </div>
         )}
-
-        {/* Today's volume. Words are credited as sentences are actually reached, not on opening a book. */}
-        <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <HeroStat icon={BookOpen} value={wordsToday} label={`word${wordsToday === 1 ? '' : 's'} today`} />
-          <HeroStat icon={Layers} value={booksRead} label={`book${booksRead === 1 ? '' : 's'} completed`} />
-        </div>
       </div>
     </section>
   );
@@ -244,27 +265,6 @@ function Dot() {
     <span className="text-white/25" aria-hidden="true">
       ·
     </span>
-  );
-}
-
-function HeroStat({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: typeof BookOpen;
-  value: number;
-  label: string;
-}) {
-  return (
-    <p className="flex items-center gap-2.5 text-sm text-white/60">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/70 ring-1 ring-inset ring-white/15">
-        <Icon size={17} aria-hidden="true" />
-      </span>
-      <span>
-        <strong className="font-bold text-white tabular-nums">{value.toLocaleString()}</strong> {label}
-      </span>
-    </p>
   );
 }
 
