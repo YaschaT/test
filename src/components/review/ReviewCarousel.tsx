@@ -39,7 +39,10 @@ export function ReviewCarousel<T>({
   className,
 }: ReviewCarouselProps<T>) {
   return (
-    <div className={`relative isolate w-full max-w-[760px] mx-auto ${className ?? ''}`} style={{ perspective: '1600px' }}>
+    <div
+      className={`relative isolate w-full max-w-[760px] 2xl:max-w-[860px] mx-auto ${className ?? ''}`}
+      style={{ perspective: '1600px' }}
+    >
       <div
         aria-hidden="true"
         className="absolute -inset-x-24 -inset-y-12 -z-10 pointer-events-none blur-2xl bg-[radial-gradient(ellipse_at_center,rgba(76,110,240,0.10),transparent_62%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(76,110,240,0.16),transparent_62%)]"

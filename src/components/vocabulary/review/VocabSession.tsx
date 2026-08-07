@@ -210,7 +210,10 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] flex flex-col overflow-x-clip md:min-h-[calc(100dvh-2rem)] xl:min-h-0">
+    // `flex-1` fills the shell's content frame at every width — the card, not the background, gets the
+    // leftover height. The width cap grows on large displays so the card and rail don't sit in a narrow
+    // strip with empty gutters either side.
+    <div className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col overflow-x-clip 2xl:max-w-[1560px]">
       <ReviewHeader
         position={position}
         total={queue.length}
@@ -223,10 +226,10 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
 
       {railOpen && <ReviewSessionRail {...railProps} className="xl:hidden mt-4" />}
 
-      <div className="flex-1 flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_288px] xl:gap-12 xl:items-start xl:pt-6 xl:pb-2">
+      <div className="flex-1 min-h-0 flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_288px] xl:gap-12 xl:items-center xl:pt-6 xl:pb-2 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <section
           aria-label="Flashcard"
-          className="flex-1 flex flex-col justify-center py-8 md:py-12 xl:py-0 xl:justify-start"
+          className="flex-1 min-h-0 flex flex-col justify-center py-8 md:py-12 xl:py-0"
           onTouchStart={(e) => {
             touchStartXRef.current = e.touches[0].clientX;
           }}
@@ -245,8 +248,11 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
             }
           }}
         >
+          {/* The card grows with the window instead of sitting at a fixed 500px in the middle of a tall
+              screen — but it stops at 46rem, past which a flashcard is just a big empty rectangle. The
+              little slack that's left is split above and below by the section's `justify-center`. */}
           <ReviewCarousel
-            className="xl:flex-1"
+            className="xl:h-[clamp(31.25rem,calc(100dvh-19rem),46rem)]"
             item={word}
             prevItem={queue[position - 1]}
             nextItem={queue[position + 1]}
@@ -276,7 +282,7 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
 
           {browsing && <DeckPager position={position} total={queue.length} onPrev={goPrev} onNext={goNext} />}
 
-          <div className="w-full max-w-[760px] mx-auto mt-7 md:mt-9 sticky bottom-16 md:static z-20 max-md:bg-slate-50 max-md:dark:bg-slate-950 max-md:py-3 max-md:-my-3">
+          <div className="w-full max-w-[760px] 2xl:max-w-[860px] mx-auto mt-7 md:mt-9 sticky bottom-16 md:static z-20 max-md:bg-slate-50 max-md:dark:bg-slate-950 max-md:py-3 max-md:-my-3">
             <ReviewAnswerControls
               card={getSrsCard(progress, 'vocabulary', word.id)}
               onRate={rate}

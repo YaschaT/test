@@ -81,7 +81,9 @@ export function ListeningHome() {
   const accuracyPct = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
 
   return (
-    <div className="space-y-6">
+    // Column layout rather than `space-y`: the exercise below is the flexible part, so it takes the
+    // height the header and controls don't use instead of leaving it empty under the card.
+    <div className="flex flex-1 flex-col gap-6">
       <ModuleHeader
         skill="listening"
         title="Listening"
@@ -377,8 +379,8 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
   };
 
   return (
-    <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-5 items-start">
-      <Card className="p-6 space-y-5">
+    <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] gap-5 items-start lg:items-stretch">
+      <Card className="flex flex-col justify-center p-6 space-y-5">
         {/* Just the locator. The running score used to sit here too, duplicating the panel alongside and
             counting only answer XP, so the total jumped when the session bonus landed at the end. */}
         <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -521,8 +523,8 @@ function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAut
   }
 
   return (
-    <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-5 items-start">
-      <Card className="p-6 space-y-5">
+    <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] gap-5 items-start lg:items-stretch">
+      <Card className="flex flex-col justify-center p-6 space-y-5">
         {/* Just the locator. The running score used to sit here too, duplicating the panel alongside and
             counting only answer XP, so the total jumped when the session bonus landed at the end. */}
         <p className="text-xs font-medium text-slate-600 dark:text-slate-300">

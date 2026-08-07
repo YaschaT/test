@@ -203,7 +203,8 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] flex flex-col overflow-x-clip md:min-h-[calc(100dvh-2rem)] xl:min-h-0">
+    // Same frame as the vocabulary session: fills the shell's height, and widens on large displays.
+    <div className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col overflow-x-clip 2xl:max-w-[1560px]">
       <ReviewHeader
         position={position}
         total={queue.length}
@@ -216,7 +217,7 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
 
       {railOpen && <ReviewSessionRail {...railProps} className="xl:hidden mt-4" />}
 
-      <div className="flex-1 flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_288px] xl:gap-12 xl:items-start xl:pt-6 xl:pb-2">
+      <div className="flex-1 min-h-0 flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_288px] xl:gap-12 xl:items-center xl:pt-6 xl:pb-2 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <section
           aria-label="Flashcard"
           className="flex-1 flex flex-col justify-center py-8 md:py-12 xl:py-0 xl:justify-start"
@@ -238,7 +239,10 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
             }
           }}
         >
+          {/* Grows with the window like the vocabulary card, but with a smaller ceiling: the study panel
+              below it is part of this screen and needs room too. */}
           <ReviewCarousel
+            className="xl:h-[clamp(31.25rem,calc(100dvh-28rem),38rem)]"
             item={kanji}
             prevItem={queue[position - 1]}
             nextItem={queue[position + 1]}
@@ -258,7 +262,7 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
 
           {browsing && <DeckPager position={position} total={queue.length} onPrev={goPrev} onNext={goNext} />}
 
-          <div className="w-full max-w-[760px] mx-auto mt-7 md:mt-9 sticky bottom-16 md:static z-20 max-md:bg-slate-50 max-md:dark:bg-slate-950 max-md:py-3 max-md:-my-3">
+          <div className="w-full max-w-[760px] 2xl:max-w-[860px] mx-auto mt-7 md:mt-9 sticky bottom-16 md:static z-20 max-md:bg-slate-50 max-md:dark:bg-slate-950 max-md:py-3 max-md:-my-3">
             <ReviewAnswerControls
               card={getSrsCard(progress, 'kanji', kanji.id)}
               onRate={rate}
@@ -280,7 +284,7 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
           </div>
 
           {/* Everything you'd previously have left the session to read — keyed so it collapses per card. */}
-          <div className="w-full max-w-[760px] mx-auto mt-5">
+          <div className="w-full max-w-[760px] 2xl:max-w-[860px] mx-auto mt-5">
             <KanjiStudyPanel key={kanji.id} kanji={kanji} prefs={prefs} />
           </div>
         </section>

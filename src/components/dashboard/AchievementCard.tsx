@@ -11,7 +11,7 @@ const ILLUSTRATION_BASE = '/assets/dashboard/redesign/achievements/';
  * illustration, live progress and the XP that work is worth. "View all" expands the full badge set in
  * place — there's no separate achievements page, and a link that went nowhere would be worse than none.
  */
-export function AchievementCard({ progress }: { progress: ProgressState }) {
+export function AchievementCard({ progress, className = '' }: { progress: ProgressState; className?: string }) {
   const [showAll, setShowAll] = useState(false);
   const badges = computeBadges(progress);
   const featured = pickFeaturedBadge(badges);
@@ -23,8 +23,11 @@ export function AchievementCard({ progress }: { progress: ProgressState }) {
       title="Latest Achievement"
       icon={<Trophy size={20} className="text-amber-500" aria-hidden="true" />}
       action={<CardAction onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : 'View all'}</CardAction>}
+      className={`flex flex-col ${className}`}
     >
-      <div className="mt-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-ink-line dark:bg-ink-800">
+      {/* `flex-1` on the featured panel: when the card is stretched by the dashboard's flexible row the
+          extra height lands inside this surface (content stays centred) instead of below it. */}
+      <div className="mt-4 flex flex-1 items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-ink-line dark:bg-ink-800">
         <img
           src={`${ILLUSTRATION_BASE}${featured.asset}`}
           alt={`${featured.label} achievement`}

@@ -164,8 +164,9 @@ function LevelShelf({
           <span className="text-xs font-semibold tabular-nums text-slate-400 dark:text-slate-500">
             {readCount}/{books.length}
           </span>
-          {/* Scroll controls — desktop only; touch users swipe */}
-          <div className="hidden items-center gap-1 md:flex">
+          {/* Scroll controls — desktop only; touch users swipe. Gone from 2xl, where the shelf stops
+              being a rail and lays every cover out at once. */}
+          <div className="hidden items-center gap-1 md:flex 2xl:hidden">
             <RailButton dir={-1} onClick={() => scrollBy(-1)} />
             <RailButton dir={1} onClick={() => scrollBy(1)} />
           </div>
@@ -174,7 +175,10 @@ function LevelShelf({
 
       <div
         ref={railRef}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)]"
+        /* A scrolling rail up to xl. From 2xl the whole shelf fits across the frame, so it becomes a
+           wrapping grid instead — a half-empty rail of five covers next to 900px of background was the
+           worst use of a wide display on this page. */
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)] 2xl:grid 2xl:grid-cols-[repeat(auto-fill,minmax(10.25rem,1fr))] 2xl:overflow-visible 2xl:[mask-image:none]"
       >
         {books.map((book) => (
           <CoverCard key={book.id} book={book} done={doneSet.has(book.id)} />
@@ -204,7 +208,7 @@ function CoverCard({ book, done }: { book: ReadingPassage; done: boolean }) {
   return (
     <Link
       to={`/reading/${book.id}`}
-      className="group/card w-[164px] shrink-0 snap-start rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+      className="group/card w-[164px] shrink-0 snap-start 2xl:w-auto rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
     >
       {/* Cover */}
       <div

@@ -22,7 +22,7 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
   const best = progress.mockExams[level];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-1 flex-col gap-6">
       <header className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:gap-5 sm:text-left">
         <img
           src={MASCOTS['mock-exam']}
@@ -45,9 +45,11 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
       </header>
 
       {/* Format on the left, the start card on the right: on a wide screen the paper's shape and the
-          decision to begin sit side by side instead of stacking into one narrow ribbon. */}
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          decision to begin sit side by side instead of stacking into one narrow ribbon. Both panels take
+          the height the header leaves and centre their content, so the lobby reads as two full surfaces
+          rather than two short cards above half a screen of empty background. */}
+      <div className="grid flex-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
+        <div className="flex flex-col justify-center rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
           <div className="grid grid-cols-3 divide-x divide-slate-200 dark:divide-slate-800">
             <Stat icon={ListChecks} value={String(total)} label="questions" sub="vragen" />
             <Stat icon={Clock} value={`${config.minutes}`} label="minutes" sub={`official ${config.officialMinutes}m`} />
@@ -92,7 +94,7 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
 
         {/* Stacked on a phone the choice comes first — you pick a level and start, and the format panel
             reads as the detail below it. Side by side it goes back to the right. */}
-        <div className="order-first rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:order-last lg:sticky lg:top-8 dark:border-slate-800 dark:bg-slate-900">
+        <div className="order-first flex flex-col justify-center rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:order-last dark:border-slate-800 dark:bg-slate-900">
           {/* The level lives with the start button rather than stretched across the page: picking a
               level and beginning are one decision, and the panel on the left updates to match. */}
           <h2 className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Choose your level</h2>

@@ -33,7 +33,10 @@ export function TodaySessionCard({ steps, totalMinutes, onSelect, onViewFullPlan
       subtitle={`${steps.length} ${steps.length === 1 ? 'activity' : 'activities'} · ${totalMinutes} min`}
       className="flex h-full flex-col"
     >
-      <ol className="mt-5 flex-1 space-y-1">
+      {/* The rows share whatever height the card was given rather than bunching at the top: each step
+          keeps its own minimum and grows evenly, so a stretched card reads as a roomy timeline instead
+          of a short list with a void under it. */}
+      <ol className="mt-5 flex flex-1 flex-col gap-1">
         {steps.map((step, i) => (
           <SessionRow key={step.id} step={step} index={i} isLast={i === steps.length - 1} onSelect={onSelect} />
         ))}
@@ -123,17 +126,17 @@ function SessionRow({
   );
 
   return (
-    <li>
+    <li className="flex min-h-[4.25rem] flex-1 flex-col">
       {available ? (
         <button
           type="button"
           onClick={() => onSelect(step.route!)}
-          className="flex w-full items-center gap-4 rounded-2xl px-2 py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-ink-800"
+          className="flex h-full w-full items-center gap-4 rounded-2xl px-2 py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-ink-800"
         >
           {content}
         </button>
       ) : (
-        <div className="flex w-full items-center gap-4 px-2 py-2.5 opacity-60">{content}</div>
+        <div className="flex h-full w-full items-center gap-4 px-2 py-2.5 opacity-60">{content}</div>
       )}
     </li>
   );

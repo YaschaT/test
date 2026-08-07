@@ -97,7 +97,9 @@ export function Dashboard() {
   const { greetingJa, emoji } = timeGreeting();
 
   return (
-    <div className="flex flex-col gap-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
+    // `flex-1` so the page owns the full height of the shell's content frame: on a tall display the
+    // slack goes into the cards below rather than into an empty band under the last one.
+    <div className="flex flex-1 flex-col gap-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
       <DashboardHero
         greetingJa={greetingJa}
         greetingEmoji={emoji}
@@ -125,7 +127,9 @@ export function Dashboard() {
 
       {isNewUser && <OnboardingSteps />}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      {/* The row that flexes: it takes whatever height is left over, and both columns stretch into it
+          (min-h-0 so a tall session list scrolls the page rather than overflowing the grid). */}
+      <div className="grid flex-1 min-h-0 gap-5 lg:grid-cols-2">
         <TodaySessionCard
           steps={sessionSteps}
           totalMinutes={plan.totalMinutes}
@@ -138,8 +142,9 @@ export function Dashboard() {
             studyDays={studyDays}
             goalDays={WEEKLY_GOAL_DAYS}
             onViewFullPath={() => navigate('/path')}
+            className="flex-1"
           />
-          <AchievementCard progress={progress} />
+          <AchievementCard progress={progress} className="flex-1" />
         </div>
       </div>
 

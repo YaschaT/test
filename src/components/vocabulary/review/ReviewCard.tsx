@@ -45,16 +45,18 @@ export function ReviewCard({ word, revealed, prefs, onReveal }: ReviewCardProps)
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center text-center gap-2.5 py-6">
-        <p className="jp-text text-5xl sm:text-6xl leading-tight font-semibold text-slate-900 dark:text-white">
+        {/* The word scales with the card: on a large display the card is taller, so the headline grows
+            with it rather than floating in the middle of a big empty surface. */}
+        <p className="jp-text text-5xl sm:text-6xl 2xl:text-7xl leading-tight font-semibold text-slate-900 dark:text-white">
           {word.japanese}
         </p>
         {word.kana !== word.japanese && (
-          <p className="jp-text text-xl md:text-2xl text-brand-600 dark:text-brand-300">{word.kana}</p>
+          <p className="jp-text text-xl md:text-2xl 2xl:text-3xl text-brand-600 dark:text-brand-300">{word.kana}</p>
         )}
 
         {revealed && (
           <div className="animate-review-reveal-in mt-4 space-y-1">
-            <p className="text-xl md:text-2xl font-semibold text-slate-800 dark:text-slate-100">{word.meaning.en}</p>
+            <p className="text-xl md:text-2xl 2xl:text-3xl font-semibold text-slate-800 dark:text-slate-100">{word.meaning.en}</p>
             <p className="text-base text-slate-500 dark:text-slate-400">{word.meaning.nl}</p>
             {prefs.romaji && (
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 pt-1">

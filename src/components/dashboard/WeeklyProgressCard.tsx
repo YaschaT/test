@@ -7,9 +7,16 @@ interface WeeklyProgressCardProps {
   studyDays: number;
   goalDays: number;
   onViewFullPath: () => void;
+  className?: string;
 }
 
-export function WeeklyProgressCard({ days, studyDays, goalDays, onViewFullPath }: WeeklyProgressCardProps) {
+export function WeeklyProgressCard({
+  days,
+  studyDays,
+  goalDays,
+  onViewFullPath,
+  className = '',
+}: WeeklyProgressCardProps) {
   const remaining = Math.max(0, goalDays - studyDays);
   const pct = goalDays > 0 ? Math.min(100, (studyDays / goalDays) * 100) : 0;
 
@@ -23,8 +30,9 @@ export function WeeklyProgressCard({ days, studyDays, goalDays, onViewFullPath }
           <ChevronRight size={16} aria-hidden="true" />
         </CardAction>
       }
+      className={`flex flex-col ${className}`}
     >
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+      <div className="mt-5 flex flex-1 flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div>
           <p className="text-4xl font-extrabold leading-none text-slate-900 dark:text-white">
             {studyDays} / {goalDays} <span className="text-[1.375rem] font-bold">days</span>

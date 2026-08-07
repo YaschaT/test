@@ -87,7 +87,10 @@ export function ReviewSessionRail({
         <DisplayToggles prefs={prefs} onChange={onPrefsChange} />
       </div>
 
-      <div className="border-t border-slate-100 dark:border-white/[0.06] p-6 xl:flex-1">
+      {/* No `flex-1` here on purpose: the rail is stretched to the session's full height and spreads its
+          four groups with `justify-between`, so the space lands between the dividers instead of piling
+          up under the last one. */}
+      <div className="border-t border-slate-100 dark:border-white/[0.06] p-6">
         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">Shortcuts</p>
         <ul className="space-y-2">
           {GRADE_ORDER.map((rating) => (
