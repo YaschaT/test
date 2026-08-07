@@ -120,7 +120,9 @@ export function ReadingDetail() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
+    // Full-bleed like every other screen. Safe for a reader because the passage is one sentence per
+    // row, not flowing paragraphs — nothing here wraps into an unreadably long line.
+    <div className="w-full space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3">
         <Link

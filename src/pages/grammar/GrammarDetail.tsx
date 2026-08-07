@@ -44,9 +44,9 @@ export function GrammarDetail() {
   }
 
   return (
-    <div className="w-full">
+    <div className="flex w-full flex-1 flex-col">
       {phase === 'lesson' ? (
-        <div className="grid gap-6 lg:grid-cols-[232px_minmax(0,1fr)] lg:items-start">
+        <div className="grid flex-1 gap-6 lg:grid-cols-[232px_minmax(0,1fr)] lg:items-stretch">
           <div className="hidden lg:block lg:sticky lg:top-4">
             <GrammarLessonRail
               levelLabel={point.level}

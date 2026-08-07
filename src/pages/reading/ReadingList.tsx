@@ -178,7 +178,7 @@ function LevelShelf({
         /* A scrolling rail up to xl. From 2xl the whole shelf fits across the frame, so it becomes a
            wrapping grid instead — a half-empty rail of five covers next to 900px of background was the
            worst use of a wide display on this page. */
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)] 2xl:grid 2xl:grid-cols-[repeat(auto-fill,minmax(10.25rem,1fr))] 2xl:overflow-visible 2xl:[mask-image:none]"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)] 2xl:grid 2xl:grid-cols-[repeat(auto-fit,minmax(10.25rem,13rem))] 2xl:justify-center 2xl:overflow-visible 2xl:[mask-image:none]"
       >
         {books.map((book) => (
           <CoverCard key={book.id} book={book} done={doneSet.has(book.id)} />

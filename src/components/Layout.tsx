@@ -167,17 +167,15 @@ export function Layout() {
           </div>
         </header>
 
-        {/* One content frame for every screen: the same gutter on all four sides (16px on mobile,
-            32px from md), capped at 1600px — and 1920px on displays wide enough that 1600 would leave
-            a dead margin either side. Pages no longer opt into their own width here — a screen that
-            wants a reading-width column centres it inside this frame itself.
+        {/* One content frame for every screen: full-bleed, with just a gutter on all four sides (16px on
+            mobile, 32px from md, 40px on very wide displays). No max width — the app uses the whole
+            window rather than centring a column with dead margins either side. A screen that wants a
+            reading-width measure caps that one element itself.
             `flex flex-col` is what lets a page opt into filling the viewport height: a page whose root
             carries `flex-1` (dashboard, review sessions) grows into the leftover space instead of
             leaving a band of empty background under it on a tall screen. */}
-        <main
-          id="main-content"
-          className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col p-4 pb-20 md:p-8 md:pb-8 2xl:max-w-[1920px]"
-        >
+        <main id="main-content" className="flex w-full flex-1 flex-col p-4 pb-20 md:p-8 md:pb-8 2xl:px-10">
+
           <Outlet />
         </main>
 

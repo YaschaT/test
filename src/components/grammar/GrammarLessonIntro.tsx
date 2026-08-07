@@ -31,7 +31,7 @@ export function GrammarLessonIntro({ point, lessonNumber, levelTotal, onStart }:
   }, [onStart]);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#141d36] via-[#0f1830] to-[#0b1222] p-6 lg:p-8">
+    <div className="relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#141d36] via-[#0f1830] to-[#0b1222] p-6 lg:p-8">
       <img
         src="/assets/grammar/background-grammar.png"
         alt=""
@@ -39,7 +39,9 @@ export function GrammarLessonIntro({ point, lessonNumber, levelTotal, onStart }:
         className="pointer-events-none select-none absolute inset-0 h-full w-full object-cover opacity-[0.22] [mask-image:linear-gradient(to_bottom,black,transparent_80%)]"
       />
 
-      <div className="relative">
+      {/* Flex column so the two reference grids below can share whatever height the lesson card was
+          given — on a tall window the panels grow instead of leaving the card's lower half empty. */}
+      <div className="relative flex flex-1 flex-col">
         <Link
           to="/grammar"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-white/55 hover:text-white transition-colors"
@@ -56,7 +58,7 @@ export function GrammarLessonIntro({ point, lessonNumber, levelTotal, onStart }:
         </div>
         <p className="mt-2 text-slate-300">{capitalize(point.meaning.en)}.</p>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 grid flex-1 gap-6 lg:grid-cols-2">
           {/* Structure + how it works */}
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <p className="text-xs font-bold uppercase tracking-wide text-brand-300">Structure</p>
@@ -91,7 +93,7 @@ export function GrammarLessonIntro({ point, lessonNumber, levelTotal, onStart }:
         </div>
 
         {/* Full meaning + the mistake to avoid — the reference detail that rounds out the lesson. */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 grid flex-1 gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-brand-300">
               <BookOpen size={13} aria-hidden="true" /> What it means

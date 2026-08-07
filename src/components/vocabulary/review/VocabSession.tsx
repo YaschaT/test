@@ -213,7 +213,7 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
     // `flex-1` fills the shell's content frame at every width — the card, not the background, gets the
     // leftover height. The width cap grows on large displays so the card and rail don't sit in a narrow
     // strip with empty gutters either side.
-    <div className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col overflow-x-clip 2xl:max-w-[1560px]">
+    <div className="flex w-full flex-1 flex-col overflow-x-clip">
       <ReviewHeader
         position={position}
         total={queue.length}
@@ -282,7 +282,7 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
 
           {browsing && <DeckPager position={position} total={queue.length} onPrev={goPrev} onNext={goNext} />}
 
-          <div className="w-full max-w-[760px] 2xl:max-w-[860px] mx-auto mt-7 md:mt-9 sticky bottom-16 md:static z-20 max-md:bg-slate-50 max-md:dark:bg-slate-950 max-md:py-3 max-md:-my-3">
+          <div className="w-full max-w-[760px] xl:max-w-[64rem] 2xl:max-w-[92rem] mx-auto mt-7 md:mt-9 sticky bottom-16 md:static z-20 max-md:bg-slate-50 max-md:dark:bg-slate-950 max-md:py-3 max-md:-my-3">
             <ReviewAnswerControls
               card={getSrsCard(progress, 'vocabulary', word.id)}
               onRate={rate}

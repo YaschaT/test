@@ -20,7 +20,7 @@ export function KanjiCardGrid({ entries, progress, layout }: KanjiCardGridProps)
   }
 
   return (
-    <div className={layout === 'grid' ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6' : 'flex flex-col gap-3'}>
+    <div className={layout === 'grid' ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))]' : 'flex flex-col gap-3'}>
       {entries.map((kanji, i) => (
         <KanjiCard
           key={kanji.id}

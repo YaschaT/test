@@ -40,7 +40,7 @@ export function ReviewCarousel<T>({
 }: ReviewCarouselProps<T>) {
   return (
     <div
-      className={`relative isolate w-full max-w-[760px] 2xl:max-w-[860px] mx-auto ${className ?? ''}`}
+      className={`relative isolate w-full max-w-[760px] xl:max-w-[64rem] 2xl:max-w-[92rem] mx-auto ${className ?? ''}`}
       style={{ perspective: '1600px' }}
     >
       <div

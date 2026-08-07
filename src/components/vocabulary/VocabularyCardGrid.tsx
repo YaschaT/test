@@ -20,7 +20,7 @@ export function VocabularyCardGrid({ words, progress, layout }: VocabularyCardGr
   }
 
   return (
-    <div className={layout === 'grid' ? 'grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5' : 'flex flex-col gap-3'}>
+    <div className={layout === 'grid' ? 'grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(16rem,1fr))]' : 'flex flex-col gap-3'}>
       {words.map((word, i) => (
         <VocabularyCard
           key={word.id}

@@ -238,7 +238,7 @@ export function SpeakingPage() {
   // ── Scenario picker ──
   if (!scenario) {
     return (
-      <div className="space-y-5">
+      <div className="flex flex-1 flex-col gap-5">
         <header className="flex items-center gap-4">
           {/* Page identity uses the Speaking mascot like every other section; AiCore stays as Kai's
               own avatar inside the live conversation below. */}
@@ -292,7 +292,9 @@ export function SpeakingPage() {
           <>
             {aiBanners}
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {/* Auto-fill so a wide window gets more scenarios per row rather than six very wide ones,
+                and `auto-rows-fr` + `flex-1` so the rows share the height the header leaves. */}
+            <div className="grid flex-1 auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fill,minmax(21rem,1fr))]">
               {SCENARIOS.map((s) => (
                 <button
                   key={s.id}

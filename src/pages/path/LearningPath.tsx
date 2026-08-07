@@ -136,9 +136,10 @@ export function LearningPath() {
       {PHASE_ORDER.map((phase) => (
         <section key={phase} className="space-y-3">
           <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">{PHASE_LABEL[phase]}</h2>
-          {/* Two weeks abreast from xl — `items-start` so expanding one week doesn't stretch its
-              neighbour to match. */}
-          <div className="grid gap-3 xl:grid-cols-2 xl:items-start">
+          {/* Two weeks abreast from xl, three on a very wide display so the cards stay a readable width
+              instead of stretching — `items-start` so expanding one week doesn't stretch its neighbour
+              to match. */}
+          <div className="grid gap-3 xl:grid-cols-2 xl:items-start 2xl:grid-cols-3">
             {ROADMAP.filter((w) => w.phase === phase).map((week) => {
               const status = statusOf(week);
               const ids = weekContentIds(week);
