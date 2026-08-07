@@ -238,7 +238,7 @@ export function SpeakingPage() {
   // ── Scenario picker ──
   if (!scenario) {
     return (
-      <div className="space-y-5 max-w-3xl">
+      <div className="space-y-5">
         <header className="flex items-center gap-4">
           {/* Page identity uses the Speaking mascot like every other section; AiCore stays as Kai's
               own avatar inside the live conversation below. */}
@@ -282,7 +282,7 @@ export function SpeakingPage() {
 
         {tab === 'phrases' ? (
           <>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="max-w-3xl text-sm text-slate-500 dark:text-slate-400">
               Tap a phrase to hear it and shadow the pronunciation. Turn on <em>Say it first</em> to hide the
               Japanese and produce it from the meaning before revealing. Works offline — no AI key needed.
             </p>
@@ -292,7 +292,7 @@ export function SpeakingPage() {
           <>
             {aiBanners}
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {SCENARIOS.map((s) => (
                 <button
                   key={s.id}
@@ -315,37 +315,12 @@ export function SpeakingPage() {
   }
 
   // ── Conversation ──
-  return (
-    <div className="flex flex-col max-w-2xl h-[calc(100vh-7rem)]">
-      <div className="flex items-center gap-3 mb-3">
-        <button
-          type="button"
-          onClick={backToScenarios}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 shrink-0"
-        >
-          <ChevronLeft size={16} /> Scenarios
-        </button>
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <AiCore size={40} active={coreActive} />
-          <div className="min-w-0">
-            <p className="font-semibold text-slate-900 dark:text-white leading-tight truncate">
-              Kai · <span className="font-normal text-slate-500 dark:text-slate-400">{scenario.emoji} {scenario.title.en}</span>
-            </p>
-            <p className="text-xs text-brand-500 dark:text-brand-400">{status}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={restart}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shrink-0"
-        >
-          <RotateCcw size={13} /> Restart
-        </button>
-      </div>
-
-      {aiBanners && <div className="mb-3">{aiBanners}</div>}
-
-      <div className="flex items-center gap-2 mb-2 text-xs">
+  // What you can change mid-conversation. Inline above the thread on small screens; from lg it moves
+  // into the rail beside it, so the chat itself keeps a comfortable width without leaving the right
+  // half of a desktop window empty.
+  const conversationControls = (
+    <>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-slate-400 font-medium">Show:</span>
         {(['kana', 'romaji', 'en'] as const).map((k) => (
           <button
@@ -359,124 +334,180 @@ export function SpeakingPage() {
             {k === 'en' ? 'English' : k}
           </button>
         ))}
-        {neuralAvailable && (
-          <span className="ml-auto flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Voice:</span>
-            {([
-              ['ja-JP-NanamiNeural', 'Nanami ♀'],
-              ['ja-JP-KeitaNeural', 'Keita ♂'],
-            ] as const).map(([v, label]) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => {
-                  setNeuralVoice(v);
-                  playNeural('こんにちは。', { voice: v }).catch(() => {});
-                }}
-                className={`rounded-full px-2.5 py-1 font-semibold ${
-                  neuralVoice === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </span>
-        )}
       </div>
+      {neuralAvailable && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-slate-400 font-medium">Voice:</span>
+          {([
+            ['ja-JP-NanamiNeural', 'Nanami ♀'],
+            ['ja-JP-KeitaNeural', 'Keita ♂'],
+          ] as const).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => {
+                setNeuralVoice(v);
+                playNeural('こんにちは。', { voice: v }).catch(() => {});
+              }}
+              className={`rounded-full px-2.5 py-1 font-semibold ${
+                neuralVoice === v ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
-        {messages.map((m) =>
-          m.role === 'companion' ? (
-            <Card key={m.id} className="p-3.5 mr-6">
-              <div className="flex items-start justify-between gap-2">
-                <p className="jp-text text-lg text-slate-900 dark:text-white leading-relaxed">{m.reply.ja}</p>
-                <button
-                  type="button"
-                  onClick={() => speak(m.reply.ja)}
-                  aria-label="Play audio"
-                  className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800"
-                >
-                  <Volume2 size={16} />
-                </button>
-              </div>
-              {show.kana && m.reply.kana && <p className="jp-text text-sm text-slate-500 dark:text-slate-400 mt-0.5">{m.reply.kana}</p>}
-              {show.romaji && m.reply.romaji && <p className="text-sm text-slate-500 dark:text-slate-400 italic mt-0.5">{m.reply.romaji}</p>}
-              {show.en && m.reply.en && <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{m.reply.en}</p>}
-              {m.reply.feedback && (
-                <p className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs px-2.5 py-1.5">
-                  <Sparkles size={12} className="inline mr-1 -mt-0.5" />
-                  {m.reply.feedback}
-                </p>
-              )}
-            </Card>
-          ) : (
-            <div key={m.id} className="flex justify-end">
-              <div className="jp-text max-w-[80%] rounded-2xl rounded-br-sm bg-brand-600 text-white px-4 py-2.5 text-[15px]">
-                {m.text}
-              </div>
-            </div>
-          ),
-        )}
-        {loading && (
-          <div className="flex items-center gap-2 text-slate-400 text-sm mr-6">
-            <Loader2 size={16} className="animate-spin" />
-            {modelProgress ? `Preparing Kai… ${pct}% (one-time download)` : 'Kai is thinking…'}
-          </div>
-        )}
-      </div>
-
-      {error && <p className="text-sm text-rose-600 dark:text-rose-400 mt-2">{error}</p>}
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(draft);
-        }}
-        className="mt-3 flex items-center gap-2"
-      >
-        {speech.supported && (
+  return (
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      {/* min-w-0: as a grid item this defaults to min-width:auto, so a long line in the thread would
+          push the column past the viewport instead of wrapping. */}
+      <div className="flex min-w-0 flex-col h-[calc(100dvh-152px)] md:h-[calc(100dvh-4rem)]">
+        <div className="flex items-center gap-3 mb-3">
           <button
             type="button"
-            onClick={() => (speech.listening ? speech.stop() : speech.start())}
-            aria-label={speech.listening ? 'Stop listening' : 'Start speaking'}
-            className={`shrink-0 rounded-full p-3 transition-colors ${
-              speech.listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-brand-600 text-white hover:bg-brand-700'
-            }`}
+            onClick={backToScenarios}
+            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 shrink-0"
           >
-            <Mic size={20} />
+            <ChevronLeft size={16} /> Scenarios
           </button>
-        )}
-        <input
-          value={liveTranscript}
-          onChange={(e) => setDraft(e.target.value)}
-          readOnly={speech.listening}
-          placeholder={
-            engine === 'none'
-              ? 'Use Chrome/Edge or add a key to chat…'
-              : engine === 'browser' && !modelReady
-                ? 'Type to start — first reply prepares Kai on your device…'
-                : speech.listening
-                  ? 'Listening… tap the mic when you finish'
-                  : speech.supported
-                    ? 'Speak with the mic, or type here…'
-                    : 'Type your reply in Japanese…'
-          }
-          disabled={engine === 'none' || engine === null || loading}
-          className="jp-text flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-[15px] outline-none focus:border-brand-500 disabled:opacity-60"
-        />
-        <button
-          type="submit"
-          disabled={!liveTranscript.trim() || loading || engine === 'none' || engine === null}
-          aria-label="Send"
-          className="shrink-0 rounded-full bg-brand-600 p-3 text-white hover:bg-brand-700 disabled:opacity-40"
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <AiCore size={40} active={coreActive} />
+            <div className="min-w-0">
+              <p className="font-semibold text-slate-900 dark:text-white leading-tight truncate">
+                Kai · <span className="font-normal text-slate-500 dark:text-slate-400">{scenario.emoji} {scenario.title.en}</span>
+              </p>
+              <p className="text-xs text-brand-500 dark:text-brand-400">{status}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={restart}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shrink-0"
+          >
+            <RotateCcw size={13} /> Restart
+          </button>
+        </div>
+
+        {aiBanners && <div className="mb-3 lg:hidden">{aiBanners}</div>}
+
+        <div className="mb-2 space-y-2 lg:hidden">{conversationControls}</div>
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
+          {messages.map((m) =>
+            m.role === 'companion' ? (
+              <Card key={m.id} className="p-3.5 mr-6">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="jp-text text-lg text-slate-900 dark:text-white leading-relaxed">{m.reply.ja}</p>
+                  <button
+                    type="button"
+                    onClick={() => speak(m.reply.ja)}
+                    aria-label="Play audio"
+                    className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    <Volume2 size={16} />
+                  </button>
+                </div>
+                {show.kana && m.reply.kana && <p className="jp-text text-sm text-slate-500 dark:text-slate-400 mt-0.5">{m.reply.kana}</p>}
+                {show.romaji && m.reply.romaji && <p className="text-sm text-slate-500 dark:text-slate-400 italic mt-0.5">{m.reply.romaji}</p>}
+                {show.en && m.reply.en && <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{m.reply.en}</p>}
+                {m.reply.feedback && (
+                  <p className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs px-2.5 py-1.5">
+                    <Sparkles size={12} className="inline mr-1 -mt-0.5" />
+                    {m.reply.feedback}
+                  </p>
+                )}
+              </Card>
+            ) : (
+              <div key={m.id} className="flex justify-end">
+                <div className="jp-text max-w-[80%] rounded-2xl rounded-br-sm bg-brand-600 text-white px-4 py-2.5 text-[15px]">
+                  {m.text}
+                </div>
+              </div>
+            ),
+          )}
+          {loading && (
+            <div className="flex items-center gap-2 text-slate-400 text-sm mr-6">
+              <Loader2 size={16} className="animate-spin" />
+              {modelProgress ? `Preparing Kai… ${pct}% (one-time download)` : 'Kai is thinking…'}
+            </div>
+          )}
+        </div>
+
+        {error && <p className="text-sm text-rose-600 dark:text-rose-400 mt-2">{error}</p>}
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(draft);
+          }}
+          className="mt-3 flex items-center gap-2"
         >
-          <Send size={18} />
-        </button>
-      </form>
-      {speech.error && <p className="text-xs text-rose-500 mt-1">{speech.error}</p>}
-      {!speech.supported && (
-        <p className="text-xs text-slate-400 mt-1">Voice input needs Chrome or Edge. You can still type your replies here.</p>
-      )}
+          {speech.supported && (
+            <button
+              type="button"
+              onClick={() => (speech.listening ? speech.stop() : speech.start())}
+              aria-label={speech.listening ? 'Stop listening' : 'Start speaking'}
+              className={`shrink-0 rounded-full p-3 transition-colors ${
+                speech.listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-brand-600 text-white hover:bg-brand-700'
+              }`}
+            >
+              <Mic size={20} />
+            </button>
+          )}
+          <input
+            value={liveTranscript}
+            onChange={(e) => setDraft(e.target.value)}
+            readOnly={speech.listening}
+            placeholder={
+              engine === 'none'
+                ? 'Use Chrome/Edge or add a key to chat…'
+                : engine === 'browser' && !modelReady
+                  ? 'Type to start — first reply prepares Kai on your device…'
+                  : speech.listening
+                    ? 'Listening… tap the mic when you finish'
+                    : speech.supported
+                      ? 'Speak with the mic, or type here…'
+                      : 'Type your reply in Japanese…'
+            }
+            disabled={engine === 'none' || engine === null || loading}
+            className="jp-text flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-[15px] outline-none focus:border-brand-500 disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={!liveTranscript.trim() || loading || engine === 'none' || engine === null}
+            aria-label="Send"
+            className="shrink-0 rounded-full bg-brand-600 p-3 text-white hover:bg-brand-700 disabled:opacity-40"
+          >
+            <Send size={18} />
+          </button>
+        </form>
+        {speech.error && <p className="text-xs text-rose-500 mt-1">{speech.error}</p>}
+        {!speech.supported && (
+          <p className="text-xs text-slate-400 mt-1">Voice input needs Chrome or Edge. You can still type your replies here.</p>
+        )}
+      </div>
+
+      {/* Conversation rail (lg+) */}
+      <aside className="sticky top-8 hidden space-y-4 lg:block">
+        {aiBanners}
+        <Card className="p-4 space-y-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Scenario</p>
+            <p className="mt-1 font-semibold text-slate-900 dark:text-white">
+              {scenario.emoji} {scenario.title.en}
+            </p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{scenario.blurb.en}</p>
+          </div>
+          <div className="space-y-2 border-t border-slate-100 pt-3 dark:border-slate-800">{conversationControls}</div>
+          <p className="border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-slate-800">
+            Speak with the mic or type — Kai replies in Japanese and flags mistakes as you go.
+          </p>
+        </Card>
+      </aside>
     </div>
   );
 }

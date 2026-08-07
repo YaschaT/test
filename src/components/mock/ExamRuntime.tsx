@@ -114,231 +114,277 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
   const timeLow = secondsLeft <= config.minutes * 60 * 0.2;
   const timeCritical = secondsLeft <= 30;
 
+  const progressTicks = (
+    <div className="mt-2.5 flex gap-0.5" aria-hidden="true">
+      {questions.map((q, i) => {
+        const t = SECTION_THEME[q.section];
+        const isAnswered = answers[i] !== null;
+        const isCurrent = i === index;
+        return (
+          <span
+            key={i}
+            // Unanswered ticks keep a visible track (they used to be transparent, so the strip read
+            // as one lonely dot until you'd answered a few).
+            className="h-1.5 flex-1 rounded-full bg-slate-200 transition-colors dark:bg-slate-700"
+            style={{ backgroundColor: isCurrent ? t.hex : isAnswered ? `${t.hex}99` : undefined }}
+          />
+        );
+      })}
+    </div>
+  );
+
+  const paletteGrid = (columns: string) => (
+    <div className={`grid gap-1.5 ${columns}`}>
+      {questions.map((q, i) => {
+        const isAnswered = answers[i] !== null;
+        const isCurrent = i === index;
+        const isFlagged = flagged.has(i);
+        return (
+          <button
+            key={i}
+            onClick={() => {
+              setIndex(i);
+              setShowPalette(false);
+            }}
+            aria-label={`Go to question ${i + 1}${isAnswered ? ', answered' : ''}${isFlagged ? ', flagged' : ''}`}
+            aria-current={isCurrent ? 'true' : undefined}
+            className={`relative grid aspect-square place-items-center rounded-lg text-xs font-bold tabular-nums transition-all ${
+              isCurrent
+                ? 'bg-brand-600 text-white ring-2 ring-brand-300 ring-offset-1 dark:ring-offset-slate-900'
+                : isAnswered
+                  ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/25 dark:text-brand-200'
+                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-500'
+            }`}
+            style={{ borderBottomColor: SECTION_THEME[q.section].hex }}
+          >
+            {i + 1}
+            {isFlagged && <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const timerClasses = `flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums transition-colors ${
+    timeCritical
+      ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300'
+      : timeLow
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
+  } ${timeCritical ? 'animate-pop' : ''}`;
+
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-2xl flex-col">
-      {/* Sticky exam header — sits below the mobile app header (h-14), flush to the top on desktop
-          where the app uses a sidebar instead of a top bar. */}
-      <div className="sticky top-14 z-20 -mx-4 border-b border-slate-200 bg-canvas-light/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 md:top-0">
+    // From lg the exam splits into a question stage and a permanent side rail (clock, progress,
+    // question map, submit) — the controls that used to hide behind a toggle in a narrow column.
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      {/* Tall enough that Prev/Next keep the same spot from question to question, but on a wide screen
+          it stops short of the full viewport so the nav doesn't drift far below the answers. */}
+      <div className="flex min-w-0 min-h-[calc(100dvh-9rem)] flex-col lg:min-h-[34rem]">
+        {/* Sticky exam header — sits below the mobile app header (h-14), flush to the top on desktop
+            where the app uses a sidebar instead of a top bar. Replaced by the rail from lg. */}
+        <div className="sticky top-14 z-20 -mx-4 border-b border-slate-200 bg-canvas-light/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 md:top-0 lg:hidden">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setConfirming('exit')}
+              className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              <X size={16} /> Exit
+            </button>
+            <div role="timer" aria-label="Time remaining" className={timerClasses}>
+              {mmss(secondsLeft)}
+            </div>
+            <span className="text-sm font-semibold tabular-nums text-slate-500 dark:text-slate-400">
+              {index + 1}<span className="text-slate-300 dark:text-slate-600"> / {total}</span>
+            </span>
+          </div>
+          {/* Segmented progress: one tick per question, colored by section, filled when answered */}
+          {progressTicks}
+        </div>
+
+        {/* Question body */}
+        <div key={index} className="animate-review-reveal-in flex flex-1 flex-col pt-6 lg:pt-0">
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${theme.chip}`}>
+              <SectionIcon size={13} strokeWidth={2.4} />
+              {SECTION_LABEL[question.section].en}
+            </span>
+            <span className="text-xs font-medium tabular-nums text-slate-400 dark:text-slate-500">
+              {sectionInfo.within} / {sectionInfo.count}
+            </span>
+            {flagged.has(index) && (
+              <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                <Flag size={12} className="fill-current" /> Flagged
+              </span>
+            )}
+          </div>
+
+          {question.context && (
+            <p className="mt-4 text-sm italic text-slate-400 dark:text-slate-500">{question.context.en}</p>
+          )}
+
+          {question.section === 'listening' && (
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => question.audioText && tts.play(question.audioText, 1)}
+                  className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-95"
+                  aria-label="Play audio again"
+                >
+                  {tts.state.status === 'loading' ? <Loader2 size={22} className="animate-spin" /> : <Volume2 size={22} />}
+                </button>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Listen, then choose the meaning</p>
+                  <button
+                    onClick={() => setTranscriptIdx((v) => (v === index ? null : index))}
+                    className="mt-0.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    {transcriptIdx === index ? 'Hide transcript' : 'Can’t hear it? Show transcript'}
+                  </button>
+                  {transcriptIdx === index && <p className="jp-text mt-1.5 text-base text-slate-700 dark:text-slate-200">{question.audioText}</p>}
+                </div>
+              </div>
+              {tts.state.status === 'error' && (
+                <p className="mt-2 text-xs text-rose-500 dark:text-rose-400">Audio isn’t available here — use the transcript to answer.</p>
+              )}
+            </div>
+          )}
+
+          {question.japanese && (
+            <p className="jp-text mt-3 text-3xl font-bold leading-snug text-slate-900 dark:text-white sm:text-4xl">
+              {question.japanese}
+            </p>
+          )}
+
+          <p className="mt-3 text-[15px] font-medium text-slate-700 dark:text-slate-200">
+            {question.prompt.en}
+            <span className="mt-0.5 block text-sm font-normal text-slate-400 dark:text-slate-500">{question.prompt.nl}</span>
+          </p>
+
+          <div className="mt-5 grid gap-2.5 xl:grid-cols-2" role="radiogroup" aria-label="Answer options">
+            {question.options.map((option, i) => {
+              const selected = answers[index] === i;
+              return (
+                <button
+                  key={i}
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => select(i)}
+                  className={`group flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-all ${
+                    selected
+                      ? 'border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-500/15'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <span
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-bold transition-colors ${
+                      selected
+                        ? 'bg-brand-500 text-white'
+                        : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    {selected ? <Check size={15} strokeWidth={3} /> : LETTERS[i]}
+                  </span>
+                  <span className={`jp-text text-[15px] ${selected ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>
+                    {option}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Footer nav */}
+          <div className="mt-auto flex items-center gap-2 pt-6">
+            <button
+              onClick={goPrev}
+              disabled={index === 0}
+              className="flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-30 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <ChevronLeft size={16} /> Prev
+            </button>
+            <button
+              onClick={toggleFlag}
+              aria-pressed={flagged.has(index)}
+              className={`flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
+                flagged.has(index)
+                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
+                  : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Flag size={15} className={flagged.has(index) ? 'fill-current' : ''} />
+            </button>
+            <button
+              onClick={() => setShowPalette((v) => !v)}
+              aria-pressed={showPalette}
+              aria-label="Question map"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              <LayoutGrid size={15} />
+            </button>
+            {isLast ? (
+              <button
+                onClick={() => setConfirming('finish')}
+                className="ml-auto flex items-center gap-1 rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-[0.98]"
+              >
+                Finish exam <Check size={16} />
+              </button>
+            ) : (
+              <button
+                onClick={goNext}
+                className="ml-auto flex items-center gap-1 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-[0.98] dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+              >
+                Next <ChevronRight size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Question palette — the rail carries this from lg, so it only toggles on smaller screens. */}
+          {showPalette && (
+            <div className="animate-review-reveal-in mt-4 rounded-2xl border border-slate-200 bg-white p-4 lg:hidden dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-3 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+                <span>{answeredCount} of {total} answered</span>
+                <span className="flex items-center gap-1"><Flag size={11} className="fill-amber-500 text-amber-500" /> {flagged.size} flagged</span>
+              </div>
+              {paletteGrid('grid-cols-8 sm:grid-cols-10')}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Side rail (lg+) */}
+      <aside className="sticky top-8 hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:block dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between">
           <button
             onClick={() => setConfirming('exit')}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <X size={16} /> Exit
           </button>
-          <div
-            role="timer"
-            aria-label="Time remaining"
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums transition-colors ${
-              timeCritical
-                ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300'
-                : timeLow
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
-                  : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
-            } ${timeCritical ? 'animate-pop' : ''}`}
-          >
+          <div role="timer" aria-label="Time remaining" className={timerClasses}>
             {mmss(secondsLeft)}
           </div>
-          <span className="text-sm font-semibold tabular-nums text-slate-500 dark:text-slate-400">
-            {index + 1}<span className="text-slate-300 dark:text-slate-600"> / {total}</span>
-          </span>
-        </div>
-        {/* Segmented progress: one tick per question, colored by section, filled when answered */}
-        <div className="mt-2.5 flex gap-0.5" aria-hidden="true">
-          {questions.map((q, i) => {
-            const t = SECTION_THEME[q.section];
-            const isAnswered = answers[i] !== null;
-            const isCurrent = i === index;
-            return (
-              <span
-                key={i}
-                className="h-1.5 flex-1 rounded-full transition-colors"
-                style={{
-                  backgroundColor: isCurrent
-                    ? t.hex
-                    : isAnswered
-                      ? `${t.hex}99`
-                      : undefined,
-                }}
-                data-empty={!isAnswered && !isCurrent}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Question body */}
-      <div key={index} className="animate-review-reveal-in flex flex-1 flex-col pt-6">
-        <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${theme.chip}`}>
-            <SectionIcon size={13} strokeWidth={2.4} />
-            {SECTION_LABEL[question.section].en}
-          </span>
-          <span className="text-xs font-medium tabular-nums text-slate-400 dark:text-slate-500">
-            {sectionInfo.within} / {sectionInfo.count}
-          </span>
-          {flagged.has(index) && (
-            <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-              <Flag size={12} className="fill-current" /> Flagged
-            </span>
-          )}
         </div>
 
-        {question.context && (
-          <p className="mt-4 text-sm italic text-slate-400 dark:text-slate-500">{question.context.en}</p>
-        )}
-
-        {question.section === 'listening' && (
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => question.audioText && tts.play(question.audioText, 1)}
-                className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-95"
-                aria-label="Play audio again"
-              >
-                {tts.state.status === 'loading' ? <Loader2 size={22} className="animate-spin" /> : <Volume2 size={22} />}
-              </button>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Listen, then choose the meaning</p>
-                <button
-                  onClick={() => setTranscriptIdx((v) => (v === index ? null : index))}
-                  className="mt-0.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                >
-                  {transcriptIdx === index ? 'Hide transcript' : 'Can’t hear it? Show transcript'}
-                </button>
-                {transcriptIdx === index && <p className="jp-text mt-1.5 text-base text-slate-700 dark:text-slate-200">{question.audioText}</p>}
-              </div>
-            </div>
-            {tts.state.status === 'error' && (
-              <p className="mt-2 text-xs text-rose-500 dark:text-rose-400">Audio isn’t available here — use the transcript to answer.</p>
-            )}
-          </div>
-        )}
-
-        {question.japanese && (
-          <p className="jp-text mt-3 text-3xl font-bold leading-snug text-slate-900 dark:text-white sm:text-4xl">
-            {question.japanese}
-          </p>
-        )}
-
-        <p className="mt-3 text-[15px] font-medium text-slate-700 dark:text-slate-200">
-          {question.prompt.en}
-          <span className="mt-0.5 block text-sm font-normal text-slate-400 dark:text-slate-500">{question.prompt.nl}</span>
+        <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Question {index + 1}
+          <span className="font-medium text-slate-400 dark:text-slate-500"> of {total}</span>
         </p>
+        {progressTicks}
 
-        <div className="mt-5 space-y-2.5" role="radiogroup" aria-label="Answer options">
-          {question.options.map((option, i) => {
-            const selected = answers[index] === i;
-            return (
-              <button
-                key={i}
-                role="radio"
-                aria-checked={selected}
-                onClick={() => select(i)}
-                className={`group flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-all ${
-                  selected
-                    ? 'border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-500/15'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800/60'
-                }`}
-              >
-                <span
-                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-bold transition-colors ${
-                    selected
-                      ? 'bg-brand-500 text-white'
-                      : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
-                  }`}
-                >
-                  {selected ? <Check size={15} strokeWidth={3} /> : LETTERS[i]}
-                </span>
-                <span className={`jp-text text-[15px] ${selected ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>
-                  {option}
-                </span>
-              </button>
-            );
-          })}
+        <div className="mt-5 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+          <span className="tabular-nums">{answeredCount} of {total} answered</span>
+          <span className="flex items-center gap-1 tabular-nums">
+            <Flag size={11} className="fill-amber-500 text-amber-500" /> {flagged.size}
+          </span>
         </div>
+        <div className="mt-2">{paletteGrid('grid-cols-6')}</div>
 
-        {/* Footer nav */}
-        <div className="mt-auto flex items-center gap-2 pt-6">
-          <button
-            onClick={goPrev}
-            disabled={index === 0}
-            className="flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-30 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            <ChevronLeft size={16} /> Prev
-          </button>
-          <button
-            onClick={toggleFlag}
-            aria-pressed={flagged.has(index)}
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
-              flagged.has(index)
-                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
-                : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Flag size={15} className={flagged.has(index) ? 'fill-current' : ''} />
-          </button>
-          <button
-            onClick={() => setShowPalette((v) => !v)}
-            aria-pressed={showPalette}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
-          >
-            <LayoutGrid size={15} />
-          </button>
-          {isLast ? (
-            <button
-              onClick={() => setConfirming('finish')}
-              className="ml-auto flex items-center gap-1 rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-[0.98]"
-            >
-              Finish exam <Check size={16} />
-            </button>
-          ) : (
-            <button
-              onClick={goNext}
-              className="ml-auto flex items-center gap-1 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-[0.98] dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-            >
-              Next <ChevronRight size={16} />
-            </button>
-          )}
-        </div>
-
-        {/* Question palette */}
-        {showPalette && (
-          <div className="animate-review-reveal-in mt-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-3 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-              <span>{answeredCount} of {total} answered</span>
-              <span className="flex items-center gap-1"><Flag size={11} className="fill-amber-500 text-amber-500" /> {flagged.size} flagged</span>
-            </div>
-            <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10">
-              {questions.map((q, i) => {
-                const isAnswered = answers[i] !== null;
-                const isCurrent = i === index;
-                const isFlagged = flagged.has(i);
-                return (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setIndex(i);
-                      setShowPalette(false);
-                    }}
-                    className={`relative grid aspect-square place-items-center rounded-lg text-xs font-bold tabular-nums transition-all ${
-                      isCurrent
-                        ? 'bg-brand-600 text-white ring-2 ring-brand-300 ring-offset-1 dark:ring-offset-slate-900'
-                        : isAnswered
-                          ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/25 dark:text-brand-200'
-                          : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-500'
-                    }`}
-                    style={{ borderBottomColor: SECTION_THEME[q.section].hex }}
-                  >
-                    {i + 1}
-                    {isFlagged && <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
+        <button
+          onClick={() => setConfirming('finish')}
+          className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-[0.98]"
+        >
+          Finish exam <Check size={16} />
+        </button>
+      </aside>
 
       {/* Confirm overlays */}
       {confirming && (

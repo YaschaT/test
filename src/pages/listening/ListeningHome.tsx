@@ -377,7 +377,7 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
   };
 
   return (
-    <div className="grid lg:grid-cols-[2fr_1fr] gap-5 items-start">
+    <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-5 items-start">
       <Card className="p-6 space-y-5">
         {/* Just the locator. The running score used to sit here too, duplicating the panel alongside and
             counting only answer XP, so the total jumped when the session bonus landed at the end. */}
@@ -521,7 +521,7 @@ function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAut
   }
 
   return (
-    <div className="grid lg:grid-cols-[2fr_1fr] gap-5 items-start">
+    <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-5 items-start">
       <Card className="p-6 space-y-5">
         {/* Just the locator. The running score used to sit here too, duplicating the panel alongside and
             counting only answer XP, so the total jumped when the session bonus landed at the end. */}

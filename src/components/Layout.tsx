@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Flame, Moon, Sun, Volume2, VolumeX, Music2, LogIn, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/nav';
 import { useAwayTitle } from '../lib/awayTitle';
@@ -42,18 +42,6 @@ export function Layout() {
   const streakPulsing = useStreakPulse(streak);
   const levelInfo = getLevelInfo(progress);
   const { newLevel, dismiss: dismissLevelUp } = useLevelUp(levelInfo.level);
-  const location = useLocation();
-  // These screens share the Dashboard's full-width treatment rather than the narrower reading-focused
-  // `max-w-5xl` used by detail pages (Grammar/Kanji/Reading detail, etc.) — a fixed-width column left a
-  // lot of dead space either side once the stats panel/card grid were built to fill the available width.
-  // The vocabulary review workspace joined the list with its two-column stage + session-rail redesign.
-  const isWideLayout =
-    location.pathname === '/dashboard' ||
-    location.pathname === '/vocabulary' ||
-    location.pathname === '/kanji' ||
-    location.pathname === '/vocabulary/review' ||
-    location.pathname.startsWith('/grammar') ||
-    location.pathname.startsWith('/reading/');
   const levelPercent = levelProgressPercent(progress);
   const auth = useAuth();
   const navigate = useNavigate();
@@ -179,12 +167,11 @@ export function Layout() {
           </div>
         </header>
 
-        <main
-          id="main-content"
-          className={`flex-1 px-4 pb-20 w-full ${
-            isWideLayout ? 'py-3 md:px-8 md:py-4 md:pb-4' : 'py-6 md:px-8 md:py-8 md:pb-8 max-w-5xl mx-auto'
-          }`}
-        >
+        {/* One content frame for every screen: the same gutter on all four sides (16px on mobile,
+            32px from md), capped at 1600px so the app centres on very wide displays instead of
+            stretching forever. Pages no longer opt into their own width here — a screen that wants a
+            reading-width column centres it inside this frame itself. */}
+        <main id="main-content" className="mx-auto w-full max-w-[1600px] flex-1 p-4 pb-20 md:p-8 md:pb-8">
           <Outlet />
         </main>
 

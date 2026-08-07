@@ -44,7 +44,9 @@ export function MockTest() {
   }
 
   return (
-    <div className="px-4 py-8 sm:py-10">
+    // No padding of its own — the app shell already provides the page gutter, and adding a second
+    // one here left the exam sitting further from the edges than every other screen.
+    <div>
       {phase === 'lobby' && <ExamLobby level={level} onLevelChange={setLevel} onBegin={begin} />}
       {phase === 'exam' && (
         <ExamRuntime
