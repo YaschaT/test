@@ -3003,3 +3003,40 @@ public project URL + `sb_publishable_` anon key into `src/lib/supabase.ts` as a 
 ships client-side anyway; a real `.env` still overrides). Commit 458e726, deployed. Verified live: config in
 the bundle, login page renders functional with no "account service" error, zero console errors. (Google
 OAuth may still need enabling in the Supabase dashboard per earlier notes; email/password works.)
+
+### Reading redesign — cover shelf + measured progress (2026-08-07)
+
+Applied the `reading redesign/` drop (approved mockup + banner mascot, award mascot, four book covers)
+to the Reading pages. Full-size sources are gitignored like the dashboard drop; `public/assets/reading/`
+carries alpha-trimmed mascots and 640px WebP covers (63 KB for all four).
+
+**The mockup showed three numbers with nothing behind them**, so they were built rather than faked:
+per-book position (`readingPositions`) and words read per day (`readingWordsByDate`), both in the synced
+`ProgressState` with merge rules in `progressMerge.ts` (deepest position per book, later timestamp for
+ordering, max-per-day so repeated syncs can't inflate). `ReadingDetail` records position with an
+IntersectionObserver — a sentence counts only after holding 60% of the viewport for **1.5 s**, because
+without the dwell a five-line book on a tall display was marked fully read in the frame it rendered.
+Words are credited by the *difference* in the high-water mark, apportioned from the authored word count;
+both ends round off the same curve, so finishing a book credits exactly its word count and a re-read
+credits nothing. New `src/lib/readingProgress.ts` holds the selectors (`bookPercent`, `pickNextRead` —
+resume beats suggest, and the two are labelled differently on screen).
+
+**Data:** `ReadingPassage` gained `titleJa` (required, written at each book's own level — kana with
+spaced phrasing at L0–L1, kanji from L2) and optional `cover`. All 31 books got a Japanese title, and
+the shelf and reader now lead with it. Three covers matched existing books; the fourth had no book, so
+**`rx-onigiri-picnic` ("おにぎりの ピクニック", L1, 34 words)** was written as an original reader — the
+library is now 32 books. `TADOKU_LEVEL_INFO` gained `short` for the filter chips, and `readingMinutes()`
+estimates time at a deliberately slow 20 words/min.
+
+**Page:** `ReadingList` rebuilt to the mockup — night hero (JLPT tabs + Continue-reading block + words
+today / books completed), Tadoku chips **derived from the selected level** (the two filters are
+near-perfectly correlated, so no combination resolves to an empty shelf), and a responsive cover grid
+with bookmark toggle and per-book progress. Books without art keep the tinted emoji cover at the same
+aspect ratio. The golden-rules strip moved below the shelf. `ReadingDetail`'s finished state now shows
+the crowned award mascot.
+
+Validation: `tsc -b`, `eslint .`, `vite build` clean; **vitest 167/167** (17 new — cover files verified
+by glob so a renamed artwork fails the suite, Japanese titles script-checked, word-crediting maths, and
+the resume/suggest picker). Verified in-browser at both themes, mobile + desktop, zero console errors:
+reading two sentences of a 37-word book showed 40% and 15 words, then finishing it moved the tally to
+exactly +11. Deployed (commit 2972d5a).
