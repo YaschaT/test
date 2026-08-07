@@ -25,6 +25,8 @@ function progress(over: Partial<ProgressState> = {}): ProgressState {
     completedGrammarIds: [],
     learnedKanjiIds: [],
     completedReadingIds: [],
+    readingPositions: {},
+    readingWordsByDate: {},
     quizResults: [],
     weeklyCheckpoints: {},
     mockExams: {},
@@ -125,6 +127,41 @@ describe('mergeProgress (cross-device sync)', () => {
 
     expect(merged.weeklyCheckpoints).toEqual({ 1: 0.75, 2: 1 });
     expect(merged.mockExams.N5).toEqual({ bestScore: 140, passed: true, attempts: 2, lastAttempt: '2026-08-04' });
+  });
+
+  it('keeps the deepest reading position, and the later timestamp, per book', () => {
+    const merged = mergeProgress(
+      progress({
+        readingPositions: {
+          'rx-hello': { sentencesRead: 4, totalSentences: 5, lastReadAt: '2026-08-05T09:00:00.000Z' },
+        },
+      }),
+      progress({
+        // Opened more recently, but this device had barely started the book.
+        readingPositions: {
+          'rx-hello': { sentencesRead: 1, totalSentences: 5, lastReadAt: '2026-08-06T20:00:00.000Z' },
+          'rx-my-cat': { sentencesRead: 2, totalSentences: 4, lastReadAt: '2026-08-06T21:00:00.000Z' },
+        },
+      }),
+    );
+
+    expect(merged.readingPositions['rx-hello']).toEqual({
+      sentencesRead: 4,
+      totalSentences: 5,
+      lastReadAt: '2026-08-06T20:00:00.000Z',
+    });
+    expect(merged.readingPositions['rx-my-cat'].sentencesRead).toBe(2);
+  });
+
+  it('takes the max of words read per day rather than summing them', () => {
+    const a = progress({ readingWordsByDate: { '2026-08-06': 162, '2026-08-05': 40 } });
+    const b = progress({ readingWordsByDate: { '2026-08-06': 98 } });
+
+    expect(mergeProgress(a, b).readingWordsByDate).toEqual({ '2026-08-06': 162, '2026-08-05': 40 });
+    expect(mergeProgress(mergeProgress(a, b), b).readingWordsByDate).toEqual({
+      '2026-08-06': 162,
+      '2026-08-05': 40,
+    });
   });
 
   it('keeps the longest streak ever and the most recent current streak', () => {

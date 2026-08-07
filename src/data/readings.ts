@@ -16,6 +16,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 31,
     genre: 'Daily life',
     title: { en: 'My Day', nl: 'Mijn Dag' },
+    titleJa: 'わたしの いちにち',
     description: { en: 'A short passage about daily routines.', nl: 'Een korte tekst over dagelijkse routines.' },
     difficulty: 'easy',
     sentences: [
@@ -90,6 +91,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 30,
     genre: 'Daily life',
     title: { en: 'Weekend Plans', nl: 'Weekendplannen' },
+    titleJa: 'しゅうまつの よてい',
     description: { en: 'Making plans and saying what you want to do.', nl: 'Plannen maken en zeggen wat je wilt doen.' },
     difficulty: 'easy',
     sentences: [
@@ -164,6 +166,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 30,
     genre: 'Friendship',
     title: { en: 'A Promise with a Friend', nl: 'Een belofte aan een vriend(in)' },
+    titleJa: '友だちとの約束',
     description: { en: 'Plans, conditions and keeping your word.', nl: 'Plannen, voorwaarden en je woord houden.' },
     difficulty: 'medium',
     sentences: [
@@ -238,6 +241,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 31,
     genre: 'Culture',
     title: { en: 'Japan’s Weather', nl: 'Het weer in Japan' },
+    titleJa: '日本の天気',
     description: { en: 'The four seasons and describing how things seem.', nl: 'De vier seizoenen en beschrijven hoe iets lijkt.' },
     difficulty: 'hard',
     sentences: [
@@ -312,6 +316,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 57,
     genre: 'Life story',
     title: { en: 'Deciding to Study Abroad', nl: 'De keuze om in het buitenland te studeren' },
+    titleJa: '留学を決める',
     description: {
       en: 'An original N3 passage about preparing to study overseas — reuses this level’s new vocabulary and grammar.',
       nl: 'Een originele N3-tekst over de voorbereiding op studeren in het buitenland — hergebruikt de nieuwe woordenschat en grammatica van dit niveau.',
@@ -407,6 +412,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 44,
     genre: 'Daily life',
     title: { en: 'My Birthday', nl: 'Mijn Verjaardag' },
+    titleJa: 'わたしの誕生日',
     description: {
       en: 'An original N4 passage that puts giving/receiving verbs, quoting and the potential form to work.',
       nl: 'Een originele N4-tekst die geef/ontvang-werkwoorden, citeren en de potentiaalvorm in de praktijk brengt.',
@@ -502,6 +508,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 60,
     genre: 'Study',
     title: { en: 'Studying Kanji', nl: 'Kanji Studeren' },
+    titleJa: '漢字の勉強',
     description: {
       en: 'An original N3 passage weaving together the causative, passive, ば〜ほど and おかげで.',
       nl: 'Een originele N3-tekst die de veroorzakende en lijdende vorm, ば〜ほど en おかげで samenbrengt.',
@@ -597,6 +604,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 37,
     genre: 'Daily life',
     title: { en: 'My Town', nl: 'Mijn Stad' },
+    titleJa: 'わたしの まち',
     description: { en: 'A short tour of the places in a small town.', nl: 'Een korte rondleiding langs de plekken in een klein stadje.' },
     difficulty: 'easy',
     sentences: [
@@ -682,6 +690,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 45,
     genre: 'Study',
     title: { en: 'Studying Japanese', nl: 'Japans Studeren' },
+    titleJa: '日本語の勉強',
     description: { en: 'A learner reflects on studying kanji and reading.', nl: 'Een student blikt terug op het leren van kanji en lezen.' },
     difficulty: 'medium',
     sentences: [
@@ -767,6 +776,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 37,
     genre: 'Health',
     title: { en: 'A Healthy Life', nl: 'Een Gezond Leven' },
+    titleJa: '健康な生活',
     description: { en: 'How daily exercise changed one person’s habits.', nl: 'Hoe dagelijkse beweging iemands gewoonten veranderde.' },
     difficulty: 'medium',
     sentences: [
@@ -852,6 +862,7 @@ export const READINGS: ReadingPassage[] = [
     wordCount: 42,
     genre: 'Work',
     title: { en: 'My Part-Time Job', nl: 'Mijn Bijbaan' },
+    titleJa: 'アルバイト',
     description: { en: 'A student describes a busy convenience-store job.', nl: 'Een student beschrijft een drukke baan in een buurtwinkel.' },
     difficulty: 'hard',
     sentences: [
@@ -947,33 +958,55 @@ export function readingStats(completedIds: string[]) {
   };
 }
 
-/** Shelf metadata for each Tadoku level, low→high. */
+/**
+ * Rough minutes a book takes, from its authored word count.
+ *
+ * 20 Japanese words/minute is a deliberately slow beginner pace: at these levels a reader is still
+ * decoding furigana and re-reading lines, so a native-speed figure would be useless to them. Floored
+ * at 1, because "~0 min" tells nobody anything.
+ */
+export function readingMinutes(wordCount: number): number {
+  return Math.max(1, Math.round(wordCount / 20));
+}
+
+/**
+ * Shelf metadata for each Tadoku level, low→high.
+ *
+ * `short` is the two-word label used on the library's filter chips, where the full shelf name
+ * ("Getting started") says nothing about what makes the level harder. "First kanji" does.
+ */
 export const TADOKU_LEVEL_INFO: Record<
   number,
-  { name: { en: string; nl: string }; blurb: { en: string; nl: string } }
+  { name: { en: string; nl: string }; short: string; blurb: { en: string; nl: string } }
 > = {
   0: {
     name: { en: 'First words', nl: 'Eerste woorden' },
+    short: 'Kana',
     blurb: { en: 'Tiny all-kana books.', nl: 'Piepkleine boekjes in kana.' },
   },
   1: {
     name: { en: 'Getting started', nl: 'Op weg' },
+    short: 'First kanji',
     blurb: { en: 'Short books, basic kanji with furigana.', nl: 'Korte boekjes, basiskanji met furigana.' },
   },
   2: {
     name: { en: 'Building up', nl: 'Opbouwen' },
+    short: 'Beginner',
     blurb: { en: 'Past tense and everyday stories.', nl: 'Verleden tijd en alledaagse verhalen.' },
   },
   3: {
     name: { en: 'Stretching out', nl: 'Uitbreiden' },
+    short: 'Easy',
     blurb: { en: 'Longer stories with richer grammar.', nl: 'Langere verhalen met rijkere grammatica.' },
   },
   4: {
     name: { en: 'Reading freely', nl: 'Vrij lezen' },
+    short: 'Freer',
     blurb: { en: 'Fuller texts on wider topics.', nl: 'Vollere teksten over bredere onderwerpen.' },
   },
   5: {
     name: { en: 'Advanced', nl: 'Gevorderd' },
+    short: 'Advanced',
     blurb: { en: 'Native-like extended reading.', nl: 'Uitgebreid lezen op moedertaalniveau.' },
   },
 };

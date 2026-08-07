@@ -117,11 +117,22 @@ export interface ReadingPassage {
   /** Primary grade for the library shelves — Tadoku's own 0–5 scale. */
   tadokuLevel: TadokuLevel;
   title: Translatable;
+  /**
+   * The book's own Japanese title — what a learner sees first on the shelf, with the English
+   * title underneath. Written at the book's own reading level (kana-only for L0), so the title
+   * itself is already readable by whoever the book is for.
+   */
+  titleJa: string;
   /** One-line summary shown in the "About this book" panel. */
   description: Translatable;
   difficulty: 'easy' | 'medium' | 'hard';
   /** Cover glyph shown on the shelf card (e.g. "🍙"). */
   coverEmoji: string;
+  /**
+   * Optional painted cover, served from `/assets/reading/covers/`. Only some books have one;
+   * the rest fall back to the tinted emoji cover, so the shelf never shows a blank placeholder.
+   */
+  cover?: string;
   /** Authored word count (Japanese words) — drives the "words read" volume tracker. */
   wordCount: number;
   /** Optional theme label shown as a small tag (e.g. "Daily life"). */

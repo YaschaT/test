@@ -33,6 +33,10 @@ server/credentials/*.json
 # converted, web-sized copies in public/assets/dashboard/redesign/.
 Dashboard-redesign/
 
+# Same deal for the reading redesign (9MB of full-size mockups, mascots and cover art). The build
+# uses the trimmed/WebP copies in public/assets/reading/.
+reading redesign/
+
 # Full-size brand source images; the build uses the trimmed copies in public/.
 favicon-image.png
 navigation-image.png

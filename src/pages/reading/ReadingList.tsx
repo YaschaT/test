@@ -1,21 +1,23 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, BookMarked, Ban, Wind, ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { ModuleHeader } from '../../components/learning/ModuleHeader';
-import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
-import { READINGS, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
-import { useProgress } from '../../lib/progressStore';
-import type { ReadingPassage, TadokuLevel } from '../../types';
-import { TADOKU_LEVELS } from '../../types';
+import { ArrowRight, Ban, BookMarked, BookOpen, Bookmark, Check, Layers, Wind } from 'lucide-react';
+import { CategoryIcon } from '../../components/CategoryIcon';
+import { SegmentedTabs } from '../../components/SegmentedTabs';
+import { READINGS, readingMinutes, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
+import { getReadingWordsToday, useProgress } from '../../lib/progressStore';
+import { bookPercent, pickNextRead } from '../../lib/readingProgress';
+import { getSavedReadingIds, toggleReadingSaved } from '../../lib/savedReadings';
+import type { JlptLevel, ReadingPassage, TadokuLevel } from '../../types';
+import { JLPT_LEVELS, TADOKU_LEVELS } from '../../types';
 
 /** The three golden rules of extensive reading (tadoku). */
 const GOLDEN_RULES = [
-  { icon: Ban, en: 'No dictionary', nl: 'Geen woordenboek', ja: '辞書を引かない' },
-  { icon: Wind, en: 'Skip what you don’t get', nl: 'Sla over wat je niet snapt', ja: 'わからない所は飛ばす' },
-  { icon: BookMarked, en: 'Bored? Pick another', nl: 'Verveeld? Kies een ander', ja: 'つまらなければ別の本へ' },
+  { icon: Ban, en: 'No dictionary', ja: '辞書を引かない' },
+  { icon: Wind, en: 'Skip what you don’t get', ja: 'わからない所は飛ばす' },
+  { icon: BookMarked, en: 'Bored? Pick another', ja: 'つまらなければ別の本へ' },
 ];
 
-/** Per-level identity: solid accent (badges) + soft cover tint. Each Tadoku shelf gets its own hue. */
+/** Per-shelf identity: a solid badge accent and the soft tint used behind an emoji-only cover. */
 const LEVEL_ACCENT: Record<number, string> = {
   0: 'bg-sky-500',
   1: 'bg-emerald-500',
@@ -24,89 +26,339 @@ const LEVEL_ACCENT: Record<number, string> = {
   4: 'bg-rose-500',
   5: 'bg-violet-500',
 };
-const LEVEL_DOT: Record<number, string> = {
-  0: 'bg-sky-400',
-  1: 'bg-emerald-400',
-  2: 'bg-indigo-400',
-  3: 'bg-amber-400',
-  4: 'bg-rose-400',
-  5: 'bg-violet-400',
-};
+/**
+ * The tinted panel behind an emoji-only cover. Sitting next to painted covers these have to hold
+ * their own, so the dark values are a ring plus a real tint rather than the 15%-over-slate wash they
+ * started as — at that strength every shelf read as the same grey box.
+ */
 const LEVEL_COVER: Record<number, string> = {
-  0: 'bg-sky-100 dark:bg-sky-500/15',
-  1: 'bg-emerald-100 dark:bg-emerald-500/15',
-  2: 'bg-indigo-100 dark:bg-indigo-500/15',
-  3: 'bg-amber-100 dark:bg-amber-500/15',
-  4: 'bg-rose-100 dark:bg-rose-500/15',
-  5: 'bg-violet-100 dark:bg-violet-500/15',
+  0: 'bg-sky-100 ring-1 ring-inset ring-sky-500/20 dark:bg-sky-500/25 dark:ring-sky-400/25',
+  1: 'bg-emerald-100 ring-1 ring-inset ring-emerald-500/20 dark:bg-emerald-500/25 dark:ring-emerald-400/25',
+  2: 'bg-indigo-100 ring-1 ring-inset ring-indigo-500/20 dark:bg-indigo-500/25 dark:ring-indigo-400/25',
+  3: 'bg-amber-100 ring-1 ring-inset ring-amber-500/20 dark:bg-amber-500/25 dark:ring-amber-400/25',
+  4: 'bg-rose-100 ring-1 ring-inset ring-rose-500/20 dark:bg-rose-500/25 dark:ring-rose-400/25',
+  5: 'bg-violet-100 ring-1 ring-inset ring-violet-500/20 dark:bg-violet-500/25 dark:ring-violet-400/25',
 };
 
 export function ReadingList() {
   const progress = useProgress();
   const completed = progress.completedReadingIds;
   const stats = useMemo(() => readingStats(completed), [completed]);
-  const [filter, setFilter] = useState<TadokuLevel | 'all'>('all');
+
+  // Opens on the learner's own level rather than always N5, like every other module page.
+  const [level, setLevel] = useState<JlptLevel>(progress.level);
+  const [shelf, setShelf] = useState<TadokuLevel | 'all'>('all');
 
   const doneSet = useMemo(() => new Set(completed), [completed]);
-  const totalWords = useMemo(() => READINGS.reduce((n, r) => n + r.wordCount, 0), []);
+  const wordsToday = getReadingWordsToday(progress);
+  const next = useMemo(() => pickNextRead(progress, level), [progress, level]);
 
-  // Books grouped by Tadoku level, easiest-first within each shelf.
-  const shelves = useMemo(
-    () =>
-      TADOKU_LEVELS.map((lvl) => ({
-        level: lvl,
-        books: READINGS.filter((r) => r.tadokuLevel === lvl).sort((a, b) => a.wordCount - b.wordCount),
-      })).filter((shelf) => shelf.books.length > 0),
-    [],
+  const booksAtLevel = useMemo(
+    () => READINGS.filter((book) => book.level === level),
+    [level],
   );
 
-  const levelReached =
-    shelves.filter((s) => s.books.some((b) => doneSet.has(b.id))).map((s) => s.level).pop() ?? 0;
+  /**
+   * Only the shelves that actually hold a book at this JLPT level get a chip. The two filters are
+   * near-perfectly correlated (N5 books are L0–L1, N4 books are L2…), so offering every shelf at every
+   * level would mostly offer combinations that resolve to an empty page.
+   */
+  const shelves = useMemo(
+    () => TADOKU_LEVELS.filter((lvl) => booksAtLevel.some((book) => book.tadokuLevel === lvl)),
+    [booksAtLevel],
+  );
 
-  const visibleShelves = filter === 'all' ? shelves : shelves.filter((s) => s.level === filter);
+  // Switching JLPT level can strand the chip on a shelf that doesn't exist there. Resolved during
+  // render rather than corrected in an effect, so the page never paints an empty shelf for a frame.
+  const activeShelf = shelf !== 'all' && shelves.includes(shelf) ? shelf : 'all';
+
+  const visible = useMemo(
+    () =>
+      booksAtLevel
+        .filter((book) => activeShelf === 'all' || book.tadokuLevel === activeShelf)
+        .sort((a, b) => a.tadokuLevel - b.tadokuLevel || a.wordCount - b.wordCount),
+    [booksAtLevel, activeShelf],
+  );
 
   return (
-    <div className="space-y-6">
-      <ModuleHeader skill="reading" title="Reading" subtitle="Read a lot, read easy — the words add up." />
-      <ModuleStatsHero
-        ringProgress={stats.totalBooks > 0 ? stats.booksRead / stats.totalBooks : 0}
-        ringIcon={BookOpen}
-        headlineValue={stats.wordsRead}
-        headlineTotal={totalWords}
-        headlineLabel="Words read"
-        mascot="reading"
-        facts={[
-          { value: stats.booksRead, label: 'Books' },
-          { value: levelReached, label: 'Level' },
-        ]}
+    <div className="w-full space-y-6">
+      <ReadingHero
+        level={level}
+        onLevelChange={setLevel}
+        next={next}
+        wordsToday={wordsToday}
+        booksRead={stats.booksRead}
       />
 
-      <GoldenRules />
-
-      {/* Level filter */}
+      {/* Shelf filter */}
       <div className="flex flex-wrap gap-2">
-        <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
-          All levels
+        <FilterChip active={activeShelf === 'all'} onClick={() => setShelf('all')}>
+          All
         </FilterChip>
-        {shelves.map((shelf) => (
-          <FilterChip key={shelf.level} active={filter === shelf.level} onClick={() => setFilter(shelf.level)}>
-            <span className={`inline-block h-2 w-2 rounded-full ${LEVEL_DOT[shelf.level]}`} aria-hidden="true" />
-            Level {shelf.level}
+        {shelves.map((lvl) => (
+          <FilterChip key={lvl} active={activeShelf === lvl} onClick={() => setShelf(lvl)}>
+            L{lvl} {TADOKU_LEVEL_INFO[lvl].short}
           </FilterChip>
         ))}
       </div>
 
-      {/* Shelves — horizontal cover rails */}
-      <div className="space-y-9">
-        {visibleShelves.map((shelf) => (
-          <LevelShelf key={shelf.level} level={shelf.level} books={shelf.books} doneSet={doneSet} />
-        ))}
-      </div>
+      <section>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          {activeShelf === 'all'
+            ? `${level} books`
+            : `Level ${activeShelf} — ${TADOKU_LEVEL_INFO[activeShelf].name.en}`}
+        </h2>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          {activeShelf === 'all'
+            ? `${visible.length} book${visible.length === 1 ? '' : 's'} graded for ${level}, shortest first.`
+            : TADOKU_LEVEL_INFO[activeShelf].blurb.en}
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+          {visible.map((book) => (
+            <BookCard
+              key={book.id}
+              book={book}
+              done={doneSet.has(book.id)}
+              percent={bookPercent(progress, book)}
+            />
+          ))}
+        </div>
+      </section>
+
+      <GoldenRules />
     </div>
   );
 }
 
-// ── Golden rules ────────────────────────────────────────────────────────────
+// ── Hero ──────────────────────────────────────────────────────────────────────
+interface ReadingHeroProps {
+  level: JlptLevel;
+  onLevelChange: (level: JlptLevel) => void;
+  next: ReturnType<typeof pickNextRead>;
+  wordsToday: number;
+  booksRead: number;
+}
+
+/**
+ * The night-sky banner, built around one job: get back into a book.
+ *
+ * The headline slot is a real book — either one left half-finished (`resume`) or, with nothing
+ * underway, the shortest unread book at this level offered as a suggestion (`start`). The two are
+ * labelled differently and only the first carries a progress bar, so a suggestion is never dressed up
+ * as progress the reader hasn't made.
+ */
+function ReadingHero({ level, onLevelChange, next, wordsToday, booksRead }: ReadingHeroProps) {
+  const resuming = next?.kind === 'resume';
+  const percent = next ? Math.round(next.percent * 100) : 0;
+
+  return (
+    <section className="relative overflow-hidden rounded-3xl bg-slate-950">
+      <img
+        src="/assets/kotobox-dashboard/generated/hero-background.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      {/* Keeps the copy legible over the busiest part of the scene without flattening the artwork. */}
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/55 to-transparent"
+        aria-hidden="true"
+      />
+      <img
+        src="/assets/reading/reading-banner.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 right-0 hidden h-[88%] w-auto object-contain object-bottom lg:block"
+      />
+
+      <div className="relative z-10 p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CategoryIcon skill="reading" size={44} />
+            <div>
+              <h1 className="text-3xl font-bold text-white">Reading</h1>
+              <p className="mt-1 text-white/70">Read a lot, read easy — the words add up.</p>
+            </div>
+          </div>
+          <SegmentedTabs
+            value={level}
+            onChange={onLevelChange}
+            variant="glass"
+            groupLabel="Reading level"
+            options={JLPT_LEVELS.map((lvl) => ({ value: lvl, label: lvl }))}
+          />
+        </div>
+
+        {next && (
+          <div className="mt-7 max-w-xl">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand-300">
+              {resuming ? 'Continue reading' : 'Start reading'}
+            </p>
+            <p className="jp-text mt-2 text-3xl font-bold text-white sm:text-4xl">{next.passage.titleJa}</p>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/60">
+              <span className="font-semibold">L{next.passage.tadokuLevel}</span>
+              <Dot />
+              <span className="tabular-nums">{next.passage.wordCount} words</span>
+              <Dot />
+              <span className="tabular-nums">~{readingMinutes(next.passage.wordCount)} min</span>
+              <Dot />
+              <span>{next.passage.title.en}</span>
+            </p>
+
+            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
+              {resuming && (
+                <div className="min-w-0 flex-1">
+                  <div className="h-2 overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className="h-full rounded-full bg-brand-400 transition-[width] duration-500 ease-out"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-white/60 tabular-nums">{percent}% completed</p>
+                </div>
+              )}
+              <Link
+                to={`/reading/${next.passage.id}`}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+              >
+                {resuming ? 'Continue reading' : 'Start reading'}
+                <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Today's volume. Words are credited as sentences are actually reached, not on opening a book. */}
+        <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <HeroStat icon={BookOpen} value={wordsToday} label={`word${wordsToday === 1 ? '' : 's'} today`} />
+          <HeroStat icon={Layers} value={booksRead} label={`book${booksRead === 1 ? '' : 's'} completed`} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Dot() {
+  return (
+    <span className="text-white/25" aria-hidden="true">
+      ·
+    </span>
+  );
+}
+
+function HeroStat({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof BookOpen;
+  value: number;
+  label: string;
+}) {
+  return (
+    <p className="flex items-center gap-2.5 text-sm text-white/60">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/70 ring-1 ring-inset ring-white/15">
+        <Icon size={17} aria-hidden="true" />
+      </span>
+      <span>
+        <strong className="font-bold text-white tabular-nums">{value.toLocaleString()}</strong> {label}
+      </span>
+    </p>
+  );
+}
+
+// ── Book card ─────────────────────────────────────────────────────────────────
+function BookCard({ book, done, percent }: { book: ReadingPassage; done: boolean; percent: number }) {
+  const [saved, setSaved] = useState(() => getSavedReadingIds().includes(book.id));
+  const started = percent > 0 && percent < 1;
+
+  return (
+    <div className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
+      <Link
+        to={`/reading/${book.id}`}
+        className="flex flex-1 flex-col rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+      >
+        {/* Cover. Books with painted art show it; the rest keep the tinted emoji cover, at the same
+            aspect ratio so a mixed shelf still lines up. */}
+        <div className={`relative overflow-hidden rounded-xl ${book.cover ? 'bg-slate-100 dark:bg-slate-800' : LEVEL_COVER[book.tadokuLevel]}`}>
+          {book.cover ? (
+            <img
+              src={book.cover}
+              alt=""
+              aria-hidden="true"
+              width={640}
+              height={450}
+              loading="lazy"
+              className="aspect-[64/45] w-full object-cover"
+            />
+          ) : (
+            <div className="flex aspect-[64/45] w-full items-center justify-center">
+              <span className="text-5xl transition-transform duration-200 ease-out group-hover:scale-110" aria-hidden="true">
+                {book.coverEmoji}
+              </span>
+            </div>
+          )}
+          <span
+            className={`absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm ${LEVEL_ACCENT[book.tadokuLevel]}`}
+          >
+            L{book.tadokuLevel}
+          </span>
+          {done && (
+            <span
+              className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm ring-2 ring-white dark:ring-slate-900"
+              aria-label="Read"
+            >
+              <Check size={13} strokeWidth={3} aria-hidden="true" />
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col px-1 pt-2.5">
+          <p className="jp-text line-clamp-2 font-bold leading-snug text-slate-900 dark:text-white">
+            {book.titleJa}
+          </p>
+          <p className="mt-0.5 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">{book.title.en}</p>
+          <p className="mt-auto pt-2 flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+            <span className="tabular-nums">{book.wordCount} words</span>
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="tabular-nums">~{readingMinutes(book.wordCount)} min</span>
+          </p>
+          {started && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                <span
+                  className="block h-full rounded-full bg-brand-500"
+                  style={{ width: `${Math.round(percent * 100)}%` }}
+                />
+              </span>
+              <span className="text-[11px] font-semibold text-slate-500 tabular-nums dark:text-slate-400">
+                {Math.round(percent * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      {/* Outside the Link so saving a book doesn't also open it. */}
+      <button
+        type="button"
+        onClick={() => setSaved(toggleReadingSaved(book.id))}
+        aria-pressed={saved}
+        aria-label={saved ? `Remove ${book.title.en} from saved` : `Save ${book.title.en}`}
+        className={`absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
+          saved
+            ? 'bg-brand-600 text-white'
+            : 'bg-black/35 text-white/80 opacity-0 hover:bg-black/55 hover:text-white focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100'
+        } ${done ? 'right-11' : ''}`}
+      >
+        <Bookmark size={15} className={saved ? 'fill-current' : ''} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+// ── Golden rules ──────────────────────────────────────────────────────────────
 // Each rule needs `min-w-0`: its Japanese line is `truncate` (white-space: nowrap), so without it the
 // grid column's min-content becomes the full unbreakable string and widens the entire page.
 function GoldenRules() {
@@ -127,124 +379,6 @@ function GoldenRules() {
   );
 }
 
-// ── Shelf (horizontal cover rail) ─────────────────────────────────────────────
-function LevelShelf({
-  level,
-  books,
-  doneSet,
-}: {
-  level: TadokuLevel;
-  books: ReadingPassage[];
-  doneSet: Set<string>;
-}) {
-  const info = TADOKU_LEVEL_INFO[level];
-  const railRef = useRef<HTMLDivElement>(null);
-  const readCount = books.filter((b) => doneSet.has(b.id)).length;
-
-  function scrollBy(dir: 1 | -1) {
-    const rail = railRef.current;
-    if (!rail) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    rail.scrollBy({ left: dir * Math.min(rail.clientWidth * 0.8, 520), behavior: reduce ? 'auto' : 'smooth' });
-  }
-
-  return (
-    <section className="group/shelf">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className={`flex h-9 min-w-9 items-center justify-center rounded-xl px-2 text-sm font-bold text-white ${LEVEL_ACCENT[level]}`}>
-            L{level}
-          </span>
-          <div>
-            <h2 className="font-bold text-slate-900 dark:text-white">{info.name.en}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{info.blurb.en}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold tabular-nums text-slate-400 dark:text-slate-500">
-            {readCount}/{books.length}
-          </span>
-          {/* Scroll controls — desktop only; touch users swipe. Gone from 2xl, where the shelf stops
-              being a rail and lays every cover out at once. */}
-          <div className="hidden items-center gap-1 md:flex 2xl:hidden">
-            <RailButton dir={-1} onClick={() => scrollBy(-1)} />
-            <RailButton dir={1} onClick={() => scrollBy(1)} />
-          </div>
-        </div>
-      </div>
-
-      <div
-        ref={railRef}
-        /* A scrolling rail up to xl. From 2xl the whole shelf fits across the frame, so it becomes a
-           wrapping grid instead — a half-empty rail of five covers next to 900px of background was the
-           worst use of a wide display on this page. */
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)] 2xl:grid 2xl:grid-cols-[repeat(auto-fit,minmax(10.25rem,13rem))] 2xl:justify-center 2xl:overflow-visible 2xl:[mask-image:none]"
-      >
-        {books.map((book) => (
-          <CoverCard key={book.id} book={book} done={doneSet.has(book.id)} />
-        ))}
-        {/* trailing spacer so the last card can snap clear of the mask fade */}
-        <span className="shrink-0 basis-1" aria-hidden="true" />
-      </div>
-    </section>
-  );
-}
-
-function RailButton({ dir, onClick }: { dir: 1 | -1; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={dir === 1 ? 'Scroll shelf right' : 'Scroll shelf left'}
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-    >
-      {dir === 1 ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronLeft size={16} aria-hidden="true" />}
-    </button>
-  );
-}
-
-// ── Cover card ────────────────────────────────────────────────────────────────
-function CoverCard({ book, done }: { book: ReadingPassage; done: boolean }) {
-  return (
-    <Link
-      to={`/reading/${book.id}`}
-      className="group/card w-[164px] shrink-0 snap-start 2xl:w-auto rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
-    >
-      {/* Cover */}
-      <div
-        className={`relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl border border-black/5 shadow-sm transition-all duration-200 ease-out group-hover/card:-translate-y-1 group-hover/card:shadow-lg dark:border-white/10 ${LEVEL_COVER[book.tadokuLevel]}`}
-      >
-        {/* faux book spine */}
-        <span className="absolute inset-y-0 left-0 w-1.5 bg-black/10 dark:bg-black/30" aria-hidden="true" />
-        <span className="text-5xl transition-transform duration-200 ease-out group-hover/card:scale-110" aria-hidden="true">
-          {book.coverEmoji}
-        </span>
-        <span className={`absolute left-2.5 top-2.5 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white ${LEVEL_ACCENT[book.tadokuLevel]}`}>
-          L{book.tadokuLevel}
-        </span>
-        {done && (
-          <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm ring-2 ring-white dark:ring-slate-950" aria-label="Read">
-            <Check size={13} strokeWidth={3} aria-hidden="true" />
-          </span>
-        )}
-      </div>
-
-      {/* Meta */}
-      <div className="px-0.5 pt-2.5">
-        <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 text-balance dark:text-white">
-          {book.title.en}
-        </p>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-          <BookOpen size={12} aria-hidden="true" />
-          <span className="tabular-nums">{book.wordCount} words</span>
-          <span className="text-slate-300 dark:text-slate-600">·</span>
-          <span className="font-semibold uppercase tracking-wide">{book.level}</span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
 function FilterChip({
   active,
   onClick,
@@ -261,8 +395,8 @@ function FilterChip({
       aria-pressed={active}
       className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
         active
-          ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900'
-          : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+          ? 'bg-brand-600 text-white shadow-sm'
+          : 'border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
       }`}
     >
       {children}

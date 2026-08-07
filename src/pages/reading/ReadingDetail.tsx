@@ -23,7 +23,14 @@ import { ReadingQuestionPlayer } from '../../components/ReadingQuestionPlayer';
 import { getReading, readingStats, READINGS } from '../../data/readings';
 import { getVocabWord } from '../../data/vocabulary';
 import { getGrammarPoint } from '../../data/grammar';
-import { markReadingCompleted, recordQuizResult, useProgress } from '../../lib/progressStore';
+import {
+  getProgressSnapshot,
+  markReadingCompleted,
+  recordQuizResult,
+  recordReadingPosition,
+  useProgress,
+} from '../../lib/progressStore';
+import { resumeSentenceIndex } from '../../lib/readingProgress';
 import { isReadingSaved, toggleReadingSaved } from '../../lib/savedReadings';
 import { speakJapaneseBrowser, useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
 
@@ -46,11 +53,82 @@ export function ReadingDetail() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [result, setResult] = useState<{ correct: number; total: number } | null>(null);
   const quizRef = useRef<HTMLDivElement>(null);
+  const sentenceRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const furthestRef = useRef(0);
 
   const passage = id ? getReading(id) : undefined;
 
   // Stop any in-flight speech when leaving the page.
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
+
+  /**
+   * Reading position, measured rather than guessed: the furthest sentence actually read is what drives
+   * the shelf's per-book percentage and the daily word tally. Only advances — scrolling back up never
+   * costs the reader progress.
+   *
+   * A sentence has to stay mostly on screen for DWELL_MS before it counts. Without that, opening a
+   * five-line book on a tall display would mark the whole thing read in the same frame it rendered,
+   * and the word tally would be counting pixels shown rather than Japanese read.
+   */
+  useEffect(() => {
+    if (!passage) return;
+    const nodes = sentenceRefs.current.filter((node): node is HTMLLIElement => node != null);
+    if (nodes.length === 0) return;
+
+    const DWELL_MS = 1500;
+    const timers = new Map<number, ReturnType<typeof setTimeout>>();
+
+    function credit(index: number) {
+      const furthest = index + 1;
+      if (furthest <= furthestRef.current) return;
+      furthestRef.current = furthest;
+      recordReadingPosition(passage!.id, furthest, passage!.sentences.length, passage!.wordCount);
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const index = Number((entry.target as HTMLElement).dataset.sentenceIndex);
+          if (entry.isIntersecting) {
+            if (index + 1 <= furthestRef.current || timers.has(index)) continue;
+            timers.set(
+              index,
+              setTimeout(() => {
+                timers.delete(index);
+                credit(index);
+              }, DWELL_MS),
+            );
+          } else {
+            // Scrolled straight past before the dwell elapsed — that line wasn't read.
+            const timer = timers.get(index);
+            if (timer) {
+              clearTimeout(timer);
+              timers.delete(index);
+            }
+          }
+        }
+      },
+      { threshold: 0.6 },
+    );
+    nodes.forEach((node) => observer.observe(node));
+    return () => {
+      observer.disconnect();
+      timers.forEach(clearTimeout);
+    };
+  }, [passage]);
+
+  // Re-opening a part-read book drops you back where you stopped, one sentence early for context.
+  useEffect(() => {
+    if (!passage) return;
+    const index = resumeSentenceIndex(getProgressSnapshot(), passage);
+    if (index <= 0) return;
+    const node = sentenceRefs.current[index];
+    if (!node) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    node.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    // Book id only: re-running this on every progress tick would yank the page around mid-read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [passage?.id]);
 
   const grammarPoints = useMemo(
     () => (passage ? passage.grammarHighlightIds.map(getGrammarPoint).filter((g): g is NonNullable<typeof g> => !!g) : []),
@@ -92,13 +170,17 @@ export function ReadingDetail() {
 
   function handleQuizComplete(correct: number, total: number) {
     setResult({ correct, total });
-    markReadingCompleted(passage!.id);
+    finishBook();
     recordQuizResult({ quizId: `reading-${passage!.id}`, skill: 'reading', level: progress.level, correct, total });
   }
 
-  // Extensive reading: finishing a book is the goal, not passing a quiz.
-  function markAsRead() {
-    markReadingCompleted(passage!.id);
+  // Extensive reading: finishing a book is the goal, not passing a quiz. Closing the book also closes
+  // out its position, so any sentences skipped past still count toward the day's words exactly once.
+  function finishBook() {
+    const book = passage!;
+    markReadingCompleted(book.id);
+    recordReadingPosition(book.id, book.sentences.length, book.sentences.length, book.wordCount);
+    furthestRef.current = book.sentences.length;
   }
 
   function copyText() {
@@ -176,8 +258,11 @@ export function ReadingDetail() {
                 </span>
               )}
             </div>
-            <h1 className="mt-3 text-4xl font-bold text-white">{passage.title.en}</h1>
-            <p className="mt-1 text-lg text-white/60">{passage.title.nl}</p>
+            {/* The book's own Japanese title leads — this is a reading page, so the first thing on it
+                should be Japanese. English sits underneath as the gloss. */}
+            <h1 className="jp-text mt-3 text-4xl font-bold text-white">{passage.titleJa}</h1>
+            <p className="mt-1.5 text-lg text-white/70">{passage.title.en}</p>
+            <p className="text-sm text-white/50">{passage.title.nl}</p>
 
             <div className="mt-5 flex flex-wrap gap-2">
               {toggles.map(([key, label]) => {
@@ -232,6 +317,10 @@ export function ReadingDetail() {
                 return (
                   <li
                     key={i}
+                    ref={(node) => {
+                      sentenceRefs.current[i] = node;
+                    }}
+                    data-sentence-index={i}
                     className={`flex items-start gap-4 rounded-2xl border-b border-slate-100 p-4 last:border-b-0 sm:p-5 dark:border-white/[0.06] ${
                       isPlaying ? 'bg-brand-50 ring-1 ring-inset ring-brand-500/40 dark:bg-brand-500/10' : ''
                     }`}
@@ -309,27 +398,42 @@ export function ReadingDetail() {
           </Card>
 
           {/* Finishing the book is the goal — not passing a quiz. */}
-          <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> Finished reading?
-              </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {read
-                  ? `Nice — this book's ${passage.wordCount} words are counted in your total.`
-                  : `Mark it read to add ${passage.wordCount} words to your total.`}
-              </p>
-            </div>
-            {read ? (
-              <span className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200 sm:w-auto dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30">
-                <Check size={16} aria-hidden="true" /> Read
-              </span>
-            ) : (
-              <PrimaryButton onClick={markAsRead} className="w-full shrink-0 sm:w-auto">
+          {read ? (
+            <Card className="flex flex-col items-center gap-4 overflow-hidden p-5 text-center sm:flex-row sm:text-left">
+              <img
+                src="/assets/reading/award.png"
+                alt=""
+                aria-hidden="true"
+                width={128}
+                height={128}
+                className="h-32 w-32 shrink-0 object-contain"
+              />
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Book finished</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  This book’s {passage.wordCount} words are counted in your total — {stats.wordsRead.toLocaleString()}{' '}
+                  across {stats.booksRead} book{stats.booksRead === 1 ? '' : 's'} so far.
+                </p>
+                <span className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30">
+                  <Check size={16} aria-hidden="true" /> Read
+                </span>
+              </div>
+            </Card>
+          ) : (
+            <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+                  <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> Finished reading?
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Mark it read to add {passage.wordCount} words to your total.
+                </p>
+              </div>
+              <PrimaryButton onClick={finishBook} className="w-full shrink-0 sm:w-auto">
                 Mark as read
               </PrimaryButton>
-            )}
-          </Card>
+            </Card>
+          )}
 
           {/* Optional comprehension check — only for books that carry one. */}
           {passage.questions.length > 0 &&

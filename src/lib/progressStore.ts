@@ -39,12 +39,30 @@ export interface ProgressState {
   completedGrammarIds: string[];
   learnedKanjiIds: string[];
   completedReadingIds: string[];
+  /** Where the reader got to in each book, keyed by passage id — powers "Continue reading". */
+  readingPositions: Record<string, ReadingPosition>;
+  /** Japanese words actually read per calendar day (local), keyed yyyy-mm-dd. */
+  readingWordsByDate: Record<string, number>;
   quizResults: QuizResult[];
   /** Best accuracy (0..1) achieved on each roadmap week's checkpoint quiz, keyed by week number. */
   weeklyCheckpoints: Record<number, number>;
   /** Best mock-exam result per JLPT level (kept as best accuracy + attempt count). */
   mockExams: Record<string, MockExamRecord>;
   session: StudySession | null;
+}
+
+/**
+ * How far into one book the reader has actually got.
+ *
+ * `sentencesRead` is a high-water mark, not a cursor: it only ever goes up, so re-opening a book at
+ * the top doesn't wipe out progress, and it's what makes the shelf's per-book percentage a measured
+ * number rather than a decorative one.
+ */
+export interface ReadingPosition {
+  sentencesRead: number;
+  totalSentences: number;
+  /** ISO timestamp of the last time this book was opened — orders the "Continue reading" pick. */
+  lastReadAt: string;
 }
 
 export interface MockExamRecord {
@@ -67,6 +85,8 @@ function defaultState(): ProgressState {
     completedGrammarIds: [],
     learnedKanjiIds: [],
     completedReadingIds: [],
+    readingPositions: {},
+    readingWordsByDate: {},
     quizResults: [],
     weeklyCheckpoints: {},
     mockExams: {},
@@ -196,6 +216,52 @@ export function markReadingCompleted(id: string) {
   setState((s) =>
     s.completedReadingIds.includes(id) ? s : { ...s, completedReadingIds: [...s.completedReadingIds, id] },
   );
+}
+
+/**
+ * Records that the reader has now reached `sentencesRead` of a book's `totalSentences`, and credits
+ * the words in the part they just got through to today's tally.
+ *
+ * Words are credited by the *difference* in the high-water mark, apportioned from the book's authored
+ * word count: reaching sentence 4 of 6 in a 34-word book credits round(34·4/6) − round(34·2/6) for the
+ * two sentences newly reached. Because both ends are rounded from the same curve, finishing a book
+ * always credits exactly its word count — no drift, and no double-counting when a book is re-read.
+ *
+ * A call that doesn't advance the mark still refreshes `lastReadAt`, so simply re-opening a book moves
+ * it to the front of the "Continue reading" queue.
+ */
+export function recordReadingPosition(
+  id: string,
+  sentencesRead: number,
+  totalSentences: number,
+  wordCount: number,
+  date: string = todayIso(),
+) {
+  if (totalSentences <= 0) return;
+  setState((s) => {
+    const previous = s.readingPositions[id];
+    const before = Math.min(previous?.sentencesRead ?? 0, totalSentences);
+    const after = Math.max(before, Math.min(sentencesRead, totalSentences));
+    const wordsGained =
+      Math.round((wordCount * after) / totalSentences) - Math.round((wordCount * before) / totalSentences);
+
+    return {
+      ...s,
+      readingPositions: {
+        ...s.readingPositions,
+        [id]: { sentencesRead: after, totalSentences, lastReadAt: new Date().toISOString() },
+      },
+      readingWordsByDate:
+        wordsGained > 0
+          ? { ...s.readingWordsByDate, [date]: (s.readingWordsByDate[date] ?? 0) + wordsGained }
+          : s.readingWordsByDate,
+    };
+  });
+}
+
+/** Japanese words read today, across every book. */
+export function getReadingWordsToday(s: ProgressState, date: string = todayIso()): number {
+  return s.readingWordsByDate[date] ?? 0;
 }
 
 export function recordQuizResult(result: Omit<QuizResult, 'id' | 'date'>) {

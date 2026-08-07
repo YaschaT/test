@@ -40,6 +40,8 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 11,
     genre: 'Greetings',
     title: { en: 'Hello, Fox!', nl: 'Hallo, Vos!' },
+    titleJa: 'こんにちは、きつねさん！',
+    cover: '/assets/reading/covers/reading-l0-01-hello-fox.webp',
     description: { en: 'A tiny first hello.', nl: 'Een klein eerste hallo.' },
     difficulty: 'easy',
     sentences: [
@@ -67,6 +69,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 11,
     genre: 'Introductions',
     title: { en: 'This is Me', nl: 'Dit ben ik' },
+    titleJa: 'わたしの こと',
     description: { en: 'A first self-introduction.', nl: 'Een eerste voorstelrondje.' },
     difficulty: 'easy',
     sentences: [
@@ -99,6 +102,8 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 21,
     genre: 'Animals',
     title: { en: 'My Cat', nl: 'Mijn Kat' },
+    titleJa: 'ねこの まいにち',
+    cover: '/assets/reading/covers/reading-l0-03-my-cats-day.webp',
     description: { en: 'A little cat named Tama.', nl: 'Een katje dat Tama heet.' },
     difficulty: 'easy',
     sentences: [
@@ -132,6 +137,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 23,
     genre: 'Food',
     title: { en: 'I Like Fruit', nl: 'Ik hou van fruit' },
+    titleJa: 'くだものが すき',
     description: { en: 'Apples and bananas.', nl: 'Appels en bananen.' },
     difficulty: 'easy',
     sentences: [
@@ -171,6 +177,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 18,
     genre: 'Nature',
     title: { en: 'Colors', nl: 'Kleuren' },
+    titleJa: 'いろの はなし',
     description: { en: 'The colors around us.', nl: 'De kleuren om ons heen.' },
     difficulty: 'easy',
     sentences: [
@@ -197,6 +204,8 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 15,
     genre: 'Daily life',
     title: { en: 'Good Morning', nl: 'Goedemorgen' },
+    titleJa: 'おはよう！',
+    cover: '/assets/reading/covers/reading-l0-02-good-morning.webp',
     description: { en: 'A short morning routine.', nl: 'Een korte ochtendroutine.' },
     difficulty: 'easy',
     sentences: [
@@ -225,6 +234,69 @@ export const READINGS_EXTRA: ReadingPassage[] = [
 
   // ─────────────────────────── LEVEL 1 ───────────────────────────
   {
+    id: 'rx-onigiri-picnic',
+    level: 'N5',
+    tadokuLevel: 1,
+    coverEmoji: '🍙',
+    cover: '/assets/reading/covers/reading-l1-01-onigiri-picnic.webp',
+    wordCount: 34,
+    genre: 'Daily life',
+    title: { en: 'The Onigiri Picnic', nl: 'De Onigiri-picknick' },
+    titleJa: 'おにぎりの ピクニック',
+    description: {
+      en: 'Rice balls under the cherry blossoms.',
+      nl: 'Rijstballetjes onder de kersenbloesem.',
+    },
+    difficulty: 'easy',
+    sentences: [
+      rs(
+        [s('今日', 'きょう'), s('は'), s('友達', 'ともだち'), s('と'), s('公園', 'こうえん'), s('へ'), s('行', 'い'), s('きました'), s('。')],
+        'きょうはともだちとこうえんへいきました。',
+        'Kyou wa tomodachi to kouen e ikimashita.',
+        'Today I went to the park with my friend.',
+        'Vandaag ging ik met een vriend(in) naar het park.',
+      ),
+      rs(
+        [s('かばん'), s('の'), s('中', 'なか'), s('に'), s('おにぎり'), s('が'), s('ありました'), s('。')],
+        'かばんのなかにおにぎりがありました。',
+        'Kaban no naka ni onigiri ga arimashita.',
+        'There were rice balls in my bag.',
+        'Er zaten rijstballetjes in mijn tas.',
+      ),
+      rs(
+        [s('さくら'), s('の'), s('木', 'き'), s('の'), s('下', 'した'), s('で'), s('食', 'た'), s('べました'), s('。')],
+        'さくらのきのしたでたべました。',
+        'Sakura no ki no shita de tabemashita.',
+        'We ate under the cherry tree.',
+        'We aten onder de kersenboom.',
+      ),
+      rs(
+        [s('おにぎり'), s('は'), s('とても'), s('おいしかったです'), s('。')],
+        'おにぎりはとてもおいしかったです。',
+        'Onigiri wa totemo oishikatta desu.',
+        'The rice balls were very tasty.',
+        'De rijstballetjes waren heel lekker.',
+      ),
+      rs(
+        [s('友達', 'ともだち'), s('と'), s('お茶', 'おちゃ'), s('を'), s('飲', 'の'), s('みました'), s('。')],
+        'ともだちとおちゃをのみました。',
+        'Tomodachi to ocha wo nomimashita.',
+        'I drank tea with my friend.',
+        'Ik dronk thee met mijn vriend(in).',
+      ),
+      rs(
+        [s('また'), s('ピクニック'), s('を'), s('したいです'), s('。')],
+        'またピクニックをしたいです。',
+        'Mata pikunikku wo shitai desu.',
+        'I want to have a picnic again.',
+        'Ik wil weer een picknick houden.',
+      ),
+    ],
+    vocabHighlightIds: ['v-kyou', 'v-tomodachi', 'v-kouen', 'v-taberu', 'v-ocha', 'v-nomu'],
+    grammarHighlightIds: ['mashita', 'tai'],
+    questions: [],
+  },
+  {
     id: 'rx-family',
     level: 'N5',
     tadokuLevel: 1,
@@ -232,6 +304,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 27,
     genre: 'Family',
     title: { en: 'My Family', nl: 'Mijn Familie' },
+    titleJa: 'わたしの かぞく',
     description: { en: 'Four people at home.', nl: 'Vier mensen thuis.' },
     difficulty: 'easy',
     sentences: [
@@ -283,6 +356,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 20,
     genre: 'Food',
     title: { en: 'Breakfast', nl: 'Ontbijt' },
+    titleJa: 'あさごはんの じかん',
     description: { en: 'What I eat in the morning.', nl: 'Wat ik ’s ochtends eet.' },
     difficulty: 'easy',
     sentences: [
@@ -327,6 +401,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 24,
     genre: 'Daily life',
     title: { en: 'At the Park', nl: 'In het Park' },
+    titleJa: 'こうえんで あそぶ',
     description: { en: 'A fun day outside.', nl: 'Een leuke dag buiten.' },
     difficulty: 'easy',
     sentences: [
@@ -366,6 +441,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 25,
     genre: 'Daily life',
     title: { en: 'Shopping', nl: 'Boodschappen' },
+    titleJa: 'かいものに いきます',
     description: { en: 'A trip to the supermarket.', nl: 'Een tripje naar de supermarkt.' },
     difficulty: 'easy',
     sentences: [
@@ -417,6 +493,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 28,
     genre: 'Daily life',
     title: { en: 'Today’s Weather', nl: 'Het weer van vandaag' },
+    titleJa: 'きょうの てんき',
     description: { en: 'Sun today, rain tomorrow.', nl: 'Zon vandaag, regen morgen.' },
     difficulty: 'easy',
     sentences: [
@@ -452,6 +529,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 33,
     genre: 'Travel',
     title: { en: 'Summer Trip', nl: 'Zomerreisje' },
+    titleJa: '夏の旅行',
     description: { en: 'A day at the sea.', nl: 'Een dag aan zee.' },
     difficulty: 'medium',
     sentences: [
@@ -521,6 +599,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 34,
     genre: 'Food',
     title: { en: 'Making Curry', nl: 'Curry maken' },
+    titleJa: 'カレーを作る',
     description: { en: 'Cooking dinner step by step.', nl: 'Stap voor stap het avondeten koken.' },
     difficulty: 'medium',
     sentences: [
@@ -595,6 +674,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 34,
     genre: 'Friendship',
     title: { en: 'A New Friend', nl: 'Een nieuwe vriend' },
+    titleJa: '新しい友だち',
     description: { en: 'Meeting someone from far away.', nl: 'Iemand van ver ontmoeten.' },
     difficulty: 'medium',
     sentences: [
@@ -658,6 +738,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 33,
     genre: 'Study',
     title: { en: 'A Day at the Library', nl: 'Een dag in de bibliotheek' },
+    titleJa: '図書館の一日',
     description: { en: 'Reading quietly on a Saturday.', nl: 'Rustig lezen op zaterdag.' },
     difficulty: 'medium',
     sentences: [
@@ -732,6 +813,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 30,
     genre: 'Daily life',
     title: { en: 'A Rainy Day', nl: 'Een regenachtige dag' },
+    titleJa: '雨の日',
     description: { en: 'A quiet day indoors.', nl: 'Een rustige dag binnen.' },
     difficulty: 'medium',
     sentences: [
@@ -806,6 +888,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 26,
     genre: 'Travel',
     title: { en: 'Lost at the Station', nl: 'Verdwaald op het station' },
+    titleJa: '駅でまよった',
     description: { en: 'Asking for help politely.', nl: 'Beleefd om hulp vragen.' },
     difficulty: 'medium',
     sentences: [
@@ -882,6 +965,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 42,
     genre: 'Life story',
     title: { en: 'Moving to the City', nl: 'Verhuizen naar de stad' },
+    titleJa: '都会へ引っこす',
     description: { en: 'A big change for a new job.', nl: 'Een grote verandering voor een nieuwe baan.' },
     difficulty: 'hard',
     sentences: [
@@ -956,6 +1040,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 40,
     genre: 'Community',
     title: { en: 'Volunteering', nl: 'Vrijwilligerswerk' },
+    titleJa: 'ボランティアの一日',
     description: { en: 'Cleaning the park together.', nl: 'Samen het park schoonmaken.' },
     difficulty: 'hard',
     sentences: [
@@ -1030,6 +1115,7 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     wordCount: 32,
     genre: 'Health',
     title: { en: 'A New Habit', nl: 'Een nieuwe gewoonte' },
+    titleJa: '新しい習慣',
     description: { en: 'How morning runs changed things.', nl: 'Hoe ochtendrondjes alles veranderden.' },
     difficulty: 'hard',
     sentences: [

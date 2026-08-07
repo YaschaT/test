@@ -23,6 +23,8 @@ export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState
     completedGrammarIds: union(a.completedGrammarIds, b.completedGrammarIds),
     learnedKanjiIds: union(a.learnedKanjiIds, b.learnedKanjiIds),
     completedReadingIds: union(a.completedReadingIds, b.completedReadingIds),
+    readingPositions: mergeReadingPositions(a.readingPositions, b.readingPositions),
+    readingWordsByDate: mergeNumberMap(a.readingWordsByDate, b.readingWordsByDate),
     quizResults: mergeQuizResults(a.quizResults, b.quizResults),
     weeklyCheckpoints: mergeNumberMap(a.weeklyCheckpoints, b.weeklyCheckpoints),
     mockExams: mergeMockExams(a.mockExams, b.mockExams),
@@ -99,6 +101,32 @@ function mergeQuizResults(a: QuizResult[] = [], b: QuizResult[] = []): QuizResul
   const byId = new Map<string, QuizResult>();
   for (const result of [...a, ...b]) byId.set(result.id, result);
   return [...byId.values()].sort((x, y) => x.date.localeCompare(y.date));
+}
+
+/**
+ * Per book, the further-along position wins — reading position is a high-water mark, so the device
+ * that got deeper is right even if the other one opened the book more recently. `lastReadAt` still
+ * takes the later of the two, so "Continue reading" surfaces whatever was genuinely touched last.
+ */
+function mergeReadingPositions(
+  a: ProgressState['readingPositions'] = {},
+  b: ProgressState['readingPositions'] = {},
+): ProgressState['readingPositions'] {
+  const out: ProgressState['readingPositions'] = { ...a };
+  for (const [id, position] of Object.entries(b)) {
+    const existing = out[id];
+    if (!existing) {
+      out[id] = position;
+      continue;
+    }
+    out[id] = {
+      sentencesRead: Math.max(existing.sentencesRead, position.sentencesRead),
+      // A book can be re-authored with more sentences; the larger total is the current one.
+      totalSentences: Math.max(existing.totalSentences, position.totalSentences),
+      lastReadAt: existing.lastReadAt > position.lastReadAt ? existing.lastReadAt : position.lastReadAt,
+    };
+  }
+  return out;
 }
 
 function mergeMockExams(
