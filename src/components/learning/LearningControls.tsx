@@ -1,14 +1,14 @@
 import { Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react';
 import { SegmentedTabs } from '../SegmentedTabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import type { JlptLevel } from '../../types';
 import { playSoftClick } from '../../lib/sound';
 
-const LEVEL_TABS: Array<JlptLevel | 'all'> = ['all', 'N5', 'N4', 'N3'];
-
+/**
+ * Search, category/status filters and the grid/list switch. The JLPT level tabs used to lead this row;
+ * they now live in the page's SectionBanner, in the same top-right corner every section puts them, so
+ * the one control a learner reaches for constantly is never in a different place per screen.
+ */
 interface LearningControlsProps {
-  level: JlptLevel | 'all';
-  onLevelChange: (level: JlptLevel | 'all') => void;
   query: string;
   onQueryChange: (query: string) => void;
   searchPlaceholder: string;
@@ -29,8 +29,6 @@ interface LearningControlsProps {
 }
 
 export function LearningControls({
-  level,
-  onLevelChange,
   query,
   onQueryChange,
   searchPlaceholder,
@@ -45,13 +43,6 @@ export function LearningControls({
 }: LearningControlsProps) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-      <SegmentedTabs
-        value={level}
-        onChange={onLevelChange}
-        className="w-fit"
-        options={LEVEL_TABS.map((l) => ({ value: l, label: l === 'all' ? 'All' : l }))}
-      />
-
       <div className="flex flex-1 flex-wrap gap-3">
         <div className="relative w-full sm:min-w-[220px] sm:max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

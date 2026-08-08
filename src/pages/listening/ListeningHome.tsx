@@ -23,7 +23,7 @@ import { getAutoPlayEnabled, setAutoPlayEnabled } from '../../lib/listeningPrefs
 import { buildDictationPool, buildListeningPool, matchesDictation, shuffle, type ListeningItem } from '../../lib/listeningPool';
 import { recordQuizResult, useProgress } from '../../lib/progressStore';
 import { SKILL_THEME } from '../../lib/skillTheme';
-import type { JlptLevel } from '../../types';
+import { JLPT_LEVELS, type JlptLevel } from '../../types';
 import { XP_RULES } from '../../lib/xp';
 import { playCorrect, playWrong } from '../../lib/sound';
 
@@ -40,6 +40,9 @@ export function ListeningHome() {
   const [speed, setSpeed] = useState<number>(1);
   const [autoPlay, setAutoPlay] = useState<boolean>(() => getAutoPlayEnabled());
   const [sessionKey, setSessionKey] = useState(0);
+  // Which level's sentence pool to draw from. Seeded from the learner's own level, like every other
+  // module page, but changeable — practising a level below your own is how listening gets fluent.
+  const [level, setLevel] = useState<JlptLevel>(progress.level);
   const userChoseVoice = useRef(false);
 
   // Prefer the natural neural voice by default once we know it's available (unless the learner has
@@ -94,6 +97,16 @@ export function ListeningHome() {
           totalAnswered > 0 ? ` \u00b7 ${accuracyPct}% accuracy` : ''
         }`}
         progress={totalAnswered > 0 ? totalCorrect / totalAnswered : 0}
+        levels={
+          <SegmentedTabs
+            value={level}
+            onChange={setLevel}
+            variant="glass"
+            size="sm"
+            groupLabel="Listening level"
+            options={JLPT_LEVELS.map((l) => ({ value: l, label: l }))}
+          />
+        }
         // The exercise below is always live, so this brings the learner to it rather than resetting it —
         // a banner button that silently discarded a half-finished session would be a trap.
         action={{
@@ -142,16 +155,17 @@ export function ListeningHome() {
         </div>
       </div>
 
-      {/* Keyed on the session counter only. Voice is a playback preference, not part of what the session
-          is — keying on it too meant that switching voice mid-session (the most likely reason anyone
-          touches that control) silently threw the learner's answers away and restarted at item 1. */}
+      {/* Keyed on the session counter and the level — the level chooses the sentence pool, so changing it
+          genuinely is a new session. Voice is not in the key: it's a playback preference, not part of what
+          the session is, and keying on it meant that switching voice mid-session (the most likely reason
+          anyone touches that control) silently threw the learner's answers away and restarted at item 1. */}
       {mode === 'select' ? (
         <ListenSelect
-          key={`select-${sessionKey}`}
+          key={`select-${level}-${sessionKey}`}
           speed={speed}
           voiceMode={activeVoiceMode}
           playbackAvailable={playbackAvailable}
-          level={progress.level}
+          level={level}
           autoPlay={autoPlay}
           onAutoPlayChange={handleAutoPlayChange}
           onRestart={() => setSessionKey((k) => k + 1)}
@@ -159,11 +173,11 @@ export function ListeningHome() {
         />
       ) : (
         <Dictation
-          key={`dictation-${sessionKey}`}
+          key={`dictation-${level}-${sessionKey}`}
           speed={speed}
           voiceMode={activeVoiceMode}
           playbackAvailable={playbackAvailable}
-          level={progress.level}
+          level={level}
           autoPlay={autoPlay}
           onAutoPlayChange={handleAutoPlayChange}
           onRestart={() => setSessionKey((k) => k + 1)}

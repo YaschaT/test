@@ -16,6 +16,7 @@ import {
   levelPoints,
 } from '../../lib/grammarPath';
 import type { JlptLevel } from '../../types';
+import { JLPT_LEVELS } from '../../types';
 
 export function GrammarList() {
   const progress = useProgress();
@@ -63,6 +64,16 @@ export function GrammarList() {
         value={completedIds.length}
         detail={`of ${GRAMMAR_POINTS.length} grammar points learned`}
         progress={GRAMMAR_POINTS.length > 0 ? completedIds.length / GRAMMAR_POINTS.length : 0}
+        levels={
+          <SegmentedTabs
+            value={level}
+            onChange={setLevel}
+            variant="glass"
+            size="sm"
+            groupLabel="Grammar level"
+            options={JLPT_LEVELS.map((l) => ({ value: l, label: l }))}
+          />
+        }
         // No CTA here: GrammarContinueCard below carries the identical "Continue lesson" action with the
         // lesson name and an example attached. DESIGN.md's One Button Rule — one primary action per
         // screen — and the richer of the two is the one that keeps it.
@@ -74,13 +85,6 @@ export function GrammarList() {
           list is below.
         </p>
       )}
-
-      <SegmentedTabs
-        value={level}
-        onChange={setLevel}
-        groupLabel="Grammar level"
-        options={(['N5', 'N4', 'N3'] as const).map((l) => ({ value: l, label: l }))}
-      />
 
       <GrammarContinueCard point={currentPoint} onContinue={openLesson} />
 

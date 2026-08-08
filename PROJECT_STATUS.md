@@ -3149,3 +3149,20 @@ hero saying "Continue speaking". Restoring either is one `action` prop.
 Listening's CTA scrolls to the exercise rather than resetting `sessionKey`: the exercise is always live,
 so a banner button that silently discarded a half-finished session would be a trap. Learning Path's
 opens the current week and scrolls to it (`roadmap-week-N` ids added to the week cards).
+
+**Follow-up (same day, user feedback):** three changes to `SectionBanner`.
+
+1. **The N5/N4/N3 toggle now lives in every banner**, top-right, where the Dashboard hero puts it — so
+   the control a learner reaches for constantly is in the same place on every screen. Grammar's tabs
+   moved up out of the page body; Vocabulary's and Kanji's moved out of `LearningControls` (whose level
+   props are gone — that row is now search + filters + layout only); Speaking's scenario filter lifted
+   from `Library` to the hub, and its "N role-plays" line now counts what the filter is showing.
+   Listening gained a real one (it previously hard-used `progress.level`; the pool is per-level, so the
+   session key includes it and changing level starts a fresh session). Learning Path's filters the
+   route by phase — its phases *are* the levels — with consolidation living under "All".
+2. **Taller**: `min-h-40 sm:min-h-44` with more padding, ~206px against the previous ~164px, which is
+   also what makes room for the toggle row.
+3. **The strokes animate in.** The ring already drew itself (RingStat, 1s); now the rule along the
+   bottom edge grows from zero on the first frame, and the hairline along the top sweeps in from the
+   left (`banner-sweep`, inside the `prefers-reduced-motion: no-preference` block like every other
+   keyframe in the app).

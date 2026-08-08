@@ -489,6 +489,21 @@ html {
   .boot-exit {
     animation: boot-exit 620ms cubic-bezier(0.5, 0, 0.2, 1) forwards;
   }
+
+  /* The hairline along a section banner's top edge, drawing itself in from the left on load. Paired with
+     the ring and the bottom rule, which animate from their own zero in JS — three strokes arriving
+     together is what makes the header read as switched on rather than simply present. */
+  @keyframes banner-sweep {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  .banner-sweep {
+    animation: banner-sweep 900ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  }
 }
 
 /* Safety net for every other hover/press transform transition used across the app (card lift, button

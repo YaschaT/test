@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { SectionBanner } from '../../components/learning/SectionBanner';
+import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { LearningControls } from '../../components/learning/LearningControls';
 import { playPrimaryAction } from '../../lib/sound';
 import { KanjiCardGrid } from '../../components/kanji/KanjiCardGrid';
@@ -18,6 +19,10 @@ import {
   type KanjiFilters,
   type KanjiStatus,
 } from '../../lib/kanjiFilter';
+import type { JlptLevel } from '../../types';
+
+/** 'All' first: the deck is browsed whole more often than it is browsed by level. */
+const LEVEL_TABS: Array<JlptLevel | 'all'> = ['all', 'N5', 'N4', 'N3'];
 
 export function KanjiList() {
   const progress = useProgress();
@@ -62,11 +67,19 @@ export function KanjiList() {
         value={stats.learnedCount}
         detail={`of ${stats.totalCount.toLocaleString()} kanji learned`}
         progress={stats.learnedPercent / 100}
+        levels={
+          <SegmentedTabs
+            value={filters.level}
+            onChange={(level) => updateFilters({ level })}
+            variant="glass"
+            size="sm"
+            groupLabel="Kanji level"
+            options={LEVEL_TABS.map((l) => ({ value: l, label: l === 'all' ? 'All' : l }))}
+          />
+        }
         action={ctaLabel ? { label: ctaLabel, to: ctaHref, onClick: () => playPrimaryAction() } : undefined}
       />
       <LearningControls
-        level={filters.level}
-        onLevelChange={(level) => updateFilters({ level })}
         query={filters.query}
         onQueryChange={(query) => updateFilters({ query })}
         searchPlaceholder="Search kanji..."

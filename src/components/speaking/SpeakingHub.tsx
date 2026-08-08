@@ -43,6 +43,9 @@ export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak 
   const next = useMemo(() => pickNextSpeak(progress, level), [progress, level]);
   const open = useMemo(() => listOpenSessions(progress), [progress]);
   const totals = useMemo(() => speakingTotals(progress), [progress]);
+  // Lives here rather than inside Library so the banner can host it, in the same corner every section
+  // puts its level control. It filters the scenario grid; it is not the learner's own JLPT level.
+  const [filter, setFilter] = useState<JlptLevel | 'all'>('all');
 
   return (
     <div className="w-full space-y-6">
@@ -56,6 +59,19 @@ export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak 
           totals.completed > 0 ? ` · ${totals.completed} played through` : ''
         }`}
         progress={totals.completed / totals.total}
+        levels={
+          <SegmentedTabs
+            value={filter}
+            onChange={setFilter}
+            variant="glass"
+            size="sm"
+            groupLabel="Scenario level"
+            options={[
+              { value: 'all' as const, label: 'All' },
+              ...JLPT_LEVELS.map((lvl) => ({ value: lvl, label: lvl })),
+            ]}
+          />
+        }
         // The only banner of the six without a CTA. Kai's pick sits a few hundred pixels below with the
         // same action attached to a named scenario and its opening line — two violet buttons doing the
         // identical thing is worse than one, and the richer one wins.
@@ -82,7 +98,7 @@ export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak 
         <div className="space-y-7">
           {next && <RecommendedHero next={next} level={level} progress={progress} onPick={onPick} speak={speak} onDrill={() => onTabChange('phrases')} />}
           {open.length > 0 && <ContinueSection open={open} onPick={onPick} />}
-          <Library progress={progress} level={level} onPick={onPick} />
+          <Library progress={progress} level={level} filter={filter} onPick={onPick} />
         </div>
       )}
     </div>
@@ -390,13 +406,15 @@ function ContinueSection({
 function Library({
   progress,
   level,
+  filter,
   onPick,
 }: {
   progress: ProgressState;
   level: JlptLevel;
+  /** Owned by the hub, because the control that sets it lives in the banner. */
+  filter: JlptLevel | 'all';
   onPick: (scenario: Scenario) => void;
 }) {
-  const [filter, setFilter] = useState<JlptLevel | 'all'>('all');
   const [expanded, setExpanded] = useState(false);
 
   // Gentlest first, so the six cards shown before "show more" are the six a learner at this level can
@@ -416,25 +434,15 @@ function Library({
 
   return (
     <section aria-labelledby="speaking-library">
-      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 id="speaking-library" className="font-display text-lg font-bold text-slate-900 dark:text-white">
-            Explore scenarios
-          </h2>
-          <p className="text-[13px] text-slate-500 dark:text-slate-400">
-            {SCENARIOS.length} role-plays · Kai stays in character
-          </p>
-        </div>
-        <SegmentedTabs
-          value={filter}
-          onChange={setFilter}
-          size="sm"
-          groupLabel="Scenario level"
-          options={[
-            { value: 'all' as const, label: 'All' },
-            ...JLPT_LEVELS.map((lvl) => ({ value: lvl, label: lvl })),
-          ]}
-        />
+      <div className="mb-3.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 id="speaking-library" className="font-display text-lg font-bold text-slate-900 dark:text-white">
+          Explore scenarios
+        </h2>
+        {/* Counts what the banner's level filter is actually showing, not the whole library — the control
+            is up in the banner now, so this line is the only thing that confirms it did something. */}
+        <p className="text-[13px] text-slate-500 dark:text-slate-400">
+          {visible.length} role-play{visible.length === 1 ? '' : 's'} · Kai stays in character
+        </p>
       </div>
 
       <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fill,minmax(21rem,1fr))]">

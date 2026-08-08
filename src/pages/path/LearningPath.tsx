@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CheckCircle2, Circle, Flag, Lock, ChevronDown } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { SectionBanner } from '../../components/learning/SectionBanner';
+import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { Bilingual } from '../../components/Bilingual';
 import { ROADMAP } from '../../data/roadmap';
 import { evaluateGate, type GateProgress } from '../../lib/roadmapGate';
@@ -9,7 +10,8 @@ import { useProgress } from '../../lib/progressStore';
 import { srsKey } from '../../lib/srs';
 import { hasCheckpoint } from '../../lib/checkpoint';
 import { WeeklyCheckpoint } from '../../components/path/WeeklyCheckpoint';
-import type { RoadmapPhase, RoadmapWeek } from '../../types';
+import type { JlptLevel, RoadmapPhase, RoadmapWeek } from '../../types';
+import { JLPT_LEVELS } from '../../types';
 
 type WeekStatus = 'mastered' | 'current' | 'upcoming';
 
@@ -94,6 +96,11 @@ export function LearningPath() {
   // mastered means the last week is the one still worth revisiting, not a 23rd that doesn't exist.
   const currentWeek = ROADMAP.find((w) => statusOf(w) === 'current')?.week ?? ROADMAP[ROADMAP.length - 1].week;
 
+  // The route's phases *are* the JLPT levels, so the banner's toggle narrows the page to one of them
+  // rather than filtering a list — 22 week cards is a lot to scroll when you only want your own level.
+  // Consolidation lives under "All", which is where a whole-route view belongs.
+  const [phaseFilter, setPhaseFilter] = useState<JlptLevel | 'all'>('all');
+
   function openCurrentWeek() {
     setOpenWeek(currentWeek);
     document.getElementById(`roadmap-week-${currentWeek}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -110,6 +117,19 @@ export function LearningPath() {
         valuePrefix="Week "
         detail={`of ${ROADMAP.length}`}
         progress={currentWeek / ROADMAP.length}
+        levels={
+          <SegmentedTabs
+            value={phaseFilter}
+            onChange={setPhaseFilter}
+            variant="glass"
+            size="sm"
+            groupLabel="Roadmap phase"
+            options={[
+              { value: 'all' as const, label: 'All' },
+              ...JLPT_LEVELS.map((l) => ({ value: l, label: l })),
+            ]}
+          />
+        }
         action={{ label: `Continue week ${currentWeek}`, onClick: openCurrentWeek }}
       />
 
@@ -140,7 +160,7 @@ export function LearningPath() {
         </p>
       </Card>
 
-      {PHASE_ORDER.map((phase) => (
+      {PHASE_ORDER.filter((p) => phaseFilter === 'all' || p === phaseFilter).map((phase) => (
         <section key={phase} className="space-y-3">
           <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">{PHASE_LABEL[phase]}</h2>
           {/* Two weeks abreast from xl, three on a very wide display so the cards stay a readable width

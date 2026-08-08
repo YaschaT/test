@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { SectionBanner } from '../../components/learning/SectionBanner';
+import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { LearningControls } from '../../components/learning/LearningControls';
 import { playPrimaryAction } from '../../lib/sound';
 import { VocabularyCardGrid } from '../../components/vocabulary/VocabularyCardGrid';
@@ -12,6 +13,9 @@ import { buildReviewQueue } from '../../lib/reviewQueue';
 import { getLearningStats } from '../../lib/learningState';
 import { SKILL_THEME } from '../../lib/skillTheme';
 import type { JlptLevel } from '../../types';
+
+/** 'All' first: the deck is browsed whole more often than it is browsed by level. */
+const LEVEL_TABS: Array<JlptLevel | 'all'> = ['all', 'N5', 'N4', 'N3'];
 
 export function VocabularyHome() {
   const progress = useProgress();
@@ -61,13 +65,21 @@ export function VocabularyHome() {
         value={stats.learnedCount}
         detail={`of ${stats.totalCount.toLocaleString()} words learned`}
         progress={stats.learnedPercent / 100}
+        levels={
+          <SegmentedTabs
+            value={level}
+            onChange={changeLevel}
+            variant="glass"
+            size="sm"
+            groupLabel="Vocabulary level"
+            options={LEVEL_TABS.map((l) => ({ value: l, label: l === 'all' ? 'All' : l }))}
+          />
+        }
         action={
           ctaLabel ? { label: ctaLabel, to: '/vocabulary/review', onClick: () => playPrimaryAction() } : undefined
         }
       />
       <LearningControls
-        level={level}
-        onLevelChange={changeLevel}
         query={query}
         onQueryChange={setQuery}
         searchPlaceholder="Search vocabulary..."
