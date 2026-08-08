@@ -11,7 +11,7 @@ interface SpeechRecognitionAlternative {
   transcript: string;
 }
 interface SpeechRecognitionResult {
-  0: SpeechRecognitionAlternative;
+  [i: number]: SpeechRecognitionAlternative;
   isFinal: boolean;
   length: number;
 }
@@ -23,6 +23,7 @@ interface SpeechRecognitionLike {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
+  maxAlternatives: number;
   start(): void;
   stop(): void;
   abort(): void;
@@ -48,6 +49,13 @@ export interface SpeechRecognitionState {
   transcript: string;
   /** In-progress words not yet finalised. */
   interim: string;
+  /**
+   * Every guess the recogniser offered this session — each final result's alternatives, plus the
+   * interim strings it passed through. Pronunciation scoring reads this rather than `transcript`:
+   * the top guess is often converted to kanji, while an earlier alternative or the interim text is
+   * still the kana the learner actually said. See pronunciation.ts.
+   */
+  hypotheses: string[];
   error: string | null;
   start: () => void;
   stop: () => void;
@@ -59,6 +67,7 @@ export function useSpeechRecognition(lang = 'ja-JP'): SpeechRecognitionState {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [interim, setInterim] = useState('');
+  const [hypotheses, setHypotheses] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
@@ -69,17 +78,27 @@ export function useSpeechRecognition(lang = 'ja-JP'): SpeechRecognitionState {
     recognition.lang = lang;
     recognition.continuous = true;
     recognition.interimResults = true;
+    // Costs nothing when unused (the chat only ever reads alternative 0) and gives the phrase drill
+    // the runners-up, which are frequently the closer match to a kana-written line.
+    recognition.maxAlternatives = 4;
 
     recognition.onresult = (e) => {
       let finalText = '';
       let interimText = '';
+      const guesses: string[] = [];
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const result = e.results[i];
         if (result.isFinal) finalText += result[0].transcript;
         else interimText += result[0].transcript;
+        for (let alt = 0; alt < result.length; alt++) {
+          const guess = result[alt]?.transcript;
+          if (guess) guesses.push(guess);
+        }
       }
       if (finalText) setTranscript((prev) => prev + finalText);
       setInterim(interimText);
+      // Deduped rather than appended blindly: interim results repeat the same prefix on every event.
+      if (guesses.length) setHypotheses((prev) => [...new Set([...prev, ...guesses])]);
     };
     recognition.onerror = (e) => {
       // "no-speech"/"aborted" are routine when the user pauses or stops; don't surface those.
@@ -116,6 +135,7 @@ export function useSpeechRecognition(lang = 'ja-JP'): SpeechRecognitionState {
     setError(null);
     setTranscript('');
     setInterim('');
+    setHypotheses([]);
     try {
       recognition.start();
       setListening(true);
@@ -132,8 +152,9 @@ export function useSpeechRecognition(lang = 'ja-JP'): SpeechRecognitionState {
   const reset = useCallback(() => {
     setTranscript('');
     setInterim('');
+    setHypotheses([]);
     setError(null);
   }, []);
 
-  return { supported, listening, transcript, interim, error, start, stop, reset };
+  return { supported, listening, transcript, interim, hypotheses, error, start, stop, reset };
 }

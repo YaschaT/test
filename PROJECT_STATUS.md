@@ -3040,3 +3040,40 @@ by glob so a renamed artwork fails the suite, Japanese titles script-checked, wo
 the resume/suggest picker). Verified in-browser at both themes, mobile + desktop, zero console errors:
 reading two sentences of a 37-word book showed 40% and 15 words, then finishing it moved the tally to
 exactly +11. Deployed (commit 2972d5a).
+
+### Speaking redesign — Kai's pick, resumable role-plays, scored phrase drill (2026-08-08)
+
+Applied the `Speaking with Kai.dc.html` design import to `/speaking`. The mockup's landing page is a
+hero built around one recommended scenario, a "pick up where you stopped" list, and a filtered library
+of the 20 role-plays — none of which had data behind it, so the data was built rather than mocked.
+
+**Progress (synced, in `ProgressState` with merge rules in `progressMerge.ts`):** `speakingSessions`
+(turns as a high-water mark per scenario, latching `completed` at the scenario's turn goal, plus Kai's
+last line), `phraseScores` (best match per phrase, max-merged) and `speakingTurnsByDate` (feeds the
+"spoke N of the last 7 days" strip; credited by the *difference* in turns so re-opening a scenario
+can't inflate it). A turn is recorded on Kai's **reply**, not on send — a message that never got an
+answer shouldn't move the scenario forward. Selectors live in `src/lib/speakingProgress.ts`
+(`pickNextSpeak` — an unfinished conversation always beats a new suggestion; `scenarioState`,
+`weakestPhrase`, `agoLabel`).
+
+**Transcripts** (`src/lib/speakingTranscripts.ts`) are local-only and deliberately *not* synced: what's
+learned belongs on every device, a chat log doesn't. Opening a scenario restores its thread, so
+"resume" reopens the actual conversation; "Restart" clears both the thread and the turn count.
+
+**Scenario data** (`src/data/scenarios.ts`): all 20 gained `level` (N5×9 / N4×9 / N3×2), `difficulty`
+(1–3, the card's dots), `minutes`, `turnGoal` and `phraseCategory` — the last links a role-play to the
+set phrases it actually uses, which is what the Phrases tab's drill offers.
+
+**Pronunciation scoring** (`src/lib/pronunciation.ts` + tests): the Phrases tab records an attempt and
+scores it against the line. It's a *match* score, not a phoneme grade — the browser gives text, not
+audio — so every attempt shows what was heard next to the number. Two things keep it fair:
+`useSpeechRecognition` now collects **all** hypotheses (`maxAlternatives = 4` plus interim strings,
+which are often still kana before the recogniser converts to kanji), and each is scored against both
+the phrase's written form and its kana reading. A phrase with no attempt shows an empty bar and "—"
+rather than an invented number.
+
+**Copy that couldn't be backed was replaced, not kept:** the mockup's "Kai noticed you hesitate on
+counters" became the learner's actual lowest-scoring recorded phrase (and, with nothing recorded yet,
+a count of the set phrases this role-play uses). The week strip and the "pick up where you stopped"
+list render only once they have something real in them. The old setup/on-device banners collapsed into
+one `EngineNote` chip that folds away when Kai is working and opens itself when he isn't.

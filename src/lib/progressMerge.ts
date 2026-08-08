@@ -25,6 +25,9 @@ export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState
     completedReadingIds: union(a.completedReadingIds, b.completedReadingIds),
     readingPositions: mergeReadingPositions(a.readingPositions, b.readingPositions),
     readingWordsByDate: mergeNumberMap(a.readingWordsByDate, b.readingWordsByDate),
+    speakingSessions: mergeSpeakingSessions(a.speakingSessions, b.speakingSessions),
+    phraseScores: mergeNumberMap(a.phraseScores, b.phraseScores),
+    speakingTurnsByDate: mergeNumberMap(a.speakingTurnsByDate, b.speakingTurnsByDate),
     quizResults: mergeQuizResults(a.quizResults, b.quizResults),
     weeklyCheckpoints: mergeNumberMap(a.weeklyCheckpoints, b.weeklyCheckpoints),
     mockExams: mergeMockExams(a.mockExams, b.mockExams),
@@ -124,6 +127,35 @@ function mergeReadingPositions(
       // A book can be re-authored with more sentences; the larger total is the current one.
       totalSentences: Math.max(existing.totalSentences, position.totalSentences),
       lastReadAt: existing.lastReadAt > position.lastReadAt ? existing.lastReadAt : position.lastReadAt,
+    };
+  }
+  return out;
+}
+
+/**
+ * Per scenario, the device that got further owns the turn count, and finishing it anywhere counts as
+ * finished. `lastLine` has to come from whichever copy was touched last, though — pairing the newest
+ * line with an older device's turn count would put the wrong sentence on the "pick up where you
+ * stopped" card.
+ */
+function mergeSpeakingSessions(
+  a: ProgressState['speakingSessions'] = {},
+  b: ProgressState['speakingSessions'] = {},
+): ProgressState['speakingSessions'] {
+  const out: ProgressState['speakingSessions'] = { ...a };
+  for (const [id, session] of Object.entries(b)) {
+    const existing = out[id];
+    if (!existing) {
+      out[id] = session;
+      continue;
+    }
+    const newer = existing.updatedAt >= session.updatedAt ? existing : session;
+    out[id] = {
+      turns: Math.max(existing.turns, session.turns),
+      turnGoal: Math.max(existing.turnGoal, session.turnGoal),
+      completed: existing.completed || session.completed,
+      lastLine: newer.lastLine,
+      updatedAt: newer.updatedAt,
     };
   }
   return out;

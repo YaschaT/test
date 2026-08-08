@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Mic, Send, Volume2, Loader2, RotateCcw, Sparkles, Info, ChevronLeft, Cpu } from 'lucide-react';
+import { Mic, Send, Volume2, Loader2, RotateCcw, Sparkles, ChevronLeft } from 'lucide-react';
 import { Card } from '../../components/Card';
 import { AiCore } from '../../components/speaking/AiCore';
-import { Phrasebook } from '../../components/speaking/Phrasebook';
+import { EngineNote, type SpeakingEngine } from '../../components/speaking/EngineNote';
+import { SpeakingHub } from '../../components/speaking/SpeakingHub';
 import { useSpeechRecognition } from '../../lib/speech';
 import {
   getCompanionStatus,
@@ -15,8 +16,9 @@ import { isWebGpuAvailable, browserAiReply, type LoadProgress } from '../../lib/
 import { COMPANION_SYSTEM } from '../../lib/companionPrompt';
 import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
 import { getNeuralTtsStatus, playNeural, type NeuralVoice } from '../../lib/tts/neuralTts';
-import { SCENARIOS, type Scenario } from '../../data/scenarios';
-import { MASCOTS, MASCOT_BANNER_SIZE } from '../../lib/mascots';
+import { type Scenario } from '../../data/scenarios';
+import { recordSpeakingTurn, resetSpeakingSession, useProgress } from '../../lib/progressStore';
+import { clearTranscript, loadTranscript, saveTranscript } from '../../lib/speakingTranscripts';
 
 type Msg =
   | { id: string; role: 'user'; text: string }
@@ -30,12 +32,9 @@ function openingReply(scenario: Scenario): CompanionReply {
   return { ...scenario.opening, feedback: '' };
 }
 
-// 'cloud' = a provider key is set on the host (fast, best); 'browser' = no key but WebGPU is available,
-// so Kai runs on-device; 'none' = no key and no WebGPU, so we show setup guidance. null = still checking.
-type Engine = 'cloud' | 'browser' | 'none' | null;
-
 export function SpeakingPage() {
-  const [engine, setEngine] = useState<Engine>(null);
+  const progress = useProgress();
+  const [engine, setEngine] = useState<SpeakingEngine>(null);
   const [modelProgress, setModelProgress] = useState<LoadProgress | null>(null);
   const [modelReady, setModelReady] = useState(false);
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -80,9 +79,18 @@ export function SpeakingPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
 
+  // Kept on every change rather than on leaving the page: a refresh mid-conversation is exactly when
+  // losing the thread hurts most.
+  useEffect(() => {
+    if (scenario) saveTranscript(scenario.id, messages);
+  }, [scenario, messages]);
+
+  // Opening a scenario restores the thread it was left on, so "pick up where you stopped" reopens the
+  // actual conversation rather than replaying Kai's first line at someone mid-role-play.
   function pick(s: Scenario) {
+    const stored = loadTranscript(s.id);
     setScenario(s);
-    setMessages([{ id: newId(), role: 'companion', reply: openingReply(s) }]);
+    setMessages(stored.length ? stored : [{ id: newId(), role: 'companion', reply: openingReply(s) }]);
     setDraft('');
     setError(null);
   }
@@ -98,6 +106,10 @@ export function SpeakingPage() {
   function restart() {
     if (!scenario) return;
     if (speech.listening) speech.stop();
+    // A restart is a real do-over: the thread and the turn count both go, so the scenario card stops
+    // claiming progress that no longer has a conversation behind it.
+    clearTranscript(scenario.id);
+    resetSpeakingSession(scenario.id);
     setMessages([{ id: newId(), role: 'companion', reply: openingReply(scenario) }]);
     setDraft('');
     setError(null);
@@ -130,6 +142,14 @@ export function SpeakingPage() {
       }
       setMessages((m) => [...m, { id: newId(), role: 'companion', reply }]);
       speak(reply.ja);
+      // Counted on Kai's answer, not on hitting send: a turn is an exchange, and a message that never
+      // got a reply (offline, model still loading) shouldn't move the scenario forward.
+      recordSpeakingTurn(
+        scenario.id,
+        next.filter((m) => m.role === 'user').length,
+        scenario.turnGoal,
+        reply.ja,
+      );
     } catch (e) {
       // A cloud key that vanished mid-session → re-route to on-device if we can, else show setup.
       if (e instanceof CompanionError && e.message === 'not_configured') {
@@ -150,169 +170,26 @@ export function SpeakingPage() {
     ? `${draft}${draft ? ' ' : ''}${speech.transcript}${speech.interim}`.trim()
     : draft;
 
-  const codeChip = 'rounded bg-slate-100 dark:bg-slate-800 px-1';
-  // Shown only when there's no cloud key AND no WebGPU (so on-device isn't possible either).
-  const notConfiguredCard = engine === 'none' && (
-    <Card className="p-4 flex gap-3">
-      <Info size={18} className="text-brand-500 shrink-0 mt-0.5" />
-      <div className="text-sm">
-        <p className="font-semibold text-slate-800 dark:text-slate-100">Turn on Kai (the AI companion) — free</p>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Your browser doesn’t support on-device AI (WebGPU). Open this in <span className="font-medium text-slate-700 dark:text-slate-200">Chrome or Edge</span> to
-          chat with Kai privately with no setup — or add a free cloud key:
-        </p>
-        {import.meta.env.PROD ? (
-          <>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Kai needs a cloud AI key on your host. <span className="font-medium text-slate-700 dark:text-slate-200">Groq</span> is
-              free, needs no credit card, and works in Europe:
-            </p>
-            <ol className="text-slate-500 dark:text-slate-400 mt-1.5 space-y-1 list-decimal list-inside">
-              <li>Get a free key at <span className="font-medium text-slate-700 dark:text-slate-200">console.groq.com/keys</span>.</li>
-              <li>
-                In Vercel → your project → <span className="font-medium text-slate-700 dark:text-slate-200">Settings → Environment Variables</span>,
-                add <code className={codeChip}>GROQ_API_KEY</code> = your key (and <code className={codeChip}>AI_PROVIDER=groq</code>).
-              </li>
-              <li>Redeploy (Deployments → ⋯ → Redeploy).</li>
-            </ol>
-            <p className="text-slate-400 mt-1.5 text-xs">
-              Gemini’s free tier is 0 quota in the EEA and Ollama can’t run on Vercel — use Groq. The key stays server-side, never sent to the browser.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Pick one in your <code className={codeChip}>.env</code> file, then restart with <code className={codeChip}>npm run dev</code>:
-            </p>
-            <ul className="text-slate-500 dark:text-slate-400 mt-1.5 space-y-1 list-disc list-inside">
-              <li>
-                <span className="font-medium text-slate-700 dark:text-slate-200">Groq (free, no card, works in Europe):</span>{' '}
-                get a key at console.groq.com/keys → set <code className={codeChip}>GROQ_API_KEY</code> and{' '}
-                <code className={codeChip}>AI_PROVIDER=groq</code>.
-              </li>
-              <li>
-                <span className="font-medium text-slate-700 dark:text-slate-200">Ollama (free, local, no key):</span>{' '}
-                install from ollama.com, run <code className={codeChip}>ollama pull qwen2.5</code>, set <code className={codeChip}>AI_PROVIDER=ollama</code>.
-              </li>
-            </ul>
-            <p className="text-slate-400 mt-1.5 text-xs">Everything stays on your machine/server — keys are never sent to the browser.</p>
-          </>
-        )}
-      </div>
-    </Card>
-  );
-
   const pct = modelProgress ? Math.round(modelProgress.progress * 100) : 0;
 
-  // On-device mode: shown until the model has produced its first reply this session.
-  const browserModeBanner = engine === 'browser' && !modelReady && (
-    <Card className="p-4 flex gap-3">
-      <Cpu size={18} className="text-brand-500 shrink-0 mt-0.5" />
-      <div className="text-sm flex-1 min-w-0">
-        <p className="font-semibold text-slate-800 dark:text-slate-100">Kai runs on your device — private &amp; free</p>
-        {modelProgress ? (
-          <>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 truncate">{modelProgress.text || 'Preparing Kai…'}</p>
-            <div className="mt-2 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <div className="h-full rounded-full bg-brand-500 transition-[width] duration-300" style={{ width: `${pct}%` }} />
-            </div>
-            <p className="text-xs text-slate-400 mt-1 tabular-nums">{pct}% — one-time download</p>
-          </>
-        ) : (
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            No API key needed. Your first message downloads Kai’s model once (~1&nbsp;GB), then it runs locally and works
-            offline. Replies are a bit slower than the cloud.
-          </p>
-        )}
-      </div>
-    </Card>
+  // Where Kai is running — a chip until the learner asks, and the on-device model's download progress
+  // while the first reply is being prepared. EngineNote also carries the setup steps when there's no
+  // engine at all, which is why it opens itself in that case.
+  const engineNote = (
+    <EngineNote engine={engine} progress={engine === 'browser' && !modelReady ? modelProgress : null} />
   );
 
-  const aiBanners = (notConfiguredCard || browserModeBanner) && (
-    <div className="space-y-3">
-      {notConfiguredCard}
-      {browserModeBanner}
-    </div>
-  );
-
-  // ── Scenario picker ──
+  // ── Hub: Kai's pick, unfinished conversations, the scenario library, and the phrase drill ──
   if (!scenario) {
     return (
-      <div className="flex flex-1 flex-col gap-5">
-        <header className="flex items-center gap-4">
-          {/* Page identity uses the Speaking mascot like every other section; AiCore stays as Kai's
-              own avatar inside the live conversation below. */}
-          <img
-            src={MASCOTS.speaking}
-            alt=""
-            aria-hidden="true"
-            width={MASCOT_BANNER_SIZE}
-            height={MASCOT_BANNER_SIZE}
-            style={{ width: MASCOT_BANNER_SIZE, height: MASCOT_BANNER_SIZE }}
-            className="shrink-0 object-contain"
-          />
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Speaking with Kai</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-              Have a spoken conversation with Kai, or practise real phrases out loud — no multiple choice.
-            </p>
-          </div>
-        </header>
-
-        <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-sm font-medium">
-          <button
-            type="button"
-            onClick={() => setTab('chat')}
-            className={`px-4 py-1.5 rounded-lg transition-colors ${
-              tab === 'chat' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            Conversations
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('phrases')}
-            className={`px-4 py-1.5 rounded-lg transition-colors ${
-              tab === 'phrases' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            Phrases
-          </button>
-        </div>
-
-        {tab === 'phrases' ? (
-          <>
-            <p className="max-w-3xl text-sm text-slate-500 dark:text-slate-400">
-              Tap a phrase to hear it and shadow the pronunciation. Turn on <em>Say it first</em> to hide the
-              Japanese and produce it from the meaning before revealing. Works offline — no AI key needed.
-            </p>
-            <Phrasebook />
-          </>
-        ) : (
-          <>
-            {aiBanners}
-
-            {/* Auto-fill so a wide window gets more scenarios per row rather than six very wide ones,
-                and `auto-rows-fr` + `flex-1` so the rows share the height the header leaves. */}
-            <div className="grid flex-1 auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fill,minmax(21rem,1fr))]">
-              {SCENARIOS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => pick(s)}
-                  className="text-left rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 hover:border-brand-400 hover:shadow-sm transition-colors"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl" aria-hidden="true">{s.emoji}</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">{s.title.en}</span>
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">{s.blurb.en}</p>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      <SpeakingHub
+        progress={progress}
+        engine={engine}
+        tab={tab}
+        onTabChange={setTab}
+        onPick={pick}
+        speak={speak}
+      />
     );
   }
 
@@ -394,7 +271,7 @@ export function SpeakingPage() {
           </button>
         </div>
 
-        {aiBanners && <div className="mb-3 lg:hidden">{aiBanners}</div>}
+        <div className="mb-3 lg:hidden">{engineNote}</div>
 
         <div className="mb-2 space-y-2 lg:hidden">{conversationControls}</div>
 
@@ -495,7 +372,7 @@ export function SpeakingPage() {
 
       {/* Conversation rail (lg+) */}
       <aside className="sticky top-8 hidden space-y-4 lg:block">
-        {aiBanners}
+        {engineNote}
         <Card className="p-4 space-y-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Scenario</p>

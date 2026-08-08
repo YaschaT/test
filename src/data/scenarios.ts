@@ -19,11 +19,35 @@ export interface ScenarioLine {
   en: string;
 }
 
+/** Mirrors the app's `JlptLevel`, declared locally so this module stays import-free (see above). */
+export type ScenarioLevel = 'N5' | 'N4' | 'N3';
+
+/** 1 = warm-up, 2 = steady, 3 = stretch. Drives the three dots on a scenario card. */
+export type ScenarioDifficulty = 1 | 2 | 3;
+
+export const DIFFICULTY_LABELS: Record<ScenarioDifficulty, string> = {
+  1: 'Warm-up',
+  2: 'Steady',
+  3: 'Stretch',
+};
+
 export interface Scenario {
   id: string;
   emoji: string;
   title: LocalizedText;
   blurb: LocalizedText;
+  /** The JLPT level this role-play is pitched at — the Speaking library's filter. */
+  level: ScenarioLevel;
+  difficulty: ScenarioDifficulty;
+  /** Rough length of a full run-through, in minutes. */
+  minutes: number;
+  /** Learner turns that count as having played the scenario through. */
+  turnGoal: number;
+  /**
+   * The phrase-bank category holding the set phrases this role-play actually uses, so the Phrases tab
+   * can offer the lines you're about to need rather than a generic list.
+   */
+  phraseCategory: string;
   /** Kai's opening line, in role. */
   opening: ScenarioLine;
   /** Extra instructions appended to Kai's system prompt. Empty for open-ended chat. */
@@ -36,6 +60,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '💬',
     title: { en: 'Free conversation', nl: 'Vrij gesprek' },
     blurb: { en: 'Just chat about anything with Kai.', nl: 'Praat over van alles met Kai.' },
+    level: 'N5',
+    difficulty: 1,
+    minutes: 5,
+    turnGoal: 6,
+    phraseCategory: 'Reactions',
     opening: {
       ja: 'こんにちは。わたしはカイです。きょうはなにをしましたか？',
       kana: 'こんにちは。わたしはかいです。きょうはなにをしましたか？',
@@ -49,6 +78,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🍜',
     title: { en: 'Ordering at a restaurant', nl: 'Bestellen in een restaurant' },
     blurb: { en: 'Order food, ask about the menu, and pay.', nl: 'Eten bestellen, naar het menu vragen en betalen.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 11,
+    turnGoal: 10,
+    phraseCategory: 'Shopping & eating',
     opening: {
       ja: 'いらっしゃいませ！ごちゅうもんはおきまりですか？',
       kana: 'いらっしゃいませ！ごちゅうもんはおきまりですか？',
@@ -63,6 +97,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🎫',
     title: { en: 'Buying a train ticket', nl: 'Een treinkaartje kopen' },
     blurb: { en: 'Buy a ticket and ask about times and platforms.', nl: 'Een kaartje kopen en naar tijden en perrons vragen.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 9,
+    turnGoal: 10,
+    phraseCategory: 'Asking & clarifying',
     opening: {
       ja: 'いらっしゃいませ。どちらまでですか？',
       kana: 'いらっしゃいませ。どちらまでですか？',
@@ -77,6 +116,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🛍️',
     title: { en: 'Shopping at a store', nl: 'Winkelen in een winkel' },
     blurb: { en: 'Ask for sizes, colours and prices, then buy.', nl: 'Vraag naar maten, kleuren en prijzen en koop iets.' },
+    level: 'N5',
+    difficulty: 2,
+    minutes: 8,
+    turnGoal: 8,
+    phraseCategory: 'Shopping & eating',
     opening: {
       ja: 'いらっしゃいませ。なにかおさがしですか？',
       kana: 'いらっしゃいませ。なにかおさがしですか？',
@@ -91,6 +135,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '☕',
     title: { en: 'Ordering at a café', nl: 'Bestellen in een café' },
     blurb: { en: 'Order a drink, for here or to go.', nl: 'Bestel een drankje, hier of om mee te nemen.' },
+    level: 'N5',
+    difficulty: 2,
+    minutes: 7,
+    turnGoal: 8,
+    phraseCategory: 'Shopping & eating',
     opening: {
       ja: 'いらっしゃいませ。おのみものはなにになさいますか？',
       kana: 'いらっしゃいませ。おのみものはなにになさいますか？',
@@ -105,6 +154,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🎒',
     title: { en: 'Talking in class', nl: 'Praten in de les' },
     blurb: { en: 'Chat with a classmate before/after class.', nl: 'Kletsen met een klasgenoot voor/na de les.' },
+    level: 'N5',
+    difficulty: 2,
+    minutes: 9,
+    turnGoal: 8,
+    phraseCategory: 'Plans & encouragement',
     opening: {
       ja: 'おはよう！きょうのじゅぎょう、むずかしそうだね。',
       kana: 'おはよう！きょうのじゅぎょう、むずかしそうだね。',
@@ -119,6 +173,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🗺️',
     title: { en: 'Asking for directions', nl: 'De weg vragen' },
     blurb: { en: 'Ask how to get somewhere in town.', nl: 'Vraag hoe je ergens in de stad komt.' },
+    level: 'N5',
+    difficulty: 2,
+    minutes: 8,
+    turnGoal: 8,
+    phraseCategory: 'Asking & clarifying',
     opening: {
       ja: 'はい、どうしましたか？',
       kana: 'はい、どうしましたか？',
@@ -133,6 +192,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🏨',
     title: { en: 'Checking into a hotel', nl: 'Inchecken in een hotel' },
     blurb: { en: 'Check in, ask about breakfast and Wi-Fi.', nl: 'Inchecken en vragen naar ontbijt en wifi.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 10,
+    turnGoal: 10,
+    phraseCategory: 'Asking & clarifying',
     opening: {
       ja: 'いらっしゃいませ。チェックインでございますか？',
       kana: 'いらっしゃいませ。ちぇっくいんでございますか？',
@@ -147,6 +211,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🏥',
     title: { en: 'At the clinic', nl: 'Bij de dokter' },
     blurb: { en: 'Describe symptoms to a doctor.', nl: 'Beschrijf klachten aan een dokter.' },
+    level: 'N3',
+    difficulty: 3,
+    minutes: 11,
+    turnGoal: 12,
+    phraseCategory: 'Asking & clarifying',
     opening: {
       ja: 'こんにちは。きょうはどうされましたか？',
       kana: 'こんにちは。きょうはどうされましたか？',
@@ -161,6 +230,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🤝',
     title: { en: 'Making a new friend', nl: 'Een nieuwe vriend maken' },
     blurb: { en: 'Introduce yourself and get to know someone.', nl: 'Stel jezelf voor en leer iemand kennen.' },
+    level: 'N5',
+    difficulty: 1,
+    minutes: 5,
+    turnGoal: 6,
+    phraseCategory: 'Greetings',
     opening: {
       ja: 'はじめまして！わたし、あたらしくここにきたんです。おなまえは？',
       kana: 'はじめまして！わたし、あたらしくここにきたんです。おなまえは？',
@@ -175,6 +249,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '📞',
     title: { en: 'A phone call with a friend', nl: 'Bellen met een vriend' },
     blurb: { en: 'Catch up and make weekend plans.', nl: 'Bijpraten en weekendplannen maken.' },
+    level: 'N4',
+    difficulty: 2,
+    minutes: 8,
+    turnGoal: 10,
+    phraseCategory: 'Plans & encouragement',
     opening: {
       ja: 'もしもし！ひさしぶり！げんき？こんどのしゅうまつ、ひまある？',
       kana: 'もしもし！ひさしぶり！げんき？こんどのしゅうまつ、ひまある？',
@@ -189,6 +268,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🏪',
     title: { en: 'At the convenience store', nl: 'In de buurtwinkel' },
     blurb: { en: 'Pay, and handle the little questions at the register.', nl: 'Afrekenen en de kleine vragen aan de kassa.' },
+    level: 'N5',
+    difficulty: 1,
+    minutes: 6,
+    turnGoal: 8,
+    phraseCategory: 'Shopping & eating',
     opening: {
       ja: 'いらっしゃいませ。おべんとう、あたためますか？',
       kana: 'いらっしゃいませ。おべんとう、あたためますか？',
@@ -203,6 +287,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '💊',
     title: { en: 'At the pharmacy', nl: 'Bij de apotheek' },
     blurb: { en: 'Describe a symptom and get the right medicine.', nl: 'Beschrijf een klacht en krijg het juiste medicijn.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 9,
+    turnGoal: 10,
+    phraseCategory: 'Asking & clarifying',
     opening: {
       ja: 'いらっしゃいませ。どうされましたか？',
       kana: 'いらっしゃいませ。どうされましたか？',
@@ -217,6 +306,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '📮',
     title: { en: 'At the post office', nl: 'Bij het postkantoor' },
     blurb: { en: 'Send a letter or parcel abroad.', nl: 'Een brief of pakket naar het buitenland sturen.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 8,
+    turnGoal: 10,
+    phraseCategory: 'Asking & clarifying',
     opening: {
       ja: 'いらっしゃいませ。きょうはどんなごようですか？',
       kana: 'いらっしゃいませ。きょうはどんなごようですか？',
@@ -231,6 +325,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🍶',
     title: { en: 'Drinks with friends', nl: 'Borrelen met vrienden' },
     blurb: { en: 'Relax at an izakaya after work — casual speech.', nl: 'Ontspannen in een izakaya na het werk — informeel.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 10,
+    turnGoal: 10,
+    phraseCategory: 'Thanks & manners',
     opening: {
       ja: 'おつかれさま！とりあえずビールでいい？なにたべたい？',
       kana: 'おつかれさま！とりあえずビールでいい？なにたべたい？',
@@ -245,6 +344,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🎨',
     title: { en: 'Talking about hobbies', nl: "Praten over hobby's" },
     blurb: { en: 'Share what you like and find things in common.', nl: 'Deel wat je leuk vindt en vind overeenkomsten.' },
+    level: 'N5',
+    difficulty: 2,
+    minutes: 8,
+    turnGoal: 8,
+    phraseCategory: 'Reactions',
     opening: {
       ja: 'ねえ、しゅみはなに？わたしはえいががすきなんだ。',
       kana: 'ねえ、しゅみはなに？わたしはえいががすきなんだ。',
@@ -259,6 +363,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '💼',
     title: { en: 'A part-time job interview', nl: 'Sollicitatie voor een bijbaan' },
     blurb: { en: 'Introduce yourself and talk about availability.', nl: 'Stel jezelf voor en bespreek je beschikbaarheid.' },
+    level: 'N3',
+    difficulty: 3,
+    minutes: 12,
+    turnGoal: 12,
+    phraseCategory: 'Greetings',
     opening: {
       ja: 'どうぞおかけください。では、じこしょうかいをおねがいします。',
       kana: 'どうぞおかけください。では、じこしょうかいをおねがいします。',
@@ -273,6 +382,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🏠',
     title: { en: 'Dinner with a host family', nl: 'Eten bij het gastgezin' },
     blurb: { en: 'Chat over dinner and learn table manners.', nl: 'Kletsen tijdens het eten en tafelmanieren leren.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 10,
+    turnGoal: 10,
+    phraseCategory: 'Thanks & manners',
     opening: {
       ja: 'おかえりなさい！ばんごはん、できてるよ。おなかすいた？',
       kana: 'おかえりなさい！ばんごはん、できてるよ。おなかすいた？',
@@ -287,6 +401,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '💇',
     title: { en: 'At the hair salon', nl: 'Bij de kapper' },
     blurb: { en: 'Explain the haircut you want.', nl: 'Leg uit welk kapsel je wilt.' },
+    level: 'N4',
+    difficulty: 3,
+    minutes: 9,
+    turnGoal: 10,
+    phraseCategory: 'Asking & clarifying',
     opening: {
       ja: 'いらっしゃいませ。きょうはどうなさいますか？',
       kana: 'いらっしゃいませ。きょうはどうなさいますか？',
@@ -301,6 +420,11 @@ export const SCENARIOS: Scenario[] = [
     emoji: '🌤️',
     title: { en: 'Small talk with a neighbour', nl: 'Praatje met de buren' },
     blurb: { en: 'Weather and daily-life chat — natural aizuchi.', nl: 'Weer en dagelijks leven — natuurlijke aizuchi.' },
+    level: 'N5',
+    difficulty: 2,
+    minutes: 6,
+    turnGoal: 8,
+    phraseCategory: 'Reactions',
     opening: {
       ja: 'あ、こんにちは！きょうはいいてんきですね。',
       kana: 'あ、こんにちは！きょうはいいてんきですね。',

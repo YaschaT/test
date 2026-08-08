@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { readStorage, writeStorage } from './storage';
-import { todayIso } from './date';
+import { addDays, todayIso } from './date';
 import { advanceStreak, INITIAL_STREAK, type StreakState } from './streak';
 import { createInitialSrsCard, isCardDue, reviewSrsCard, srsKey } from './srs';
 import type { JlptLevel, SkillArea, SrsCardState, SrsItemType, SrsRating } from '../types';
@@ -43,6 +43,12 @@ export interface ProgressState {
   readingPositions: Record<string, ReadingPosition>;
   /** Japanese words actually read per calendar day (local), keyed yyyy-mm-dd. */
   readingWordsByDate: Record<string, number>;
+  /** How far the learner got in each speaking role-play, keyed by scenario id. */
+  speakingSessions: Record<string, SpeakingSession>;
+  /** Best pronunciation match (0..100) per phrase id, from the Phrases tab's record-and-compare. */
+  phraseScores: Record<string, number>;
+  /** Turns actually spoken/typed to Kai per calendar day (local), keyed yyyy-mm-dd. */
+  speakingTurnsByDate: Record<string, number>;
   quizResults: QuizResult[];
   /** Best accuracy (0..1) achieved on each roadmap week's checkpoint quiz, keyed by week number. */
   weeklyCheckpoints: Record<number, number>;
@@ -63,6 +69,23 @@ export interface ReadingPosition {
   totalSentences: number;
   /** ISO timestamp of the last time this book was opened — orders the "Continue reading" pick. */
   lastReadAt: string;
+}
+
+/**
+ * One role-play with Kai, as far as it got.
+ *
+ * `turns` is a high-water mark like a reading position, so re-opening a scenario and saying nothing
+ * can't roll it back. `lastLine` is Kai's most recent line — the one sentence that makes "pick up
+ * where you stopped" mean something on a device that doesn't hold the transcript (transcripts stay
+ * local, see speakingTranscripts.ts).
+ */
+export interface SpeakingSession {
+  turns: number;
+  /** The scenario's turn goal at the time — kept so an old session still renders its own "x / y". */
+  turnGoal: number;
+  completed: boolean;
+  lastLine: string;
+  updatedAt: string;
 }
 
 export interface MockExamRecord {
@@ -87,6 +110,9 @@ function defaultState(): ProgressState {
     completedReadingIds: [],
     readingPositions: {},
     readingWordsByDate: {},
+    speakingSessions: {},
+    phraseScores: {},
+    speakingTurnsByDate: {},
     quizResults: [],
     weeklyCheckpoints: {},
     mockExams: {},
@@ -262,6 +288,76 @@ export function recordReadingPosition(
 /** Japanese words read today, across every book. */
 export function getReadingWordsToday(s: ProgressState, date: string = todayIso()): number {
   return s.readingWordsByDate[date] ?? 0;
+}
+
+/**
+ * Records that the learner has now taken `turns` in a scenario with Kai.
+ *
+ * Like a reading position this is a high-water mark, and `completed` latches once the scenario's turn
+ * goal is reached — replaying a finished role-play shows it as finished, not as 3/8 again. Today's
+ * turn tally is credited by the *difference*, so the week strip counts turns spoken, not sessions
+ * re-opened.
+ */
+export function recordSpeakingTurn(
+  scenarioId: string,
+  turns: number,
+  turnGoal: number,
+  lastLine: string,
+  date: string = todayIso(),
+) {
+  setState((s) => {
+    const previous = s.speakingSessions[scenarioId];
+    const before = previous?.turns ?? 0;
+    const after = Math.max(before, turns);
+    const gained = after - before;
+    return {
+      ...s,
+      speakingSessions: {
+        ...s.speakingSessions,
+        [scenarioId]: {
+          turns: after,
+          turnGoal,
+          completed: (previous?.completed ?? false) || after >= turnGoal,
+          lastLine,
+          updatedAt: new Date().toISOString(),
+        },
+      },
+      speakingTurnsByDate:
+        gained > 0
+          ? { ...s.speakingTurnsByDate, [date]: (s.speakingTurnsByDate[date] ?? 0) + gained }
+          : s.speakingTurnsByDate,
+    };
+  });
+}
+
+/** Clears one scenario's progress — the conversation view's "Restart", which starts it from scratch. */
+export function resetSpeakingSession(scenarioId: string) {
+  setState((s) => {
+    if (!s.speakingSessions[scenarioId]) return s;
+    const speakingSessions = { ...s.speakingSessions };
+    delete speakingSessions[scenarioId];
+    return { ...s, speakingSessions };
+  });
+}
+
+/** Keeps the learner's best pronunciation match for a phrase (0..100). */
+export function recordPhraseScore(phraseId: string, score: number) {
+  const clamped = Math.max(0, Math.min(100, Math.round(score)));
+  setState((s) => ({
+    ...s,
+    phraseScores: { ...s.phraseScores, [phraseId]: Math.max(s.phraseScores[phraseId] ?? 0, clamped) },
+  }));
+}
+
+/**
+ * The last `days` calendar days, oldest first, each flagged with whether the learner spoke that day —
+ * the Speaking page's week strip.
+ */
+export function getSpeakingDays(s: ProgressState, days = 7, today: string = todayIso()) {
+  return Array.from({ length: days }, (_, i) => {
+    const date = addDays(today, i - (days - 1));
+    return { date, spoke: (s.speakingTurnsByDate[date] ?? 0) > 0 };
+  });
 }
 
 export function recordQuizResult(result: Omit<QuizResult, 'id' | 'date'>) {

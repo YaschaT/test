@@ -32,6 +32,17 @@
         "--strictPort"
       ],
       "port": 5203
+    },
+    {
+      "name": "web-speaking",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "5207",
+        "--strictPort"
+      ],
+      "port": 5207
     }
   ]
 }
