@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Ban, BookMarked, BookOpen, Bookmark, Check, Layers, Wind } from 'lucide-react';
-import { CategoryIcon } from '../../components/CategoryIcon';
+import { Ban, BookMarked, Bookmark, Check, Wind } from 'lucide-react';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
+import { SectionBanner } from '../../components/learning/SectionBanner';
 import { READINGS, readingMinutes, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
 import { getReadingWordsToday, useProgress } from '../../lib/progressStore';
 import { bookPercent, pickNextRead } from '../../lib/readingProgress';
 import { getSavedReadingIds, toggleReadingSaved } from '../../lib/savedReadings';
+import { SKILL_THEME } from '../../lib/skillTheme';
 import type { JlptLevel, ReadingPassage, TadokuLevel } from '../../types';
 import { JLPT_LEVELS, TADOKU_LEVELS } from '../../types';
 
@@ -82,12 +83,32 @@ export function ReadingList() {
 
   return (
     <div className="w-full space-y-6">
-      <ReadingHero
-        level={level}
-        onLevelChange={setLevel}
-        next={next}
-        wordsToday={wordsToday}
-        booksRead={stats.booksRead}
+      <SectionBanner
+        title="Reading"
+        accent={SKILL_THEME.reading.from}
+        icon={SKILL_THEME.reading.icon}
+        kanji="読"
+        value={stats.booksRead}
+        detail={`of ${stats.totalBooks} books read${wordsToday > 0 ? ` \u00b7 ${wordsToday.toLocaleString()} words today` : ''}`}
+        progress={stats.totalBooks > 0 ? stats.booksRead / stats.totalBooks : 0}
+        levels={
+          <SegmentedTabs
+            value={level}
+            onChange={setLevel}
+            variant="glass"
+            size="sm"
+            groupLabel="Reading level"
+            options={JLPT_LEVELS.map((lvl) => ({ value: lvl, label: lvl }))}
+          />
+        }
+        action={
+          next
+            ? {
+                label: next.kind === 'resume' ? 'Continue reading' : 'Start reading',
+                to: `/reading/${next.passage.id}`,
+              }
+            : undefined
+        }
       />
 
       {/* Shelf filter */}
@@ -128,143 +149,6 @@ export function ReadingList() {
 
       <GoldenRules />
     </div>
-  );
-}
-
-// ── Hero ──────────────────────────────────────────────────────────────────────
-interface ReadingHeroProps {
-  level: JlptLevel;
-  onLevelChange: (level: JlptLevel) => void;
-  next: ReturnType<typeof pickNextRead>;
-  wordsToday: number;
-  booksRead: number;
-}
-
-/**
- * The night-sky banner, built around one job: get back into a book.
- *
- * The headline slot is a real book — either one left half-finished (`resume`) or, with nothing
- * underway, the shortest unread book at this level offered as a suggestion (`start`). The two are
- * labelled differently and only the first carries a progress bar, so a suggestion is never dressed up
- * as progress the reader hasn't made.
- */
-function ReadingHero({ level, onLevelChange, next, wordsToday, booksRead }: ReadingHeroProps) {
-  const resuming = next?.kind === 'resume';
-  const percent = next ? Math.round(next.percent * 100) : 0;
-
-  return (
-    /* Deliberately a touch shorter than the Dashboard's 280/300px hero: that one is the app's front
-       door and carries the primary CTA, this one sits above a shelf that wants the room. The border
-       and the mascot's inset from the corner are what make it read as a *banner* — a framed object on
-       the page — rather than a dark background the page happens to start with. */
-    <section className="relative isolate min-h-[248px] overflow-hidden rounded-3xl border border-ink-line bg-[radial-gradient(115%_150%_at_50%_38%,#0a1040_0%,#010723_72%)] sm:min-h-[268px]">
-      {/* The same painted night scene as the Dashboard hero — moon, ridge, lanterns, torii — which is
-          what the mockup drew. It was a flat starfield first, and the banner read as a dark panel
-          rather than an illustration. Sized off the banner's *height* from `sm` so the composition
-          stays one island with its own faded edges dissolving into the navy, instead of being cropped
-          to a strip; on a phone the banner is taller than it is wide, so there it simply covers. */}
-      <img
-        src="/assets/dashboard/redesign/hero-scenery.webp"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-[64%_58%] sm:inset-auto sm:left-[52%] sm:top-[-28%] sm:h-[168%] sm:w-auto sm:max-w-none sm:-translate-x-1/2 sm:object-contain"
-      />
-      {/* Keeps the copy legible where the scene's left edge reaches under it. */}
-      <div
-        className="absolute inset-0 -z-10 bg-gradient-to-r from-[#010723] via-[#010723]/55 to-transparent"
-        aria-hidden="true"
-      />
-      <img
-        src="/assets/reading/reading-banner.png"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-5 -z-10 hidden h-[80%] w-auto max-w-[34%] object-contain object-bottom lg:block"
-      />
-
-      <div className="relative flex min-h-[inherit] flex-col justify-between gap-5 p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <CategoryIcon skill="reading" size={40} />
-            <div>
-              <h1 className="text-2xl font-bold text-white sm:text-3xl">Reading</h1>
-              <p className="mt-0.5 text-sm text-white/70">Read a lot, read easy — the words add up.</p>
-            </div>
-          </div>
-          <SegmentedTabs
-            value={level}
-            onChange={onLevelChange}
-            variant="glass"
-            groupLabel="Reading level"
-            options={JLPT_LEVELS.map((lvl) => ({ value: lvl, label: lvl }))}
-          />
-        </div>
-
-        {next && (
-          <div className="max-w-xl">
-            {/* Today's volume rides on the eyebrow's empty right side. It used to sit on a row of its
-                own, which cost the banner ~70px for two numbers. */}
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand-300">
-                {resuming ? 'Continue reading' : 'Start reading'}
-              </p>
-              <p className="flex items-center gap-x-2 text-xs text-white/50">
-                <BookOpen size={13} aria-hidden="true" />
-                <span>
-                  <strong className="font-bold text-white/80 tabular-nums">{wordsToday.toLocaleString()}</strong>{' '}
-                  word{wordsToday === 1 ? '' : 's'} today
-                </span>
-                <Dot />
-                <Layers size={13} aria-hidden="true" />
-                <span>
-                  <strong className="font-bold text-white/80 tabular-nums">{booksRead.toLocaleString()}</strong>{' '}
-                  book{booksRead === 1 ? '' : 's'} completed
-                </span>
-              </p>
-            </div>
-
-            <p className="jp-text mt-1.5 text-2xl font-bold text-white sm:text-3xl">{next.passage.titleJa}</p>
-            <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-white/60">
-              <span className="font-semibold">L{next.passage.tadokuLevel}</span>
-              <Dot />
-              <span className="tabular-nums">{next.passage.wordCount} words</span>
-              <Dot />
-              <span className="tabular-nums">~{readingMinutes(next.passage.wordCount)} min</span>
-              <Dot />
-              <span>{next.passage.title.en}</span>
-            </p>
-
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-              {resuming && (
-                <div className="min-w-0 flex-1">
-                  <div className="h-2 overflow-hidden rounded-full bg-white/15">
-                    <div
-                      className="h-full rounded-full bg-brand-400 transition-[width] duration-500 ease-out"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  <p className="mt-1.5 text-xs text-white/60 tabular-nums">{percent}% completed</p>
-                </div>
-              )}
-              <Link
-                to={`/reading/${next.passage.id}`}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
-              >
-                {resuming ? 'Continue reading' : 'Start reading'}
-                <ArrowRight size={17} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function Dot() {
-  return (
-    <span className="text-white/25" aria-hidden="true">
-      ·
-    </span>
   );
 }
 

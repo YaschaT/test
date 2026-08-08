@@ -3166,3 +3166,11 @@ opens the current week and scrolls to it (`roadmap-week-N` ids added to the week
    bottom edge grows from zero on the first frame, and the hairline along the top sweeps in from the
    left (`banner-sweep`, inside the `prefers-reduced-motion: no-preference` block like every other
    keyframe in the app).
+
+**Reading joins the banner system (2026-08-09):** `ReadingList`'s bespoke night-sky hero — painted
+scenery, banner mascot, book-led headline — is replaced by the same `SectionBanner` the other six
+sections wear, so all seven now share one header. Sky-blue accent from `SKILL_THEME.reading`, 読
+watermark, "N of 32 books read · M words today" (the words line appears only once there are any), the
+N5/N4/N3 toggle in the same top-right corner, and a Continue/Start reading CTA still pointed at
+`pickNextRead`'s actual book. The hero's one loss is the book *name* in the header; the shelf below
+carries the half-finished book with its own progress bar, which is where a reader looks for it anyway.
