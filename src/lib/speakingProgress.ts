@@ -53,6 +53,23 @@ export function pickNextSpeak(progress: ProgressState, level: JlptLevel): NextSp
   return scenario ? { scenario, kind: 'start' } : null;
 }
 
+/**
+ * The Speaking page's headline numbers: how many role-plays the learner has actually spoken in, and how
+ * many they played through. A scenario opened and abandoned before saying anything isn't a conversation.
+ */
+export function speakingTotals(progress: ProgressState): {
+  conversations: number;
+  completed: number;
+  total: number;
+} {
+  const sessions = SCENARIOS.map((s) => progress.speakingSessions[s.id]).filter(Boolean);
+  return {
+    conversations: sessions.filter((s) => s.turns > 0).length,
+    completed: sessions.filter((s) => s.completed).length,
+    total: SCENARIOS.length,
+  };
+}
+
 /** How far through a scenario's turn goal a session got, 0..1. */
 export function sessionPercent(session: SpeakingSession): number {
   if (session.completed) return 1;

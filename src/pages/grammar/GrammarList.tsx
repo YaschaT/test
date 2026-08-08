@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BookOpenText, Lock } from 'lucide-react';
-import { ModuleHeader } from '../../components/learning/ModuleHeader';
-import { ModuleStatsHero } from '../../components/learning/ModuleStatsHero';
+import { Lock } from 'lucide-react';
+import { SectionBanner } from '../../components/learning/SectionBanner';
 import { GrammarContinueCard } from '../../components/grammar/GrammarContinueCard';
 import { GrammarLessonList, type GrammarLessonItem } from '../../components/grammar/GrammarLessonList';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { GRAMMAR_POINTS } from '../../data/grammar';
 import { useProgress } from '../../lib/progressStore';
+import { SKILL_THEME } from '../../lib/skillTheme';
 import {
   currentPoint as nextPointFor,
   currentPointIndex,
@@ -55,14 +55,17 @@ export function GrammarList() {
 
   return (
     <div className="space-y-6">
-      <ModuleHeader skill="grammar" title="Grammar" subtitle="Master Japanese sentence patterns step by step." />
-      <ModuleStatsHero
-        ringProgress={GRAMMAR_POINTS.length > 0 ? completedIds.length / GRAMMAR_POINTS.length : 0}
-        ringIcon={BookOpenText}
-        headlineValue={completedIds.length}
-        headlineTotal={GRAMMAR_POINTS.length}
-        headlineLabel="Grammar learned, all levels"
-        mascot="grammar"
+      <SectionBanner
+        title="Grammar"
+        accent={SKILL_THEME.grammar.from}
+        icon={SKILL_THEME.grammar.icon}
+        kanji="文"
+        value={completedIds.length}
+        detail={`of ${GRAMMAR_POINTS.length} grammar points learned`}
+        progress={GRAMMAR_POINTS.length > 0 ? completedIds.length / GRAMMAR_POINTS.length : 0}
+        // No CTA here: GrammarContinueCard below carries the identical "Continue lesson" action with the
+        // lesson name and an example attached. DESIGN.md's One Button Rule — one primary action per
+        // screen — and the richer of the two is the one that keeps it.
       />
 
       {missingLessonId && (

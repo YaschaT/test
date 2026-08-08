@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Circle, Lock, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Circle, Flag, Lock, ChevronDown } from 'lucide-react';
 import { Card } from '../../components/Card';
+import { SectionBanner } from '../../components/learning/SectionBanner';
 import { Bilingual } from '../../components/Bilingual';
 import { ROADMAP } from '../../data/roadmap';
 import { evaluateGate, type GateProgress } from '../../lib/roadmapGate';
@@ -9,7 +10,6 @@ import { srsKey } from '../../lib/srs';
 import { hasCheckpoint } from '../../lib/checkpoint';
 import { WeeklyCheckpoint } from '../../components/path/WeeklyCheckpoint';
 import type { RoadmapPhase, RoadmapWeek } from '../../types';
-import { MASCOTS, MASCOT_BANNER_SIZE } from '../../lib/mascots';
 
 type WeekStatus = 'mastered' | 'current' | 'upcoming';
 
@@ -90,30 +90,37 @@ export function LearningPath() {
 
   const masteredCount = ROADMAP.filter((w) => masteredMap.get(w.week)).length;
 
+  // Where the route actually stands: the first week that's unlocked and not yet shown. Everything
+  // mastered means the last week is the one still worth revisiting, not a 23rd that doesn't exist.
+  const currentWeek = ROADMAP.find((w) => statusOf(w) === 'current')?.week ?? ROADMAP[ROADMAP.length - 1].week;
+
+  function openCurrentWeek() {
+    setOpenWeek(currentWeek);
+    document.getElementById(`roadmap-week-${currentWeek}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   return (
     <div className="space-y-6">
-      <header>
-        <div className="flex items-center gap-3">
-          <img
-            src={MASCOTS['learning-path']}
-            alt=""
-            aria-hidden="true"
-            width={MASCOT_BANNER_SIZE}
-            height={MASCOT_BANNER_SIZE}
-            style={{ width: MASCOT_BANNER_SIZE, height: MASCOT_BANNER_SIZE }}
-            className="shrink-0 object-contain"
-          />
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Learning Path</h1>
-        </div>
-        {/* Capped at a comfortable measure even though the page itself is full-width — long prose
-            lines are the one thing that shouldn't stretch with the viewport. */}
-        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-3xl">
-          A 22-week route that starts from <strong>N5 basics</strong> (weeks 1–6), completes <strong>N4</strong>
-          (weeks 7–14) for a strong N4, then adds an optional <strong>N3</strong> stretch (weeks 15–20) before
-          consolidation. Weeks are guided by mastery — you’re ready to move on once you’ve <em>shown</em> the
-          previous week, not after a set number of days.
-        </p>
-      </header>
+      <SectionBanner
+        title="Learning Path"
+        accent="var(--color-iris-500)"
+        icon={Flag}
+        kanji="道"
+        value={currentWeek}
+        valuePrefix="Week "
+        detail={`of ${ROADMAP.length}`}
+        progress={currentWeek / ROADMAP.length}
+        action={{ label: `Continue week ${currentWeek}`, onClick: openCurrentWeek }}
+      />
+
+      {/* Capped at a comfortable measure even though the page itself is full-width — long prose lines are
+          the one thing that shouldn't stretch with the viewport. */}
+      <p className="max-w-3xl text-slate-500 dark:text-slate-400">
+        A 22-week route that starts from <strong>N5 basics</strong> (weeks 1–6), completes <strong>N4</strong>
+        (weeks 7–14) for a strong N4, then adds an optional <strong>N3</strong> stretch (weeks 15–20) before
+        consolidation. Weeks are guided by mastery — you’re ready to move on once you’ve <em>shown</em> the
+        previous week, not after a set number of days.
+      </p>
 
       <Card className="p-5 grid gap-4 sm:grid-cols-2">
         <div>
@@ -156,7 +163,11 @@ export function LearningPath() {
               ].filter((c) => c.total > 0);
 
               return (
-                <Card key={week.week} className={`p-0 overflow-hidden ${status === 'upcoming' ? 'opacity-70' : ''}`}>
+                <Card
+                  key={week.week}
+                  id={`roadmap-week-${week.week}`}
+                  className={`p-0 overflow-hidden ${status === 'upcoming' ? 'opacity-70' : ''}`}
+                >
                   <button
                     type="button"
                     onClick={() => setOpenWeek(open ? null : week.week)}

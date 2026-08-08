@@ -3117,3 +3117,35 @@ source instead — masked to the badge's circle, alpha-trimmed, 512px, 39 KB.
 Motion is fully gated: every keyframe lives inside `prefers-reduced-motion: no-preference`, and under
 `reduce` the component also skips the burst outright rather than letting the global animation
 kill-switch snap six circles to their end frame and flash the viewport.
+
+### Section banners — one header for all six section pages (2026-08-08)
+
+Applied the `Section Banners.dc.html` import. New `src/components/learning/SectionBanner.tsx` replaces
+the stacked `ModuleHeader` + `ModuleStatsHero` pair (both deleted) on Grammar, Vocabulary, Kanji and
+Listening, and the bespoke headers on Learning Path and Speaking — six pages, one band each: progress
+ring + section icon, title, the one number that page is about, a kanji watermark (文 語 字 聴 話 道), an
+optional CTA, and a rule along the bottom edge repeating the ratio at full page width. The pair it
+replaces cost ~230px before any content and printed the section's name twice.
+
+**Every number is the page's real stat**, reusing the existing selectors: grammar points completed,
+`getLearningStats` for vocabulary/kanji, recorded session results for listening (with accuracy folded
+into the sentence, which is what the ring measures), the first unlocked-and-unmastered week for the
+path, and new `speakingTotals()` for "N conversations with Kai · M played through". The mockup's ring
+percentages (2%, 4%) didn't match its own captions — those were dressing, and the real ratios are drawn
+instead, including 0.
+
+**Colour comes from `SKILL_THEME`, not the mockup's six new hexes** — same families (blue, green,
+amber, purple, pink), but now one source of truth shared with the sidebar and dashboard icons. Learning
+Path, which isn't a `SkillArea`, uses `--color-iris-500`. The CTA is `PRIMARY_BUTTON_CLASSES` rather
+than the mockup's bespoke pill: same blue-violet, no second button shape forked across six pages.
+
+**Two banners ship without a CTA, on DESIGN.md's One Button Rule.** Grammar's `GrammarContinueCard` and
+Speaking's "Kai's pick" hero already carry the identical primary action a few hundred pixels below,
+each with far more context (the lesson name and an example; the scenario and its opening line). Two
+violet gradient buttons doing the same thing on one screen is exactly what that rule exists to stop —
+and the Speaking pair would have disagreed on wording too, the banner saying "Start speaking" over a
+hero saying "Continue speaking". Restoring either is one `action` prop.
+
+Listening's CTA scrolls to the exercise rather than resetting `sessionKey`: the exercise is always live,
+so a banner button that silently discarded a half-finished session would be a trap. Learning Path's
+opens the current week and scrolls to it (`roadmap-week-N` ids added to the week cards).

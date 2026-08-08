@@ -3,6 +3,7 @@ import { ArrowRight, Check, Volume2 } from 'lucide-react';
 import { SegmentedTabs } from '../SegmentedTabs';
 import { EngineNote, type SpeakingEngine } from './EngineNote';
 import { Phrasebook } from './Phrasebook';
+import { SectionBanner } from '../learning/SectionBanner';
 import { DIFFICULTY_LABELS, SCENARIOS, type Scenario } from '../../data/scenarios';
 import { getSpeakingDays, type ProgressState, type SpeakingSession } from '../../lib/progressStore';
 import {
@@ -12,10 +13,12 @@ import {
   pickNextSpeak,
   scenarioState,
   sessionPercent,
+  speakingTotals,
   weakestPhrase,
   type ScenarioState,
 } from '../../lib/speakingProgress';
-import { MASCOTS, MASCOT_BANNER_SIZE } from '../../lib/mascots';
+import { MASCOTS } from '../../lib/mascots';
+import { SKILL_THEME } from '../../lib/skillTheme';
 import type { JlptLevel } from '../../types';
 import { JLPT_LEVELS } from '../../types';
 
@@ -39,43 +42,39 @@ export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak 
   const level = progress.level;
   const next = useMemo(() => pickNextSpeak(progress, level), [progress, level]);
   const open = useMemo(() => listOpenSessions(progress), [progress]);
+  const totals = useMemo(() => speakingTotals(progress), [progress]);
 
   return (
     <div className="w-full space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-        <div className="flex items-center gap-4">
-          {/* Page identity uses the Speaking mascot like every other section; AiCore stays as Kai's
-              own avatar inside the live conversation. */}
-          <img
-            src={MASCOTS.speaking}
-            alt=""
-            aria-hidden="true"
-            width={MASCOT_BANNER_SIZE}
-            height={MASCOT_BANNER_SIZE}
-            style={{ width: MASCOT_BANNER_SIZE, height: MASCOT_BANNER_SIZE }}
-            className="shrink-0 object-contain"
-          />
-          <div>
-            <h1 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
-              Speaking with Kai
-            </h1>
-            <p className="mt-1 max-w-[60ch] text-sm text-slate-500 dark:text-slate-400">
-              Kai talks back. You answer out loud — no multiple choice, no reading from a script.
-            </p>
-          </div>
-        </div>
-        <EngineNote engine={engine} className="ml-auto" />
-      </header>
-
-      <SegmentedTabs
-        value={tab}
-        onChange={onTabChange}
-        groupLabel="Speaking mode"
-        options={[
-          { value: 'chat', label: <TabLabel title="Conversations" hint="role-play" /> },
-          { value: 'phrases', label: <TabLabel title="Phrases" hint="pronunciation" /> },
-        ]}
+      <SectionBanner
+        title="Speaking"
+        accent={SKILL_THEME.speaking.from}
+        icon={SKILL_THEME.speaking.icon}
+        kanji="話"
+        value={totals.conversations}
+        detail={`conversation${totals.conversations === 1 ? '' : 's'} with Kai${
+          totals.completed > 0 ? ` · ${totals.completed} played through` : ''
+        }`}
+        progress={totals.completed / totals.total}
+        // The only banner of the six without a CTA. Kai's pick sits a few hundred pixels below with the
+        // same action attached to a named scenario and its opening line — two violet buttons doing the
+        // identical thing is worse than one, and the richer one wins.
       />
+
+      {/* Where Kai runs belongs beside the mode switch: it's a property of the conversation, and the
+          banner above is the section's identity, not its settings. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <SegmentedTabs
+          value={tab}
+          onChange={onTabChange}
+          groupLabel="Speaking mode"
+          options={[
+            { value: 'chat', label: <TabLabel title="Conversations" hint="role-play" /> },
+            { value: 'phrases', label: <TabLabel title="Phrases" hint="pronunciation" /> },
+          ]}
+        />
+        <EngineNote engine={engine} />
+      </div>
 
       {tab === 'phrases' ? (
         <Phrasebook progress={progress} scenario={next?.scenario ?? null} speak={speak} />
