@@ -3174,3 +3174,10 @@ watermark, "N of 32 books read · M words today" (the words line appears only on
 N5/N4/N3 toggle in the same top-right corner, and a Continue/Start reading CTA still pointed at
 `pickNextRead`'s actual book. The hero's one loss is the book *name* in the header; the shelf below
 carries the half-finished book with its own progress bar, which is where a reader looks for it anyway.
+
+**Grammar's continue card removed (2026-08-09):** `GrammarContinueCard` — the last night-sky hero left
+on a section page — is deleted, so Grammar now reads banner → lesson list like every other section. The
+banner takes back the "Continue lesson" CTA that had been withheld precisely because the card duplicated
+it, still resolving to `currentPoint`. The lesson list already marks the current lesson with an arrow and
+a highlighted row, so the next lesson is still obvious without the card restating it. Both
+`/assets/grammar/` images stay — `GrammarLessonIntro` and `GrammarPractice` still use them.

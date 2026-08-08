@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { SectionBanner } from '../../components/learning/SectionBanner';
-import { GrammarContinueCard } from '../../components/grammar/GrammarContinueCard';
 import { GrammarLessonList, type GrammarLessonItem } from '../../components/grammar/GrammarLessonList';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { GRAMMAR_POINTS } from '../../data/grammar';
@@ -74,9 +73,7 @@ export function GrammarList() {
             options={JLPT_LEVELS.map((l) => ({ value: l, label: l }))}
           />
         }
-        // No CTA here: GrammarContinueCard below carries the identical "Continue lesson" action with the
-        // lesson name and an example attached. DESIGN.md's One Button Rule — one primary action per
-        // screen — and the richer of the two is the one that keeps it.
+        action={currentPoint ? { label: 'Continue lesson', to: `/grammar/${currentPoint.id}` } : undefined}
       />
 
       {missingLessonId && (
@@ -85,8 +82,6 @@ export function GrammarList() {
           list is below.
         </p>
       )}
-
-      <GrammarContinueCard point={currentPoint} onContinue={openLesson} />
 
       {/* A level the learner hasn't reached yet has every row locked. Without this, that state is a screen
           of dimmed text with no explanation — indistinguishable from a page that failed to load. */}
