@@ -51,6 +51,11 @@ export function useAuth(): AuthState {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+/** Notifies on every auth change — used outside React by the boot loader to await the session check. */
+export function subscribeAuth(listener: () => void): () => void {
+  return subscribe(listener);
+}
+
 export function getAuthSnapshot(): AuthState {
   return state;
 }

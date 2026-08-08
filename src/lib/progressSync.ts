@@ -93,6 +93,21 @@ export async function syncProgressAfterSignIn(userId: string): Promise<void> {
 }
 
 /**
+ * Resolves the first time this device has finished catching up with the cloud (or failed trying).
+ *
+ * The boot loader waits on it so "Syncing progress" is a real step rather than a caption over a timer.
+ * It only ever settles once — later focus re-merges aren't boot work.
+ */
+let settleFirstSync: (() => void) | null = null;
+const firstSyncSettled = new Promise<void>((resolve) => {
+  settleFirstSync = resolve;
+});
+
+export function whenFirstSyncSettled(): Promise<void> {
+  return firstSyncSettled;
+}
+
+/**
  * Mounted once near the app root. Owns the whole sync lifecycle while signed in:
  *
  * 1. **Pull + merge on mount** — this is the fix for the cross-device bug. It runs whenever the app
@@ -119,6 +134,7 @@ export function useProgressSync(): void {
     // 1. Catch up with the cloud before this device is allowed to push anything.
     syncProgressAfterSignIn(userId).finally(() => {
       if (!cancelled) hydrated = true;
+      settleFirstSync?.();
     });
 
     // 2. Keep the cloud current afterwards.

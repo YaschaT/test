@@ -1,7 +1,9 @@
-import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react';
+import { lazy, Suspense, useEffect, type ComponentType, type LazyExoticComponent } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Layout } from './components/Layout';
+import { BootLoader } from './components/BootLoader';
+import { markScreenReady } from './lib/boot';
 import { useProgressSync } from './lib/progressSync';
 
 // Every route is code-split so no visitor pays for screens they aren't on: the public homepage
@@ -28,11 +30,22 @@ const ListeningHome = lazy(() => import('./pages/listening/ListeningHome').then(
 const SpeakingPage = lazy(() => import('./pages/speaking/SpeakingPage').then((m) => ({ default: m.SpeakingPage })));
 const MockTest = lazy(() => import('./pages/mock/MockTest').then((m) => ({ default: m.MockTest })));
 
+/**
+ * Reports that the route's chunk has both arrived and rendered — it sits inside the same Suspense
+ * boundary as the page, so it cannot mount before the page does. That's the boot screen's "Loading
+ * your world" step (see lib/boot.ts).
+ */
+function ScreenReady() {
+  useEffect(markScreenReady, []);
+  return null;
+}
+
 /** In-app pages suspend inside the Layout shell: sidebar stays put, content area fills in. */
 function page(Page: LazyExoticComponent<ComponentType>) {
   return (
     <Suspense fallback={null}>
       <Page />
+      <ScreenReady />
     </Suspense>
   );
 }
@@ -42,6 +55,8 @@ function App() {
 
   return (
     <TooltipProvider>
+      {/* Covers the app shell on a cold load and takes itself down when the boot work is really done. */}
+      <BootLoader />
       <Routes>
         <Route
           path="/"

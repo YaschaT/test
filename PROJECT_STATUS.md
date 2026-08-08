@@ -3077,3 +3077,43 @@ counters" became the learner's actual lowest-scoring recorded phrase (and, with 
 a count of the set phrases this role-play uses). The week strip and the "pick up where you stopped"
 list render only once they have something real in them. The old setup/on-device banners collapsed into
 one `EngineNote` chip that folds away when Kai is working and opens itself when he isn't.
+
+### Boot screen — a loader that reports real work (2026-08-08)
+
+Applied the `Loader v2.dc.html` design import as the app's cold-start screen (`src/components/BootLoader.tsx`),
+mounted in `App` and shown only for a first load of an in-app route — the marketing homepage and auth
+screens keep their own paper canvas and have nothing to boot.
+
+**The bar is not on a timer.** `src/lib/boot.ts` defines boot as five weighted promises: the app shell,
+`document.fonts.ready`, the route's lazy chunk (signalled by a `ScreenReady` component *inside* the
+route's Suspense boundary, so it fires only once the chunk has rendered), the Supabase session check,
+and the first cloud merge (`whenFirstSyncSettled()`, new in `progressSync.ts`; guests skip it). The
+percentage is the share of weight that has actually settled, so it stalls where the app stalls, and the
+mockup's four statuses map onto which step is outstanding. Two guards keep that pleasant: the value is
+eased with a floor of `MIN_SWEEP_MS` (850 ms) so a warm cache sweeps instead of flashing, and
+`MAX_BOOT_MS` (6 s) dismisses the screen regardless — the app underneath is already usable, and a
+loader that can trap someone is worse than one that rounds up at the end.
+
+**Two deviations from the mockup, both deliberate:**
+- *Palette.* The design arrived in its own purple (#0E0A20 / #6D4AE0 / #B79BFF). DESIGN.md's Closed
+  Vocabulary Rule forbids new named colors for one screen, so the composition is kept exactly and
+  painted in the existing night-sky set — Canvas Near-Black, Lantern Violet, iris-400 — via the theme
+  CSS variables. The boot screen now resolves *into* the app instead of into a second brand.
+- *Pacing.* The mockup held ~3.7 s of celebration after 100%; that was demo pacing for a looping
+  preview. In product this runs on every cold load, so it's 260 ms hold → 700 ms burst → 520 ms fade.
+
+**Things a static mockup couldn't surface, fixed here:** `requestAnimationFrame` doesn't run in a
+background tab, so a boot that finished there would replay the whole sweep and burst whenever someone
+finally looked — if the tab was ever hidden, the screen now just steps aside. The burst's fixed
+`scale(26)` covered a laptop but read as a violet ball on a large display, so the end scale is computed
+per screen from the viewport diagonal (`--boot-reach`). And Tailwind v4 emits translate utilities as
+the separate `translate` property, which composed with the parallax `transform` and pushed the ghost
+percentage a full half-width off centre; it's centred with `transform` alone now.
+
+**Asset:** the design's `badge.png` exceeds the design MCP's 256 KiB read cap (its C2PA metadata alone
+filled the response), so `public/assets/brand/badge.webp` was cut from the repo's own 1024px logo
+source instead — masked to the badge's circle, alpha-trimmed, 512px, 39 KB.
+
+Motion is fully gated: every keyframe lives inside `prefers-reduced-motion: no-preference`, and under
+`reduce` the component also skips the burst outright rather than letting the global animation
+kill-switch snap six circles to their end frame and flash the viewport.
