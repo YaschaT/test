@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { ClipboardCheck } from 'lucide-react';
 import type { JlptLevel } from '../../types';
 import { JLPT_LEVELS } from '../../types';
 import { useProgress, type MockExamRecord } from '../../lib/progressStore';
 import { EXAM_CONFIG, MOCK_SECTIONS, SCORING, SECTION_LABEL, examTotal } from '../../lib/mockExam';
 import { SECTION_THEME } from './examTheme';
-import { SectionBanner } from '../learning/SectionBanner';
+import { CategoryBanner } from '../learning/CategoryBanner';
 import { playPrimaryAction, playSoftClick } from '../../lib/sound';
 import { MASCOTS } from '../../lib/mascots';
 
@@ -15,8 +14,6 @@ interface ExamLobbyProps {
   onBegin: () => void;
 }
 
-/** The indigo the exam screens are built on — its own identity, not one of the six skill hues. */
-const EXAM_ACCENT = 'var(--color-iris-500)';
 
 const LEVEL_BLURB: Record<JlptLevel, { desc: string; kanji: string }> = {
   N5: { desc: 'Beginner', kanji: '初' },
@@ -40,26 +37,13 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
   const scoring = SCORING[level];
   const total = examTotal(config);
   const best = progress.mockExams[level] as MockExamRecord | undefined;
-  const bestScore = best?.bestScore ?? null;
 
   return (
     <div className="flex flex-1 flex-col gap-5">
-      <SectionBanner
+      <CategoryBanner
+        category="mock"
         title="Mock Exam"
-        titleSuffix="模擬試験"
-        accent={EXAM_ACCENT}
-        icon={ClipboardCheck}
-        kanji="試"
-        value={bestScore ?? undefined}
-        detail={
-          bestScore == null
-            ? 'Scored on the official JLPT scale · Beoordeeld op de officiële JLPT-schaal'
-            : `of ${scoring.total} at ${level} — ${
-                bestScore >= scoring.overallPass ? 'above the pass line' : 'below the pass line'
-              }`
-        }
-        valuePrefix={bestScore == null ? undefined : 'Best '}
-        progress={bestScore == null ? 0 : bestScore / scoring.total}
+        subtitle="Challenge yourself, test your full knowledge."
         levels={
           <div role="tablist" aria-label="Exam level" className="inline-flex rounded-xl border border-white/15 bg-white/5 p-1">
             {JLPT_LEVELS.map((lv) => (

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { SectionBanner } from '../../components/learning/SectionBanner';
+import { CategoryBanner } from '../../components/learning/CategoryBanner';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { LearningControls } from '../../components/learning/LearningControls';
 import { playPrimaryAction } from '../../lib/sound';
@@ -10,8 +10,6 @@ import { filterVocabulary, loadVocabFilters, saveVocabFilters } from '../../lib/
 import { isCardDue } from '../../lib/srs';
 import { todayIso } from '../../lib/date';
 import { buildReviewQueue } from '../../lib/reviewQueue';
-import { getLearningStats } from '../../lib/learningState';
-import { SKILL_THEME } from '../../lib/skillTheme';
 import type { JlptLevel } from '../../types';
 
 /** 'All' first: the deck is browsed whole more often than it is browsed by level. */
@@ -45,11 +43,6 @@ export function VocabularyHome() {
   }).length;
   const reviewQueueSize = reviewQueue.length;
 
-  const stats = useMemo(
-    () => getLearningStats('vocabulary', VOCABULARY.map((w) => w.id), progress, today),
-    [progress, today],
-  );
-
   // Shared with the card session so both show exactly the same deck.
   const filtered = useMemo(() => filterVocabulary(VOCABULARY, { level, category, query }), [query, level, category]);
 
@@ -57,14 +50,10 @@ export function VocabularyHome() {
 
   return (
     <div className="space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
-      <SectionBanner
+      <CategoryBanner
+        category="vocabulary"
         title="Vocabulary"
-        accent={SKILL_THEME.vocabulary.from}
-        icon={SKILL_THEME.vocabulary.icon}
-        kanji="語"
-        value={stats.learnedCount}
-        detail={`of ${stats.totalCount.toLocaleString()} words learned`}
-        progress={stats.learnedPercent / 100}
+        subtitle="Grow your word bank, unlock real conversations."
         levels={
           <SegmentedTabs
             value={level}

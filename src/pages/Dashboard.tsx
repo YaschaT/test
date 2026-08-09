@@ -94,7 +94,7 @@ export function Dashboard() {
     saveStudyMinutes(minutes);
   }
 
-  const { greetingJa, emoji } = timeGreeting();
+  const greetingJa = timeGreeting();
 
   return (
     // `flex-1` so the page owns the full height of the shell's content frame: on a tall display the
@@ -102,11 +102,10 @@ export function Dashboard() {
     <div className="flex flex-1 flex-col gap-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
       <DashboardHero
         greetingJa={greetingJa}
-        greetingEmoji={emoji}
         supportingText={
           isNewUser
-            ? 'Welcome to Kotobox! Learn a lesson, review it daily, and watch your JLPT progress grow.'
-            : `Let's make progress toward JLPT ${progress.level} today.`
+            ? 'Learn a lesson, review it daily, and your JLPT progress builds from there.'
+            : `Today's plan is set for JLPT ${progress.level}.`
         }
         ctaLabel={primaryCta.label}
         onStart={primaryCta.onClick}
@@ -148,7 +147,9 @@ export function Dashboard() {
         </div>
       </div>
 
-      <BottomJourneyStrip message="Consistency is the key to fluency. You're doing great!" />
+      {/* Was "Consistency is the key to fluency. You're doing great!" — praise inflation, which the
+          voice section rules out. The replacement states how the system actually works instead. */}
+      <BottomJourneyStrip message="Short daily sessions beat long occasional ones — reviews are scheduled to land just before you'd forget." />
     </div>
   );
 }
@@ -167,7 +168,7 @@ function OnboardingSteps() {
       {steps.map((step) => (
         <li
           key={step.n}
-          className="flex items-start gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-ink-line dark:bg-ink-900"
+          className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-hairline dark:bg-ink-900"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-iris-900 dark:text-iris-400">
             <step.icon size={20} aria-hidden="true" />
@@ -184,9 +185,14 @@ function OnboardingSteps() {
   );
 }
 
-function timeGreeting(): { greetingJa: string; emoji: string } {
+/**
+ * The hero greeting. No emoji and no exclamation mark: the design system's voice section rules both
+ * out, and at hero size a sun or moon glyph next to the mascot was the loudest thing on a screen whose
+ * whole point is calm.
+ */
+function timeGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return { greetingJa: 'おはよう！', emoji: '🌅' };
-  if (hour < 18) return { greetingJa: 'こんにちは！', emoji: '☀️' };
-  return { greetingJa: 'こんばんは！', emoji: '🌙' };
+  if (hour < 12) return 'おはよう';
+  if (hour < 18) return 'こんにちは';
+  return 'こんばんは';
 }

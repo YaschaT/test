@@ -3,7 +3,7 @@ import { ArrowRight, Check, Volume2 } from 'lucide-react';
 import { SegmentedTabs } from '../SegmentedTabs';
 import { EngineNote, type SpeakingEngine } from './EngineNote';
 import { Phrasebook } from './Phrasebook';
-import { SectionBanner } from '../learning/SectionBanner';
+import { CategoryBanner } from '../learning/CategoryBanner';
 import { DIFFICULTY_LABELS, SCENARIOS, type Scenario } from '../../data/scenarios';
 import { getSpeakingDays, type ProgressState, type SpeakingSession } from '../../lib/progressStore';
 import {
@@ -13,12 +13,10 @@ import {
   pickNextSpeak,
   scenarioState,
   sessionPercent,
-  speakingTotals,
   weakestPhrase,
   type ScenarioState,
 } from '../../lib/speakingProgress';
 import { MASCOTS } from '../../lib/mascots';
-import { SKILL_THEME } from '../../lib/skillTheme';
 import type { JlptLevel } from '../../types';
 import { JLPT_LEVELS } from '../../types';
 
@@ -41,24 +39,16 @@ const INITIAL_VISIBLE = 6;
 export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak }: SpeakingHubProps) {
   const level = progress.level;
   const next = useMemo(() => pickNextSpeak(progress, level), [progress, level]);
-  const open = useMemo(() => listOpenSessions(progress), [progress]);
-  const totals = useMemo(() => speakingTotals(progress), [progress]);
-  // Lives here rather than inside Library so the banner can host it, in the same corner every section
+  const open = useMemo(() => listOpenSessions(progress), [progress]);  // Lives here rather than inside Library so the banner can host it, in the same corner every section
   // puts its level control. It filters the scenario grid; it is not the learner's own JLPT level.
   const [filter, setFilter] = useState<JlptLevel | 'all'>('all');
 
   return (
     <div className="w-full space-y-6">
-      <SectionBanner
+      <CategoryBanner
+        category="speaking"
         title="Speaking"
-        accent={SKILL_THEME.speaking.from}
-        icon={SKILL_THEME.speaking.icon}
-        kanji="話"
-        value={totals.conversations}
-        detail={`conversation${totals.conversations === 1 ? '' : 's'} with Kai${
-          totals.completed > 0 ? ` · ${totals.completed} played through` : ''
-        }`}
-        progress={totals.completed / totals.total}
+        subtitle="Speak with confidence, practice out loud."
         levels={
           <SegmentedTabs
             value={filter}
@@ -72,9 +62,6 @@ export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak 
             ]}
           />
         }
-        // The only banner of the six without a CTA. Kai's pick sits a few hundred pixels below with the
-        // same action attached to a named scenario and its opening line — two violet buttons doing the
-        // identical thing is worse than one, and the richer one wins.
       />
 
       {/* Where Kai runs belongs beside the mode switch: it's a property of the conversation, and the

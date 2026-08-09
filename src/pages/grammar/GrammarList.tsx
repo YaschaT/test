@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
-import { SectionBanner } from '../../components/learning/SectionBanner';
+import { CategoryBanner } from '../../components/learning/CategoryBanner';
 import { GrammarLessonList, type GrammarLessonItem } from '../../components/grammar/GrammarLessonList';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { GRAMMAR_POINTS } from '../../data/grammar';
 import { useProgress } from '../../lib/progressStore';
-import { SKILL_THEME } from '../../lib/skillTheme';
 import {
   currentPoint as nextPointFor,
   currentPointIndex,
@@ -55,14 +54,10 @@ export function GrammarList() {
 
   return (
     <div className="space-y-6">
-      <SectionBanner
+      <CategoryBanner
+        category="grammar"
         title="Grammar"
-        accent={SKILL_THEME.grammar.from}
-        icon={SKILL_THEME.grammar.icon}
-        kanji="文"
-        value={completedIds.length}
-        detail={`of ${GRAMMAR_POINTS.length} grammar points learned`}
-        progress={GRAMMAR_POINTS.length > 0 ? completedIds.length / GRAMMAR_POINTS.length : 0}
+        subtitle="Build the patterns, make sentences flow."
         levels={
           <SegmentedTabs
             value={level}

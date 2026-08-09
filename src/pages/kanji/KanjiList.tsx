@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { SectionBanner } from '../../components/learning/SectionBanner';
+import { CategoryBanner } from '../../components/learning/CategoryBanner';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { LearningControls } from '../../components/learning/LearningControls';
 import { playPrimaryAction } from '../../lib/sound';
@@ -9,8 +9,6 @@ import { getSrsCard, useProgress } from '../../lib/progressStore';
 import { isCardDue } from '../../lib/srs';
 import { todayIso } from '../../lib/date';
 import { buildReviewQueue } from '../../lib/reviewQueue';
-import { getLearningStats } from '../../lib/learningState';
-import { SKILL_THEME } from '../../lib/skillTheme';
 import {
   filterKanji,
   loadKanjiFilters,
@@ -45,10 +43,6 @@ export function KanjiList() {
     return card && isCardDue(card, today);
   }).length;
 
-  const stats = useMemo(
-    () => getLearningStats('kanji', KANJI_LIST.map((k) => k.id), progress, today),
-    [progress, today],
-  );
 
   const filtered = useMemo(() => filterKanji(KANJI_LIST, filters, progress), [filters, progress]);
 
@@ -59,14 +53,10 @@ export function KanjiList() {
 
   return (
     <div className="space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
-      <SectionBanner
+      <CategoryBanner
+        category="kanji"
         title="Kanji"
-        accent={SKILL_THEME.kanji.from}
-        icon={SKILL_THEME.kanji.icon}
-        kanji="字"
-        value={stats.learnedCount}
-        detail={`of ${stats.totalCount.toLocaleString()} kanji learned`}
-        progress={stats.learnedPercent / 100}
+        subtitle="Master the characters, unlock the world."
         levels={
           <SegmentedTabs
             value={filters.level}

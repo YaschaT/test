@@ -2,12 +2,11 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Ban, BookMarked, Bookmark, Check, Wind } from 'lucide-react';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
-import { SectionBanner } from '../../components/learning/SectionBanner';
-import { READINGS, readingMinutes, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
-import { getReadingWordsToday, useProgress } from '../../lib/progressStore';
+import { CategoryBanner } from '../../components/learning/CategoryBanner';
+import { READINGS, readingMinutes, TADOKU_LEVEL_INFO } from '../../data/readings';
+import { useProgress } from '../../lib/progressStore';
 import { bookPercent, pickNextRead } from '../../lib/readingProgress';
 import { getSavedReadingIds, toggleReadingSaved } from '../../lib/savedReadings';
-import { SKILL_THEME } from '../../lib/skillTheme';
 import type { JlptLevel, ReadingPassage, TadokuLevel } from '../../types';
 import { JLPT_LEVELS, TADOKU_LEVELS } from '../../types';
 
@@ -44,15 +43,11 @@ const LEVEL_COVER: Record<number, string> = {
 export function ReadingList() {
   const progress = useProgress();
   const completed = progress.completedReadingIds;
-  const stats = useMemo(() => readingStats(completed), [completed]);
-
   // Opens on the learner's own level rather than always N5, like every other module page.
   const [level, setLevel] = useState<JlptLevel>(progress.level);
   const [shelf, setShelf] = useState<TadokuLevel | 'all'>('all');
 
-  const doneSet = useMemo(() => new Set(completed), [completed]);
-  const wordsToday = getReadingWordsToday(progress);
-  const next = useMemo(() => pickNextRead(progress, level), [progress, level]);
+  const doneSet = useMemo(() => new Set(completed), [completed]);  const next = useMemo(() => pickNextRead(progress, level), [progress, level]);
 
   const booksAtLevel = useMemo(
     () => READINGS.filter((book) => book.level === level),
@@ -83,14 +78,10 @@ export function ReadingList() {
 
   return (
     <div className="w-full space-y-6">
-      <SectionBanner
+      <CategoryBanner
+        category="reading"
         title="Reading"
-        accent={SKILL_THEME.reading.from}
-        icon={SKILL_THEME.reading.icon}
-        kanji="読"
-        value={stats.booksRead}
-        detail={`of ${stats.totalBooks} books read${wordsToday > 0 ? ` \u00b7 ${wordsToday.toLocaleString()} words today` : ''}`}
-        progress={stats.totalBooks > 0 ? stats.booksRead / stats.totalBooks : 0}
+        subtitle="Read stories, discover meaning in context."
         levels={
           <SegmentedTabs
             value={level}

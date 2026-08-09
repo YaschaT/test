@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Circle, Flag, Lock, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Circle, Lock, ChevronDown } from 'lucide-react';
 import { Card } from '../../components/Card';
-import { SectionBanner } from '../../components/learning/SectionBanner';
+import { CategoryBanner } from '../../components/learning/CategoryBanner';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { Bilingual } from '../../components/Bilingual';
 import { ROADMAP } from '../../data/roadmap';
@@ -108,15 +108,10 @@ export function LearningPath() {
 
   return (
     <div className="space-y-6">
-      <SectionBanner
+      <CategoryBanner
+        category="learning-path"
         title="Learning Path"
-        accent="var(--color-iris-500)"
-        icon={Flag}
-        kanji="道"
-        value={currentWeek}
-        valuePrefix="Week "
-        detail={`of ${ROADMAP.length}`}
-        progress={currentWeek / ROADMAP.length}
+        subtitle="Follow your journey, unlock each step."
         levels={
           <SegmentedTabs
             value={phaseFilter}

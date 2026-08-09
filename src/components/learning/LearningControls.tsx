@@ -5,7 +5,7 @@ import { playSoftClick } from '../../lib/sound';
 
 /**
  * Search, category/status filters and the grid/list switch. The JLPT level tabs used to lead this row;
- * they now live in the page's SectionBanner, in the same top-right corner every section puts them, so
+ * they now live in the page's CategoryBanner, in the same top-right corner every section puts them, so
  * the one control a learner reaches for constantly is never in a different place per screen.
  */
 interface LearningControlsProps {

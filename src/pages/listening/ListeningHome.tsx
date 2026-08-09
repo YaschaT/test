@@ -6,7 +6,7 @@ import { SegmentedTabs } from '../../components/SegmentedTabs';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { VoiceModeSelector } from '../../components/tts/VoiceModeSelector';
 import { BrowserVoiceSelector } from '../../components/tts/BrowserVoiceSelector';
-import { SectionBanner } from '../../components/learning/SectionBanner';
+import { CategoryBanner } from '../../components/learning/CategoryBanner';
 import { BigPlayButton } from '../../components/listening/BigPlayButton';
 import { ListeningSessionProgress } from '../../components/listening/ListeningSessionProgress';
 import { useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
@@ -22,7 +22,6 @@ import { useNeuralTtsAvailability } from '../../lib/tts/neuralTts';
 import { getAutoPlayEnabled, setAutoPlayEnabled } from '../../lib/listeningPrefs';
 import { buildDictationPool, buildListeningPool, matchesDictation, shuffle, type ListeningItem } from '../../lib/listeningPool';
 import { recordQuizResult, reviewItem, useProgress } from '../../lib/progressStore';
-import { SKILL_THEME } from '../../lib/skillTheme';
 import { JLPT_LEVELS, type JlptLevel } from '../../types';
 import { XP_RULES } from '../../lib/xp';
 import { playCorrect, playWrong } from '../../lib/sound';
@@ -76,27 +75,14 @@ export function ListeningHome() {
         ? neuralAvailable === true
         : googleAvailable === true;
 
-  // Real listening stats, derived from recorded session results.
-  const listeningResults = progress.quizResults.filter((r) => r.skill === 'listening');
-  const sessionsDone = listeningResults.length;
-  const totalCorrect = listeningResults.reduce((n, r) => n + r.correct, 0);
-  const totalAnswered = listeningResults.reduce((n, r) => n + r.total, 0);
-  const accuracyPct = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
-
   return (
     // Column layout rather than `space-y`: the exercise below is the flexible part, so it takes the
     // height the header and controls don't use instead of leaving it empty under the card.
     <div className="flex flex-1 flex-col gap-6">
-      <SectionBanner
+      <CategoryBanner
+        category="listening"
         title="Listening"
-        accent={SKILL_THEME.listening.from}
-        icon={SKILL_THEME.listening.icon}
-        kanji="聴"
-        value={sessionsDone}
-        detail={`session${sessionsDone === 1 ? '' : 's'} completed${
-          totalAnswered > 0 ? ` \u00b7 ${accuracyPct}% accuracy` : ''
-        }`}
-        progress={totalAnswered > 0 ? totalCorrect / totalAnswered : 0}
+        subtitle="Tune your ear, understand Japanese naturally."
         levels={
           <SegmentedTabs
             value={level}
@@ -107,8 +93,6 @@ export function ListeningHome() {
             options={JLPT_LEVELS.map((l) => ({ value: l, label: l }))}
           />
         }
-        // The exercise below is always live, so this brings the learner to it rather than resetting it —
-        // a banner button that silently discarded a half-finished session would be a trap.
         action={{
           label: 'Start session',
           onClick: () =>

@@ -3263,3 +3263,33 @@ banner never goes blank once you're good at a section. XP is paid per completed 
 loader badge. Only `icon-streak.png` and `icon-xp.png` survived; both are in `public/assets/banner/`
 waiting. The banner is a painted-background design with per-category light directions and pixel-tuned
 mascot placement, so building it without the art would be building a different component.
+
+### Category Banner — the artwork landed, all nine banners replaced (2026-08-09)
+
+The design's artwork arrived in `Redesign banner - claude design/`, so `CategoryBanner` is built and
+`SectionBanner` is deleted. Every category page now wears the painted night scene with its own mascot
+standing in it: Learning Path, Grammar, Vocabulary, Kanji, Reading, Listening, Speaking and the Mock
+Exam lobby.
+
+**Assets** were far too heavy to ship raw — 17.3 MB of PNG across 9 backgrounds (2172×724), 9 mascots
+and the milestone gem. Re-encoded into `public/assets/banner/` as WebP at the sizes they actually draw
+at (backgrounds 1800px wide, mascots alpha-trimmed to 560px tall so each stands flush on its own ground
+line, gem at 192px): **17.3 MB → 885 KB**, 1.1 MB for the folder including the two PNG icons.
+
+**Every number is measured**, via the two subsystems built just before this: the ring and `done / total`
+are mastered items over the section's real pool, learned / review / to-learn are the app's own SRS
+states (`categoryStats.ts`), and the milestone is a repeating rung off recorded progress. Verified
+live — after completing one grammar lesson and answering one listening item, Grammar read `1 learned`
+of 42 and Listening `1 learned` of 1,122.
+
+**Layout deviates from the mockup's fixed canvas.** The design is 1400×330 with pixel-tuned absolute
+offsets per category; the app's banner is fluid. So the scene is `object-cover object-right` with the
+same left-to-right scrim, the mascot is anchored to the bottom edge at 46% (it stands on the painted
+ground at any width), the copy column is capped at 40% so it never runs under the mascot, and the
+milestone card is pinned bottom-right from `lg` and falls into flow below on smaller screens. The
+per-category light-direction shading table isn't needed — each mascot already carries its own lighting,
+and one drop-shadow reads correctly against all nine scenes.
+
+The N5/N4/N3 control lives in the top-right strip beside streak and XP, keeping it in the same corner
+on every screen. Dashboard keeps its own hero (a separate approved design); its background and mascot
+are installed and ready if it should switch too.
