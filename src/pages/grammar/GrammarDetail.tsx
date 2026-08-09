@@ -4,7 +4,7 @@ import { GrammarLessonIntro } from '../../components/grammar/GrammarLessonIntro'
 import { GrammarLessonRail, type GrammarRailItem } from '../../components/grammar/GrammarLessonRail';
 import { GrammarPractice } from '../../components/grammar/GrammarPractice';
 import { GRAMMAR_POINTS, getGrammarPoint } from '../../data/grammar';
-import { markGrammarCompleted, useProgress } from '../../lib/progressStore';
+import { markGrammarCompleted, reviewItem, useProgress } from '../../lib/progressStore';
 import { currentPointIndex, lessonNumberInLevel, lessonState, levelPoints } from '../../lib/grammarPath';
 
 type Phase = 'lesson' | 'practice';
@@ -40,6 +40,9 @@ export function GrammarDetail() {
 
   function finishPractice() {
     markGrammarCompleted(point!.id);
+    // Completing the practice is the review event for this point: it enters the SRS schedule here and
+    // resurfaces on its own interval, which is what gives Grammar a real due-for-review count.
+    reviewItem('grammar', point!.id, 'good');
     navigate('/grammar');
   }
 

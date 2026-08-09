@@ -17,7 +17,7 @@ import { COMPANION_SYSTEM } from '../../lib/companionPrompt';
 import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
 import { getNeuralTtsStatus, playNeural, type NeuralVoice } from '../../lib/tts/neuralTts';
 import { type Scenario } from '../../data/scenarios';
-import { recordSpeakingTurn, resetSpeakingSession, useProgress } from '../../lib/progressStore';
+import { recordSpeakingTurn, resetSpeakingSession, reviewItem, useProgress } from '../../lib/progressStore';
 import { clearTranscript, loadTranscript, saveTranscript } from '../../lib/speakingTranscripts';
 
 type Msg =
@@ -144,12 +144,12 @@ export function SpeakingPage() {
       speak(reply.ja);
       // Counted on Kai's answer, not on hitting send: a turn is an exchange, and a message that never
       // got a reply (offline, model still loading) shouldn't move the scenario forward.
-      recordSpeakingTurn(
-        scenario.id,
-        next.filter((m) => m.role === 'user').length,
-        scenario.turnGoal,
-        reply.ja,
-      );
+      const userTurns = next.filter((m) => m.role === 'user').length;
+      recordSpeakingTurn(scenario.id, userTurns, scenario.turnGoal, reply.ja);
+      // Playing a role-play through is its review event — the scenario then comes back around on its own
+      // interval, which is how Speaking gets a due-for-review count like every other section. Guarded on
+      // the exact turn that reaches the goal so a longer conversation doesn't re-schedule it every turn.
+      if (userTurns === scenario.turnGoal) reviewItem('speaking', scenario.id, 'good');
     } catch (e) {
       // A cloud key that vanished mid-session → re-route to on-device if we can, else show setup.
       if (e instanceof CompanionError && e.message === 'not_configured') {

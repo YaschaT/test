@@ -21,7 +21,7 @@ import {
 import { useNeuralTtsAvailability } from '../../lib/tts/neuralTts';
 import { getAutoPlayEnabled, setAutoPlayEnabled } from '../../lib/listeningPrefs';
 import { buildDictationPool, buildListeningPool, matchesDictation, shuffle, type ListeningItem } from '../../lib/listeningPool';
-import { recordQuizResult, useProgress } from '../../lib/progressStore';
+import { recordQuizResult, reviewItem, useProgress } from '../../lib/progressStore';
 import { SKILL_THEME } from '../../lib/skillTheme';
 import { JLPT_LEVELS, type JlptLevel } from '../../types';
 import { XP_RULES } from '../../lib/xp';
@@ -383,7 +383,11 @@ function ListenSelect({ speed, voiceMode, playbackAvailable, level, autoPlay, on
   const choose = (en: string) => {
     if (answered) return;
     setSelected(en);
-    if (en === item.en) {
+    // Each sentence is its own SRS card: heard correctly it moves out on a longer interval, missed it
+    // comes straight back. That's what makes Listening's "review" count mean something.
+    const right = en === item.en;
+    reviewItem('listening', item.id, right ? 'good' : 'again');
+    if (right) {
       setCorrectCount((c) => c + 1);
       playCorrect();
     } else {
@@ -526,7 +530,9 @@ function Dictation({ speed, voiceMode, playbackAvailable, level, autoPlay, onAut
   function submit() {
     if (checked) return;
     setChecked(true);
-    if (matchesDictation(input, item)) {
+    const right = matchesDictation(input, item);
+    reviewItem('listening', item.id, right ? 'good' : 'again');
+    if (right) {
       setCorrectCount((c) => c + 1);
       playCorrect();
     } else {

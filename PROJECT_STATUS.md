@@ -3235,3 +3235,31 @@ still fail on one section's minimum, and the report has to say so. `ScoreRing` i
 wrong commit; the tick is now counted outside React. And the share button silently did nothing where
 the Clipboard API is blocked (it is, in some embedded browsers) — it now falls back to showing the
 line to copy by hand, and still never claims a copy that didn't happen.
+
+### Category Banner groundwork — SRS everywhere + milestones (2026-08-09)
+
+Started the `Category Banner.dc.html` import. **The banner itself is blocked on artwork** (see below);
+the two subsystems it needs are built and shipped.
+
+**SRS extended to every section.** `SrsItemType` widens from vocabulary/kanji to also cover grammar,
+reading, listening and speaking, and each section now records a real review at its natural completion
+point: finishing a grammar practice (`GrammarDetail`), finishing a book (`ReadingDetail`), answering a
+listening item in either exercise (`ListeningHome`, rated by correctness), and playing a role-play
+through to its turn goal (`SpeakingPage`, guarded on the exact turn that reaches it so a longer chat
+doesn't re-schedule). `getLearningState`/`getLearningStats` were already generic over item type, so
+every category now yields a genuine learned / due-for-review / still-to-learn split — which is what the
+new banner's four stat chips need. Verified in the browser: answering one listening question wrote
+`listening:lv-v-hai`, finishing the 〜です practice wrote `grammar:desu`.
+
+**Milestones** (`src/lib/milestones.ts` + tests): one repeating rung per category ("Learn 10 new kanji",
+"Complete 5 listening sessions"), each counting something already recorded, so nothing new is stored and
+nothing can drift. They repeat rather than run out — 13 kanji reads as 3/10 toward the next ten — so a
+banner never goes blank once you're good at a section. XP is paid per completed rung and folded into
+`calculateXp`, staying derived like the rest of the app's XP.
+
+**Blocked: 19 of the design's 21 images can't be imported.** The design MCP's `get_file` caps at
+256 KiB and returns truncated data past that — the 9 backgrounds (2172×724), the 9 mascots and
+`icon-xp-milestone.png` (1254×1254) all come back with no usable image data, the same failure as the
+loader badge. Only `icon-streak.png` and `icon-xp.png` survived; both are in `public/assets/banner/`
+waiting. The banner is a painted-background design with per-category light directions and pixel-tuned
+mascot placement, so building it without the art would be building a different component.

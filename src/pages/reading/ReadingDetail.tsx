@@ -26,6 +26,7 @@ import { getGrammarPoint } from '../../data/grammar';
 import {
   getProgressSnapshot,
   markReadingCompleted,
+  reviewItem,
   recordQuizResult,
   recordReadingPosition,
   useProgress,
@@ -179,6 +180,9 @@ export function ReadingDetail() {
   function finishBook() {
     const book = passage!;
     markReadingCompleted(book.id);
+    // A finished book re-enters the rotation on its own interval — extensive reading rewards re-reading
+    // at a comfortable level, so "due again" is a genuine suggestion here, not a chore.
+    reviewItem('reading', book.id, 'good');
     recordReadingPosition(book.id, book.sentences.length, book.sentences.length, book.wordCount);
     furthestRef.current = book.sentences.length;
   }

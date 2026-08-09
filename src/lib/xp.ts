@@ -1,4 +1,5 @@
 import type { ProgressState } from './progressStore';
+import { milestoneXpEarned } from './milestones';
 
 const XP_PER_LEVEL = 100;
 
@@ -45,7 +46,10 @@ export function calculateXp(progress: ProgressState): number {
     progress.learnedKanjiIds.length * XP_RULES.kanjiCharacter +
     progress.completedReadingIds.length * XP_RULES.readingPassage +
     listeningSessions * XP_RULES.listeningSession +
-    quizCorrectTotal * XP_RULES.quizCorrectAnswer
+    quizCorrectTotal * XP_RULES.quizCorrectAnswer +
+    // Milestone rungs pay on top of the per-item XP above. Also derived (see milestones.ts), so the two
+    // can never disagree: both are recomputed from the same recorded progress on every read.
+    milestoneXpEarned(progress)
   );
 }
 

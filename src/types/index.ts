@@ -203,8 +203,15 @@ export interface RoadmapWeek {
   gate: MasteryGate;
 }
 
-/** SRS scheduling state for one vocabulary or kanji item. Not static content — lives in progress data. */
-export type SrsItemType = 'vocabulary' | 'kanji';
+/**
+ * What an SRS card can be scheduled against. Not static content — lives in progress data.
+ *
+ * Vocabulary and kanji are reviewed in dedicated sessions; the other four are scheduled off the moment
+ * the learner genuinely finishes the thing (a grammar lesson, a book, a listening item, a role-play
+ * played through). That's what lets every section report the same learned / due-for-review / still-to-
+ * learn split instead of only the two decks with a review flow of their own.
+ */
+export type SrsItemType = 'vocabulary' | 'kanji' | 'grammar' | 'reading' | 'listening' | 'speaking';
 export type SrsRating = 'again' | 'hard' | 'good' | 'easy';
 
 export interface SrsCardState {
