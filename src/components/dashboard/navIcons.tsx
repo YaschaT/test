@@ -3,12 +3,20 @@
  *
  * Eight of them are the supplied illustrated assets (Dashboard-redesign/Navigation Icons), each trimmed
  * and centred on one square canvas at build-prep time so a single CSS box renders every icon at the same
- * visual size. They carry their own per-section colour (green Grammar, blue Vocabulary, pink Listening,
- * orange Reading …), so unlike the line icons they replace they do *not* inherit `currentColor`.
+ * visual size.
  *
- * Speaking has no supplied asset, so it keeps its original line icon, tinted to the same blue the
- * reference gives it.
+ * Their colour is baked into the pixels — these do *not* inherit `currentColor` — so the six skill icons
+ * were re-hued in place to `SKILL_THEME[skill].from`, the exact value each section's banner uses for its
+ * border, ring and watermark. Only the hue was replaced; the artwork's own saturation and value are
+ * untouched, so every highlight and shadow in the illustration survives. A skill's colour is now one
+ * value shared by its sidebar icon, its banner and its category badge — change `SKILL_THEME` and re-run
+ * the re-hue to move all three together.
+ *
+ * Dashboard, Learning Path and Mock Exam stay neutral: they aren't skills, and their greyscale is what
+ * separates the two top-level destinations and the assessment from the six coloured LEARN entries.
  */
+import { SKILL_THEME } from '../../lib/skillTheme';
+
 interface NavIconProps {
   size?: number;
   className?: string;
@@ -62,8 +70,9 @@ export function MockTestNavIcon(props: NavIconProps) {
   return <IllustratedNavIcon file="mock-exam.webp" {...props} />;
 }
 
-/** No illustrated asset was supplied for Speaking — this is the app's original line icon, fixed to the
- * blue the reference uses for it so it reads as part of the same coloured set. */
+/** No illustrated asset was supplied for Speaking — this is the app's original line icon. Being real SVG
+ * it can just take the colour rather than being re-hued like the others, so it reads it straight off
+ * SKILL_THEME: the same value its banner border, ring and watermark use. */
 export function SpeakingNavIcon({ size = 22, className }: NavIconProps) {
   return (
     <svg
@@ -71,7 +80,8 @@ export function SpeakingNavIcon({ size = 22, className }: NavIconProps) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      className={`shrink-0 text-brand-400 ${className ?? ''}`}
+      className={`shrink-0 ${className ?? ''}`}
+      style={{ color: SKILL_THEME.speaking.from }}
       aria-hidden="true"
     >
       <path

@@ -3181,3 +3181,16 @@ banner takes back the "Continue lesson" CTA that had been withheld precisely bec
 it, still resolving to `currentPoint`. The lesson list already marks the current lesson with an arrow and
 a highlighted row, so the next lesson is still obvious without the card restating it. Both
 `/assets/grammar/` images stay — `GrammarLessonIntro` and `GrammarPractice` still use them.
+
+**Sidebar icons matched to their banners (2026-08-09):** the six LEARN nav icons now carry exactly the
+colour their section's banner uses. Their colour is baked into the supplied WebP artwork (they don't
+inherit `currentColor`), so each was re-hued in place to `SKILL_THEME[skill].from` — hue replaced,
+the artwork's own saturation and value untouched, so every highlight and shadow survives. Grammar blue,
+Vocabulary green, Kanji amber, Reading sky, Listening violet. Speaking is real inline SVG rather than
+artwork, so it just reads the value: it was hardcoded `text-brand-400` (blue) against a pink banner and
+now takes `SKILL_THEME.speaking.from` directly.
+
+Dashboard, Learning Path and Mock Exam stay greyscale — they aren't skills, and that neutrality is what
+separates the two top-level destinations and the assessment from the six coloured LEARN entries.
+`ai-tutor.webp` is untouched: nothing references it. Re-running the re-hue is the step to repeat if
+`SKILL_THEME` ever changes; originals are in git history.
