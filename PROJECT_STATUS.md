@@ -3194,3 +3194,44 @@ Dashboard, Learning Path and Mock Exam stay greyscale — they aren't skills, an
 separates the two top-level destinations and the assessment from the six coloured LEARN entries.
 `ai-tutor.webp` is untouched: nothing references it. Re-running the re-hue is the step to repeat if
 `SKILL_THEME` ever changes; originals are in git history.
+
+### Mock Exam redesign — four screens (2026-08-09)
+
+Applied the `Mock Exam.dc.html` import across the whole flow: lobby → **countdown (new)** → exam → score
+report. The scoring engine (`mockExam.ts`) is untouched — the mockup scored `correct/32 × 180` with a
+flat 80 pass, which would have thrown away the official model, so every number on screen still comes
+from `EXAM_CONFIG`/`SCORING` (N5 32Q/24m/80, N4 36Q/27m/90, N3 37Q/30m/95) and `scoreExamOfficial`.
+
+**Lobby** (`ExamLobby`): the Mock Exam banner is the shared `SectionBanner` — extended with an optional
+`titleSuffix` (模擬試験) and an optional `value`, so a section with no headline number yet renders its
+detail line alone. Ring and bottom rule are the learner's best scaled score at the selected level.
+Bilingual mascot line off the real best (first sitting / points short / cleared it), the design's
+expanding level cards with per-level best rings, a per-level stat line, the sheen Start button,
+"Inside the paper" chips, "You walk away with", and collapsible rules that quote that level's real
+sectional minimums.
+
+**Per-section marks are real, not decorative.** `MockExamRecord` gained `sectionBests` — the per-section
+tally **of the sitting that set `bestScore`**, not a per-section high score, because a best-of across
+different sittings adds up to a paper nobody sat and would disagree with the headline beside it.
+Merged accordingly in `progressMerge`.
+
+**Countdown** (`ExamCountdown`, new): three seconds with a draining ring, 試 ghost and a halo thrown off
+per digit. It exists because the clock doesn't stop once it starts — this is the last moment leaving is
+free. The paper is built *before* the countdown so the pause is a pause, not a loading spinner.
+
+**Exam** (`ExamRuntime`): restyled to the design — full-width time bar, three-column header, question
+pane, numbered options, right-rail answer sheet with legend and blanks count, bilingual confirm
+dialogs. Dark in both themes on purpose: for twenty-odd minutes it's the only thing on screen. All
+existing behaviour kept (timer + auto-submit, flags, keyboard, listening audio and transcript), plus
+Escape now asks to leave. The runtime reports `secondsUsed` so the rank card can show real time.
+
+**Results** (`ExamResults`): verdict box, counting-up score, per-section bars that fill in sequence,
+the weakest part named, rank card with a real clipboard share, mascot line, retake/back. The mockup
+dropped the official sectional pass/fail — that's kept, because you can clear the overall mark and
+still fail on one section's minimum, and the report has to say so. `ScoreRing` is deleted (unused).
+
+**Two fixes found while verifying:** the countdown called the parent's `setPhase` from inside a
+`setCount` updater — updaters run during render, so React warned and the phase change landed in the
+wrong commit; the tick is now counted outside React. And the share button silently did nothing where
+the Clipboard API is blocked (it is, in some embedded browsers) — it now falls back to showing the
+line to copy by hand, and still never claims a copy that didn't happen.

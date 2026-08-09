@@ -172,11 +172,13 @@ function mergeMockExams(
       out[key] = record;
       continue;
     }
-    // `passed` must stay tied to the best score it was actually achieved with, not OR-ed independently.
+    // `passed` and the sectional breakdown must stay tied to the best score they were actually
+    // achieved with, not merged independently — they describe one specific sitting.
     const best = record.bestScore > existing.bestScore ? record : existing;
     out[key] = {
       bestScore: best.bestScore,
       passed: best.passed,
+      sectionBests: best.sectionBests,
       attempts: Math.max(existing.attempts, record.attempts),
       lastAttempt: existing.lastAttempt > record.lastAttempt ? existing.lastAttempt : record.lastAttempt,
     };

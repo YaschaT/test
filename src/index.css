@@ -504,6 +504,79 @@ html {
   .banner-sweep {
     animation: banner-sweep 900ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
   }
+
+  /* ── Mock exam ──────────────────────────────────────────────────────────────
+     A light travelling across the Start button, so the one action on the lobby keeps drawing the eye
+     without moving or resizing anything. Drawn as a ::after so the button needs no extra element. */
+  @keyframes exam-sheen {
+    0% {
+      transform: translateX(-120%);
+    }
+    55%,
+    100% {
+      transform: translateX(220%);
+    }
+  }
+  .exam-sheen::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 38%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    animation: exam-sheen 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+  }
+
+  /* The countdown digit landing, and the ring of light thrown off as it does. */
+  @keyframes exam-pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.65);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes exam-halo {
+    0% {
+      opacity: 0.5;
+      transform: scale(0.9);
+    }
+    70%,
+    100% {
+      opacity: 0;
+      transform: scale(1.5);
+    }
+  }
+  /* The overshoot lives in the keyframes (0.65 → 1.06 → 1); the curve just decelerates. Doing both —
+     as the mockup did — bounced the digit twice for one landing. */
+  .exam-pop {
+    animation: exam-pop 0.55s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  }
+  .exam-halo {
+    animation: exam-halo 0.9s ease-out both;
+  }
+  @keyframes exam-pulse {
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+  .exam-pulse {
+    animation: exam-pulse 1.6s ease-in-out infinite;
+  }
 }
 
 /* Safety net for every other hover/press transform transition used across the app (card lift, button

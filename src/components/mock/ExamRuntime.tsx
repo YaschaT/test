@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, Flag, ChevronLeft, ChevronRight, LayoutGrid, Check, Volume2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Flag, LayoutGrid, Volume2, Loader2 } from 'lucide-react';
 import type { MockExamConfig, MockQuestion } from '../../lib/mockExam';
 import { SECTION_LABEL } from '../../lib/mockExam';
 import { SECTION_THEME } from './examTheme';
@@ -9,11 +9,10 @@ import { getSavedVoiceMode, useTtsPlayer } from '../../lib/tts/ttsService';
 interface ExamRuntimeProps {
   questions: MockQuestion[];
   config: MockExamConfig;
-  onFinish: (answers: (number | null)[]) => void;
+  /** `secondsUsed` is wall-clock time on the paper — the results screen reports it back. */
+  onFinish: (answers: (number | null)[], secondsUsed: number) => void;
   onExit: () => void;
 }
-
-const LETTERS = ['A', 'B', 'C', 'D'];
 
 function mmss(total: number): string {
   const m = Math.floor(total / 60);
@@ -21,6 +20,15 @@ function mmss(total: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * The exam room. Dark in both themes on purpose: for the twenty-odd minutes the clock is running this
+ * is the only thing on screen, and the surrounding app — sidebar, light page, everything else you
+ * could be doing — should stop competing with the paper.
+ *
+ * The clock does not stop. It auto-submits at zero, leaving discards the attempt, and blanks score
+ * zero; all three are stated up front on the lobby and again in the confirm dialogs, because a timed
+ * assessment is the one place in the app where a surprise is a real cost to the learner.
+ */
 export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntimeProps) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
@@ -34,8 +42,9 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
 
   const question = questions[index];
   const isLast = index === questions.length - 1;
-  const answeredCount = answers.filter((a) => a !== null).length;
   const total = questions.length;
+  const answeredCount = answers.filter((a) => a !== null).length;
+  const blanks = total - answeredCount;
 
   // Position of this question within its own section (e.g. "Kanji 3 / 8").
   const sectionInfo = useMemo(() => {
@@ -44,7 +53,10 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
     return { within, count: sameSection.length };
   }, [questions, index, question.section]);
 
-  const finish = useCallback(() => onFinish(answers), [onFinish, answers]);
+  const finish = useCallback(
+    () => onFinish(answers, config.minutes * 60 - secondsLeft),
+    [onFinish, answers, config.minutes, secondsLeft],
+  );
 
   // Countdown — auto-submits at zero.
   useEffect(() => {
@@ -87,22 +99,25 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
     });
   }, [index]);
 
-  // Keyboard: 1-4 / A-D select, ← → navigate, F flag.
+  // Keyboard: 1–4 select, ← → navigate, F flag, Escape asks to leave.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (confirming) return;
+      if (confirming) {
+        if (e.key === 'Escape') setConfirming(null);
+        return;
+      }
       const k = e.key.toLowerCase();
       const numeric = Number(k);
       if (numeric >= 1 && numeric <= question.options.length) {
         select(numeric - 1);
-      } else if (['a', 'b', 'c', 'd'].includes(k) && LETTERS.indexOf(k.toUpperCase()) < question.options.length) {
-        select(LETTERS.indexOf(k.toUpperCase()));
       } else if (e.key === 'ArrowRight') {
         goNext();
       } else if (e.key === 'ArrowLeft') {
         goPrev();
       } else if (k === 'f') {
         toggleFlag();
+      } else if (e.key === 'Escape') {
+        setConfirming('exit');
       }
     }
     window.addEventListener('keydown', onKey);
@@ -110,32 +125,12 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
   }, [confirming, question.options.length, select, goNext, goPrev, toggleFlag]);
 
   const theme = SECTION_THEME[question.section];
-  const SectionIcon = theme.icon;
   const timeLow = secondsLeft <= config.minutes * 60 * 0.2;
   const timeCritical = secondsLeft <= 30;
 
-  const progressTicks = (
-    <div className="mt-2.5 flex gap-0.5" aria-hidden="true">
-      {questions.map((q, i) => {
-        const t = SECTION_THEME[q.section];
-        const isAnswered = answers[i] !== null;
-        const isCurrent = i === index;
-        return (
-          <span
-            key={i}
-            // Unanswered ticks keep a visible track (they used to be transparent, so the strip read
-            // as one lonely dot until you'd answered a few).
-            className="h-1.5 flex-1 rounded-full bg-slate-200 transition-colors dark:bg-slate-700"
-            style={{ backgroundColor: isCurrent ? t.hex : isAnswered ? `${t.hex}99` : undefined }}
-          />
-        );
-      })}
-    </div>
-  );
-
-  const paletteGrid = (columns: string) => (
+  const answerSheet = (columns: string) => (
     <div className={`grid gap-1.5 ${columns}`}>
-      {questions.map((q, i) => {
+      {questions.map((_, i) => {
         const isAnswered = answers[i] !== null;
         const isCurrent = i === index;
         const isFlagged = flagged.has(i);
@@ -148,119 +143,144 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
             }}
             aria-label={`Go to question ${i + 1}${isAnswered ? ', answered' : ''}${isFlagged ? ', flagged' : ''}`}
             aria-current={isCurrent ? 'true' : undefined}
-            className={`relative grid aspect-square place-items-center rounded-lg text-xs font-bold tabular-nums transition-all ${
-              isCurrent
-                ? 'bg-brand-600 text-white ring-2 ring-brand-300 ring-offset-1 dark:ring-offset-slate-900'
+            className={`grid aspect-square place-items-center rounded-lg border text-xs font-extrabold tabular-nums transition-colors ${
+              isCurrent ? 'border-brand-300' : 'border-transparent'
+            } ${
+              isFlagged
+                ? 'bg-amber-500 text-amber-950'
                 : isAnswered
-                  ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/25 dark:text-brand-200'
-                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-500'
+                  ? 'bg-iris-600 text-white'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10'
             }`}
-            style={{ borderBottomColor: SECTION_THEME[q.section].hex }}
           >
             {i + 1}
-            {isFlagged && <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />}
           </button>
         );
       })}
     </div>
   );
 
-  const timerClasses = `flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums transition-colors ${
-    timeCritical
-      ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300'
-      : timeLow
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
-        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
-  } ${timeCritical ? 'animate-pop' : ''}`;
-
   return (
-    // From lg the exam splits into a question stage and a permanent side rail (clock, progress,
-    // question map, submit) — the controls that used to hide behind a toggle in a narrow column.
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      {/* Tall enough that Prev/Next keep the same spot from question to question, but on a wide screen
-          it stops short of the full viewport so the nav doesn't drift far below the answers. */}
-      <div className="flex min-w-0 min-h-[calc(100dvh-9rem)] flex-col lg:min-h-[34rem]">
-        {/* Sticky exam header — sits below the mobile app header (h-14), flush to the top on desktop
-            where the app uses a sidebar instead of a top bar. Replaced by the rail from lg. */}
-        <div className="sticky top-14 z-20 -mx-4 border-b border-slate-200 bg-canvas-light/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 md:top-0 lg:hidden">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setConfirming('exit')}
-              className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
-            >
-              <X size={16} /> Exit
-            </button>
-            <div role="timer" aria-label="Time remaining" className={timerClasses}>
-              {mmss(secondsLeft)}
-            </div>
-            <span className="text-sm font-semibold tabular-nums text-slate-500 dark:text-slate-400">
-              {index + 1}<span className="text-slate-300 dark:text-slate-600"> / {total}</span>
-            </span>
-          </div>
-          {/* Segmented progress: one tick per question, colored by section, filled when answered */}
-          {progressTicks}
+    <div className="-mx-4 -my-4 flex min-h-[calc(100dvh-3.5rem)] flex-col bg-[#0a0f1d] text-slate-200 md:-mx-8 md:-my-8 md:min-h-dvh 2xl:-mx-10">
+      {/* The clock as a line across the whole screen — readable from the corner of your eye without
+          looking away from the question. */}
+      <div className="h-[3px] w-full bg-white/[0.06]">
+        <div
+          className="h-full bg-gradient-to-r from-iris-500 to-brand-300 transition-[width] duration-1000 ease-linear"
+          style={{ width: `${(secondsLeft / (config.minutes * 60)) * 100}%` }}
+        />
+      </div>
+
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3.5 sm:px-7 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-5">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <button
+            onClick={() => setConfirming('exit')}
+            className="flex items-center gap-2 rounded-xl border border-white/10 py-2 pr-4 pl-3 text-sm font-bold text-slate-400 transition-colors hover:border-white/25 hover:text-white"
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span className="hidden sm:inline">Leave exam</span>
+            <span className="sm:hidden">Leave</span>
+          </button>
+          <span className="hidden text-[13px] font-extrabold tracking-[0.12em] whitespace-nowrap text-slate-400 sm:inline">
+            JLPT {config.level}
+          </span>
         </div>
 
-        {/* Question body */}
-        <div key={index} className="animate-review-reveal-in flex flex-1 flex-col pt-6 lg:pt-0">
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${theme.chip}`}>
-              <SectionIcon size={13} strokeWidth={2.4} />
-              {SECTION_LABEL[question.section].en}
+        <div
+          role="timer"
+          aria-label="Time remaining"
+          className={`flex items-center gap-2.5 rounded-2xl border border-white/[0.08] px-5 py-2 transition-colors md:justify-self-center ${
+            timeCritical || timeLow ? 'bg-rose-500/15 text-rose-300' : 'bg-white/[0.04] text-brand-300'
+          }`}
+        >
+          <span aria-hidden="true" className="exam-pulse h-[7px] w-[7px] rounded-full bg-current" />
+          <span className="text-[22px] font-black tabular-nums">{mmss(secondsLeft)}</span>
+        </div>
+
+        <div className="flex items-center justify-end gap-3.5">
+          <span className="text-sm whitespace-nowrap text-slate-400 tabular-nums">
+            {index + 1} / {total}
+          </span>
+          <button
+            onClick={() => setShowPalette((v) => !v)}
+            aria-pressed={showPalette}
+            aria-label="Answer sheet"
+            className="rounded-xl border border-white/10 p-2 text-slate-400 transition-colors hover:border-white/25 hover:text-white lg:hidden"
+          >
+            <LayoutGrid size={16} aria-hidden="true" />
+          </button>
+          <button
+            onClick={() => setConfirming('finish')}
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm font-bold whitespace-nowrap text-slate-400 transition-colors hover:border-white/25 hover:text-white"
+          >
+            Hand in
+          </button>
+        </div>
+      </header>
+
+      <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_248px]">
+        <div key={index} className="animate-review-reveal-in mx-auto flex w-full max-w-[820px] flex-1 flex-col px-5 py-8 sm:px-8 sm:py-12">
+          <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+            <span className="text-[13px] font-extrabold tracking-[0.16em] text-slate-400">
+              QUESTION {index + 1}
             </span>
-            <span className="text-xs font-medium tabular-nums text-slate-400 dark:text-slate-500">
-              {sectionInfo.within} / {sectionInfo.count}
+            <span className="text-[13px] text-slate-500">
+              <span style={{ color: theme.hex }}>{SECTION_LABEL[question.section].en}</span> ·{' '}
+              {SECTION_LABEL[question.section].nl} · {sectionInfo.within}/{sectionInfo.count}
             </span>
             {flagged.has(index) && (
-              <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                <Flag size={12} className="fill-current" /> Flagged
+              <span className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                <Flag size={12} className="fill-current" aria-hidden="true" /> Flagged
               </span>
             )}
           </div>
 
-          {question.context && (
-            <p className="mt-4 text-sm italic text-slate-400 dark:text-slate-500">{question.context.en}</p>
-          )}
+          {question.context && <p className="mt-4 text-sm text-slate-500 italic">{question.context.en}</p>}
 
           {question.section === 'listening' && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+            <div className="mt-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => question.audioText && tts.play(question.audioText, 1)}
-                  className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-95"
+                  className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#6b78ff] to-iris-600 text-white shadow-[0_10px_24px_-10px_var(--color-iris-500)] transition hover:brightness-110 active:scale-95"
                   aria-label="Play audio again"
                 >
-                  {tts.state.status === 'loading' ? <Loader2 size={22} className="animate-spin" /> : <Volume2 size={22} />}
+                  {tts.state.status === 'loading' ? (
+                    <Loader2 size={22} className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Volume2 size={22} aria-hidden="true" />
+                  )}
                 </button>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Listen, then choose the meaning</p>
+                  <p className="text-sm font-semibold text-slate-100">Listen, then choose the meaning</p>
                   <button
                     onClick={() => setTranscriptIdx((v) => (v === index ? null : index))}
-                    className="mt-0.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                    className="mt-0.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300"
                   >
                     {transcriptIdx === index ? 'Hide transcript' : 'Can’t hear it? Show transcript'}
                   </button>
-                  {transcriptIdx === index && <p className="jp-text mt-1.5 text-base text-slate-700 dark:text-slate-200">{question.audioText}</p>}
+                  {transcriptIdx === index && (
+                    <p className="jp-text mt-1.5 text-base text-slate-200">{question.audioText}</p>
+                  )}
                 </div>
               </div>
               {tts.state.status === 'error' && (
-                <p className="mt-2 text-xs text-rose-500 dark:text-rose-400">Audio isn’t available here — use the transcript to answer.</p>
+                <p className="mt-2 text-xs text-rose-300">Audio isn’t available here — use the transcript to answer.</p>
               )}
             </div>
           )}
 
           {question.japanese && (
-            <p className="jp-text mt-3 text-3xl font-bold leading-snug text-slate-900 dark:text-white sm:text-4xl">
+            <p className="jp-text mt-5 text-[28px] leading-relaxed font-medium text-white sm:text-[34px]">
               {question.japanese}
             </p>
           )}
 
-          <p className="mt-3 text-[15px] font-medium text-slate-700 dark:text-slate-200">
-            {question.prompt.en}
-            <span className="mt-0.5 block text-sm font-normal text-slate-400 dark:text-slate-500">{question.prompt.nl}</span>
+          <p className="mt-2.5 text-[15px] text-slate-400">
+            {question.prompt.en} · <span className="text-slate-500">{question.prompt.nl}</span>
           </p>
 
-          <div className="mt-5 grid gap-2.5 xl:grid-cols-2" role="radiogroup" aria-label="Answer options">
+          <div className="mt-8 flex flex-col gap-2.5" role="radiogroup" aria-label="Answer options">
             {question.options.map((option, i) => {
               const selected = answers[index] === i;
               return (
@@ -269,156 +289,134 @@ export function ExamRuntime({ questions, config, onFinish, onExit }: ExamRuntime
                   role="radio"
                   aria-checked={selected}
                   onClick={() => select(i)}
-                  className={`group flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition-all ${
-                    selected
-                      ? 'border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-500/15'
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800/60'
+                  className={`flex w-full items-center gap-4 rounded-[18px] border px-5 py-4 text-left transition-[transform,background,border-color] duration-150 hover:translate-x-[3px] ${
+                    selected ? 'border-brand-300/60 bg-iris-500/15' : 'border-white/[0.07] bg-white/[0.025]'
                   }`}
                 >
                   <span
-                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-bold transition-colors ${
-                      selected
-                        ? 'bg-brand-500 text-white'
-                        : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-[15px] font-black transition-colors ${
+                      selected ? 'bg-iris-500 text-white' : 'bg-white/[0.06] text-slate-400'
                     }`}
                   >
-                    {selected ? <Check size={15} strokeWidth={3} /> : LETTERS[i]}
+                    {i + 1}
                   </span>
-                  <span className={`jp-text text-[15px] ${selected ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>
-                    {option}
-                  </span>
+                  <span className="jp-text text-lg text-slate-100 sm:text-[22px]">{option}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Footer nav */}
-          <div className="mt-auto flex items-center gap-2 pt-6">
+          <div className="mt-9 flex items-center gap-3">
             <button
               onClick={goPrev}
               disabled={index === 0}
-              className="flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-30 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="rounded-2xl border border-white/[0.12] px-6 py-3.5 text-[15px] font-bold text-slate-400 transition-colors hover:border-white/25 hover:text-white disabled:opacity-50 disabled:hover:border-white/[0.12] disabled:hover:text-slate-400"
             >
-              <ChevronLeft size={16} /> Prev
+              Back
             </button>
             <button
               onClick={toggleFlag}
               aria-pressed={flagged.has(index)}
-              className={`flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
+              className={`rounded-2xl border px-6 py-3.5 text-[15px] font-bold transition-colors ${
                 flagged.has(index)
-                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
-                  : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
+                  ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
+                  : 'border-white/[0.12] text-slate-400 hover:border-white/25 hover:text-white'
               }`}
             >
-              <Flag size={15} className={flagged.has(index) ? 'fill-current' : ''} />
+              {flagged.has(index) ? 'Flagged ✓' : 'Flag · Markeer'}
             </button>
+            <div className="flex-1" />
             <button
-              onClick={() => setShowPalette((v) => !v)}
-              aria-pressed={showPalette}
-              aria-label="Question map"
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+              onClick={() => (isLast ? setConfirming('finish') : goNext())}
+              className="rounded-2xl bg-gradient-to-b from-[#5b6bff] to-iris-600 px-7 py-3.5 text-base font-extrabold text-white shadow-[0_12px_28px_-14px_var(--color-iris-500)] transition-transform hover:-translate-y-px active:translate-y-0"
             >
-              <LayoutGrid size={15} />
+              {isLast ? 'Hand in' : 'Next question'}
             </button>
-            {isLast ? (
-              <button
-                onClick={() => setConfirming('finish')}
-                className="ml-auto flex items-center gap-1 rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-[0.98]"
-              >
-                Finish exam <Check size={16} />
-              </button>
-            ) : (
-              <button
-                onClick={goNext}
-                className="ml-auto flex items-center gap-1 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-[0.98] dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-              >
-                Next <ChevronRight size={16} />
-              </button>
-            )}
           </div>
 
-          {/* Question palette — the rail carries this from lg, so it only toggles on smaller screens. */}
+          <p className="mt-4 text-[12.5px] text-slate-500">Keys: 1–4 to answer · ← → to move · F to flag</p>
+
           {showPalette && (
-            <div className="animate-review-reveal-in mt-4 rounded-2xl border border-slate-200 bg-white p-4 lg:hidden dark:border-slate-800 dark:bg-slate-900">
-              <div className="mb-3 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-                <span>{answeredCount} of {total} answered</span>
-                <span className="flex items-center gap-1"><Flag size={11} className="fill-amber-500 text-amber-500" /> {flagged.size} flagged</span>
-              </div>
-              {paletteGrid('grid-cols-8 sm:grid-cols-10')}
+            <div className="animate-review-reveal-in mt-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 lg:hidden">
+              <p className="mb-3 text-xs font-bold text-slate-400">
+                {answeredCount} of {total} answered · {flagged.size} flagged
+              </p>
+              {answerSheet('grid-cols-8 sm:grid-cols-10')}
             </div>
           )}
         </div>
+
+        <aside className="hidden border-l border-white/[0.06] bg-white/[0.012] px-5 py-6 lg:block">
+          <h2 className="text-[11.5px] font-extrabold tracking-[0.16em] text-slate-400">ANSWER SHEET</h2>
+          <p className="mb-3.5 text-[11.5px] text-slate-500">ANTWOORDBLAD</p>
+          {answerSheet('grid-cols-6')}
+          <ul className="mt-4.5 flex flex-col gap-1.5 text-[12.5px] text-slate-400">
+            <Legend className="bg-iris-600">Answered · Beantwoord</Legend>
+            <Legend className="bg-amber-500">Flagged · Gemarkeerd</Legend>
+            <Legend className="bg-white/[0.08]">Blank · Leeg</Legend>
+          </ul>
+          <p className="mt-4.5 border-t border-white/[0.06] pt-4 text-[13px] text-slate-400">
+            {blanks === 0 ? 'All questions answered.' : `${blanks} still blank · ${blanks} nog leeg`}
+          </p>
+        </aside>
       </div>
 
-      {/* Side rail (lg+) */}
-      <aside className="sticky top-8 hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:block dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setConfirming('exit')}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
-          >
-            <X size={16} /> Exit
-          </button>
-          <div role="timer" aria-label="Time remaining" className={timerClasses}>
-            {mmss(secondsLeft)}
-          </div>
-        </div>
-
-        <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Question {index + 1}
-          <span className="font-medium text-slate-400 dark:text-slate-500"> of {total}</span>
-        </p>
-        {progressTicks}
-
-        <div className="mt-5 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-          <span className="tabular-nums">{answeredCount} of {total} answered</span>
-          <span className="flex items-center gap-1 tabular-nums">
-            <Flag size={11} className="fill-amber-500 text-amber-500" /> {flagged.size}
-          </span>
-        </div>
-        <div className="mt-2">{paletteGrid('grid-cols-6')}</div>
-
-        <button
-          onClick={() => setConfirming('finish')}
-          className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition hover:brightness-110 active:scale-[0.98]"
-        >
-          Finish exam <Check size={16} />
-        </button>
-      </aside>
-
-      {/* Confirm overlays */}
       {confirming && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="animate-pop w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {confirming === 'exit' ? 'Leave the exam?' : 'Finish and submit?'}
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-[#060912]/75 p-6 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="animate-review-reveal-in w-full max-w-[460px] rounded-[26px] border border-white/10 bg-gradient-to-b from-[#171e3c] to-[#101528] p-7">
+            <h2 className="text-[22px] font-black text-white">
+              {confirming === 'exit' ? 'Leave the exam?' : 'Hand in your paper?'}
             </h2>
-            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-2.5 text-[15px] leading-relaxed text-slate-400">
               {confirming === 'exit'
-                ? 'Your progress on this attempt will be discarded.'
-                : answeredCount < total
-                  ? `You have ${total - answeredCount} unanswered ${total - answeredCount === 1 ? 'question' : 'questions'}. They’ll be marked wrong.`
-                  : 'All questions answered. Ready to see your score?'}
+                ? 'The timer stops and your answers are discarded. Nothing is scored.'
+                : blanks === 0
+                  ? `All ${total} answered${flagged.size ? `, ${flagged.size} still flagged` : ''}. This is scored immediately.`
+                  : `${blanks} question${blanks === 1 ? '' : 's'} still blank${
+                      flagged.size ? ` and ${flagged.size} flagged` : ''
+                    }. Blanks score zero.`}
             </p>
-            <div className="mt-5 flex gap-2">
+            <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500">
+              {confirming === 'exit'
+                ? 'De timer stopt en je antwoorden vervallen.'
+                : blanks === 0
+                  ? 'Alles ingevuld. Wordt direct beoordeeld.'
+                  : `${blanks} vragen nog leeg. Lege antwoorden tellen als nul.`}
+            </p>
+            <div className="mt-6 flex gap-2.5">
               <button
                 onClick={() => setConfirming(null)}
-                className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="flex-1 rounded-[15px] border border-white/15 px-4 py-3.5 text-[15px] font-extrabold text-slate-300 transition-colors hover:border-white/30"
               >
-                Keep going
+                {confirming === 'exit' ? 'Keep going' : 'Keep working'}
               </button>
               <button
                 onClick={() => (confirming === 'exit' ? onExit() : finish())}
-                className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white ${
-                  confirming === 'exit' ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] hover:brightness-110'
+                className={`flex-1 rounded-[15px] px-4 py-3.5 text-[15px] font-extrabold text-white transition hover:brightness-110 ${
+                  confirming === 'exit'
+                    ? 'bg-gradient-to-b from-rose-500 to-rose-700'
+                    : 'bg-gradient-to-b from-[#5b6bff] to-iris-600'
                 }`}
               >
-                {confirming === 'exit' ? 'Leave' : 'Submit'}
+                {confirming === 'exit' ? 'Leave exam' : 'Hand in'}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function Legend({ className, children }: { className: string; children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-2">
+      <span aria-hidden="true" className={`inline-block h-[11px] w-[11px] rounded ${className}`} />
+      {children}
+    </li>
   );
 }

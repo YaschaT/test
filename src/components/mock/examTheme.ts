@@ -8,6 +8,8 @@ import type { MockSection } from '../../lib/mockExam';
  */
 export interface SectionTheme {
   icon: LucideIcon;
+  /** One kanji standing for the section — the exam screens label sections with these rather than icons. */
+  glyph: string;
   hex: string;
   /** Soft tinted chip: bg + text, light & dark. */
   chip: string;
@@ -18,30 +20,35 @@ export interface SectionTheme {
 export const SECTION_THEME: Record<MockSection, SectionTheme> = {
   vocabulary: {
     icon: Layers,
+    glyph: '語',
     hex: '#4c6ef0',
     chip: 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300',
     text: 'text-brand-600 dark:text-brand-300',
   },
   kanji: {
     icon: PenLine,
+    glyph: '漢',
     hex: '#8b5cf6',
     chip: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
     text: 'text-violet-600 dark:text-violet-300',
   },
   grammar: {
     icon: BookOpen,
+    glyph: '文',
     hex: '#10b981',
     chip: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
     text: 'text-emerald-600 dark:text-emerald-300',
   },
   reading: {
     icon: ScrollText,
+    glyph: '読',
     hex: '#f59e0b',
     chip: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
     text: 'text-amber-600 dark:text-amber-300',
   },
   listening: {
     icon: Headphones,
+    glyph: '聴',
     hex: '#e8735c',
     chip: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
     text: 'text-rose-600 dark:text-rose-300',

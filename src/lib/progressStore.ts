@@ -93,6 +93,12 @@ export interface MockExamRecord {
   bestScore: number;
   /** Whether that best result was an official pass (overall mark + every sectional minimum). */
   passed: boolean;
+  /**
+   * Correct answers per content section **in the sitting that set `bestScore`**, keyed by MockSection —
+   * not a per-section high score. Taking the best of each section across different sittings would add
+   * up to a paper nobody ever sat, and would disagree with the headline number beside it.
+   */
+  sectionBests?: Record<string, number>;
   attempts: number;
   lastAttempt: string;
 }
@@ -388,13 +394,24 @@ export function recordCheckpointResult(week: number, correct: number, total: num
  * and pass status for that level, and logs a `mock-test` QuizResult so its correct answers feed the
  * derived XP score like any other quiz. `passed` reflects the full official rule (overall + sectionals).
  */
-export function recordMockExamResult(level: JlptLevel, correct: number, total: number, scaled: number, passed: boolean) {
+export function recordMockExamResult(
+  level: JlptLevel,
+  correct: number,
+  total: number,
+  scaled: number,
+  passed: boolean,
+  /** Correct answers per content section in *this* sitting; kept only if this sitting is the new best. */
+  sectionCorrect?: Record<string, number>,
+) {
   if (total <= 0) return;
   setState((s) => {
     const prev = s.mockExams[level];
+    const isBest = scaled > (prev?.bestScore ?? -1);
     const record: MockExamRecord = {
       bestScore: Math.max(prev?.bestScore ?? 0, scaled),
       passed: (prev?.passed ?? false) || passed,
+      // Tied to whichever sitting owns bestScore, so the breakdown always describes that paper.
+      sectionBests: isBest ? sectionCorrect : prev?.sectionBests,
       attempts: (prev?.attempts ?? 0) + 1,
       lastAttempt: todayIso(),
     };

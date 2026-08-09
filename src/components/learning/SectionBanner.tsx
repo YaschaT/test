@@ -13,13 +13,18 @@ export type BannerAction =
 interface SectionBannerProps {
   /** The page's h1. */
   title: string;
+  /** Sits beside the title in a quieter weight — Mock Exam's 模擬試験. */
+  titleSuffix?: string;
   /** This section's identity colour — pass `SKILL_THEME[skill].from` so it matches its icon everywhere. */
   accent: string;
   icon: LucideIcon;
   /** The single kanji watermarked into the right of the panel: 文, 語, 字, 聴, 話, 道. */
   kanji: string;
-  /** The one number this section is about. Counts up on mount. */
-  value: number;
+  /**
+   * The one number this section is about. Counts up on mount. Omit when the section has no headline
+   * count yet to report, and `detail` becomes the whole line.
+   */
+  value?: number;
   /** Rendered before the number, un-animated — Learning Path's "Week". */
   valuePrefix?: string;
   /** The rest of the sentence: "of 42 grammar points learned", "conversations with Kai". */
@@ -52,6 +57,7 @@ interface SectionBannerProps {
  */
 export function SectionBanner({
   title,
+  titleSuffix,
   accent,
   icon: Icon,
   kanji,
@@ -62,7 +68,7 @@ export function SectionBanner({
   levels,
   action,
 }: SectionBannerProps) {
-  const shown = useCountUp(value);
+  const shown = useCountUp(value ?? 0);
   const percent = progress == null ? null : Math.round(Math.max(0, Math.min(1, progress)) * 100);
 
   // The bottom rule grows from nothing on the first frame, so the page's progress arrives rather than
@@ -108,12 +114,19 @@ export function SectionBanner({
         </RingStat>
 
         <div className="flex min-w-0 flex-1 basis-56 flex-col gap-1.5">
-          <h1 className="font-display text-xl leading-tight font-semibold text-white sm:text-[28px]">{title}</h1>
+          <div className="flex flex-wrap items-baseline gap-x-3">
+            <h1 className="font-display text-xl leading-tight font-semibold text-white sm:text-[28px]">{title}</h1>
+            {titleSuffix && <span className="jp-text text-[15px] text-slate-500">{titleSuffix}</span>}
+          </div>
           <p className="text-[13px] leading-snug text-slate-400 sm:text-sm">
-            <b className="font-display text-[1.08em] font-medium text-slate-200 tabular-nums">
-              {valuePrefix}
-              {shown.toLocaleString()}
-            </b>{' '}
+            {value != null && (
+              <>
+                <b className="font-display text-[1.08em] font-medium text-slate-200 tabular-nums">
+                  {valuePrefix}
+                  {shown.toLocaleString()}
+                </b>{' '}
+              </>
+            )}
             {detail}
           </p>
         </div>
