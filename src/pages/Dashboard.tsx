@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, LineChart, RotateCcw } from 'lucide-react';
-import { DashboardHero } from '../components/dashboard/DashboardHero';
+import { CategoryBanner } from '../components/learning/CategoryBanner';
+import { SegmentedTabs } from '../components/SegmentedTabs';
+import { DashboardGoalBar } from '../components/dashboard/DashboardGoalBar';
 import { SummaryStrip } from '../components/dashboard/SummaryStrip';
 import { TodaySessionCard, type SessionStep } from '../components/dashboard/TodaySessionCard';
 import { WeeklyProgressCard } from '../components/dashboard/WeeklyProgressCard';
@@ -9,6 +11,7 @@ import { AchievementCard } from '../components/dashboard/AchievementCard';
 import { BottomJourneyStrip } from '../components/dashboard/BottomJourneyStrip';
 import { useProgress, getMinutesToday, getDueSrsCount, setLevel } from '../lib/progressStore';
 import { todayIso } from '../lib/date';
+import { JLPT_LEVELS } from '../types';
 import { calculateStudyPlan } from '../lib/studyPlanCalculator';
 import { getSavedStudyMinutes, saveStudyMinutes } from '../lib/studyDurationPref';
 import { currentWeekDays, pathStepSubtitle, isSkillFullyMastered, WEEKLY_GOAL_DAYS } from '../lib/dashboardStats';
@@ -100,20 +103,31 @@ export function Dashboard() {
     // `flex-1` so the page owns the full height of the shell's content frame: on a tall display the
     // slack goes into the cards below rather than into an empty band under the last one.
     <div className="flex flex-1 flex-col gap-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
-      <DashboardHero
-        greetingJa={greetingJa}
-        supportingText={
+      <CategoryBanner
+        category="dashboard"
+        title="Dashboard"
+        // The Japanese greeting rides on the subtitle so the front door keeps its voice — the banner
+        // has one title slot and "Dashboard" is what the design puts in it.
+        subtitle={`${greetingJa} · ${
           isNewUser
             ? 'Learn a lesson, review it daily, and your JLPT progress builds from there.'
             : `Today's plan is set for JLPT ${progress.level}.`
+        }`}
+        levels={
+          <SegmentedTabs
+            value={progress.level}
+            onChange={setLevel}
+            variant="glass"
+            size="sm"
+            groupLabel="JLPT level"
+            options={JLPT_LEVELS.map((l) => ({ value: l, label: l }))}
+          />
         }
-        ctaLabel={primaryCta.label}
-        onStart={primaryCta.onClick}
-        durationMinutes={durationMinutes}
-        onDurationChange={handleDurationChange}
-        level={progress.level}
-        onLevelChange={setLevel}
+        action={{ label: primaryCta.label, onClick: primaryCta.onClick }}
       />
+
+      {/* The daily goal moved out of the hero with it — it belongs next to the numbers it governs. */}
+      <DashboardGoalBar durationMinutes={durationMinutes} onDurationChange={handleDurationChange} />
 
       <SummaryStrip
         minutesToday={minutesToday}

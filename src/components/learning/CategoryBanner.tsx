@@ -53,7 +53,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
   }, []);
 
   return (
-    <section className="relative isolate min-h-[330px] overflow-hidden rounded-[28px] border border-[#7e92d0]/16 bg-[#03091e] shadow-[0_24px_60px_rgba(0,0,0,0.55)] lg:min-h-[330px]">
+    <section className="relative isolate min-h-[300px] overflow-hidden rounded-[28px] border border-[#7e92d0]/16 bg-[#03091e] shadow-[0_24px_60px_rgba(0,0,0,0.55)] lg:h-[330px]">
       {/* The scene sits to the right and bleeds off the edge; the scrim below carries it into flat navy
           under the text, which is what keeps the copy legible over a busy painting. */}
       <img
@@ -92,7 +92,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
         </span>
       </div>
 
-      <div className="relative flex flex-col gap-6 p-6 pt-16 sm:p-8 sm:pt-20 lg:flex-row lg:items-start lg:gap-8 lg:pr-[380px]">
+      <div className="relative flex h-full flex-col gap-5 p-6 pt-16 sm:p-7 sm:pt-14 lg:flex-row lg:items-start lg:gap-7 lg:pr-[380px]">
         {/* Ring */}
         <div className="relative h-[132px] w-[132px] shrink-0 sm:h-[158px] sm:w-[158px]">
           <svg viewBox="0 0 158 158" className="h-full w-full drop-shadow-[0_0_14px_rgba(56,189,248,0.25)]">
@@ -126,11 +126,13 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 lg:max-w-[40%]">
-          <h1 className="text-[38px] leading-none font-extrabold tracking-tight text-white sm:text-[57px]">{title}</h1>
+        <div className="min-w-0 flex-1 lg:max-w-[42%]">
+          <h1 className="text-[34px] leading-none font-extrabold tracking-tight text-white text-balance sm:text-[46px] 2xl:text-[57px]">
+            {title}
+          </h1>
           <p className="mt-2.5 text-[15px] leading-snug font-medium text-slate-300 sm:text-[17px]">{subtitle}</p>
 
-          <div className="mt-5 grid max-w-lg grid-cols-2 gap-x-6 gap-y-3.5">
+          <div className="mt-4 grid max-w-lg grid-cols-2 gap-x-6 gap-y-3">
             <Stat colour="#4ADE80" hollow value={stats.done} suffix={`/ ${stats.total.toLocaleString()}`} />
             <Stat colour="#8B7BF7" value={stats.learned} suffix="learned" />
             <Stat colour="#34E5A6" value={stats.review} suffix="review" />
@@ -138,7 +140,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
           </div>
 
           {action && (
-            <div className="mt-6">
+            <div className="mt-5">
               {action.to ? (
                 <Link to={action.to} onClick={action.onClick} className={ACTION_CLASSES}>
                   {action.label}
