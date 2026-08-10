@@ -78,7 +78,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
       {/* Streak · XP · level control, in the notched strip the design puts across the top right.
           `z-20` is load-bearing: the content block below is a later sibling and paints over this strip,
           which left the level toggle visible but unclickable. */}
-      <div className="absolute top-0 right-0 z-20 flex items-center gap-4 rounded-bl-[26px] border-b border-l border-[#8c9bd7]/16 bg-[#03081a]/90 py-2.5 pr-4 pl-6 backdrop-blur-md sm:gap-5">
+      <div className="absolute top-0 right-0 z-20 flex items-center gap-4 rounded-bl-[26px] border-b border-l border-[#8c9bd7]/16 bg-[#03081a]/90 py-2 pr-4 pl-6 backdrop-blur-md sm:gap-5">
         {levels}
         <span className="hidden items-center gap-2 sm:flex">
           <img src="/assets/banner/icon-streak.png" alt="" aria-hidden="true" className="h-[23px] w-[18px] object-contain" />
@@ -94,7 +94,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
         </span>
       </div>
 
-      <div className="relative flex h-full flex-col gap-5 p-6 pt-16 sm:p-7 sm:pt-14 lg:flex-row lg:items-start lg:gap-7 lg:pr-[380px]">
+      <div className="relative flex h-full flex-col gap-5 px-6 pt-16 pb-6 sm:px-7 sm:pt-16 sm:pb-7 lg:flex-row lg:items-start lg:gap-7 lg:pr-[380px]">
         {/* Ring */}
         <div className="relative h-[132px] w-[132px] shrink-0 sm:h-[158px] sm:w-[158px]">
           <svg viewBox="0 0 158 158" className="h-full w-full drop-shadow-[0_0_14px_rgba(56,189,248,0.25)]">
@@ -132,9 +132,9 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
           <h1 className="text-[34px] leading-none font-extrabold tracking-tight text-white text-balance sm:text-[46px] 2xl:text-[57px]">
             {title}
           </h1>
-          <p className="mt-2.5 text-[15px] leading-snug font-medium text-slate-300 sm:text-[17px]">{subtitle}</p>
+          <p className="mt-2 text-[15px] leading-snug font-medium text-slate-300 sm:text-[17px]">{subtitle}</p>
 
-          <div className="mt-4 grid max-w-lg grid-cols-2 gap-x-6 gap-y-3">
+          <div className="mt-3.5 grid max-w-lg grid-cols-2 gap-x-6 gap-y-2.5">
             <Stat colour="#4ADE80" hollow value={stats.done} suffix={`/ ${stats.total.toLocaleString()}`} />
             <Stat colour="#8B7BF7" value={stats.learned} suffix="learned" />
             <Stat colour="#34E5A6" value={stats.review} suffix="review" />
@@ -142,7 +142,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
           </div>
 
           {action && (
-            <div className="mt-5">
+            <div className="mt-4">
               {action.to ? (
                 <Link to={action.to} onClick={action.onClick} className={ACTION_CLASSES}>
                   {action.label}
@@ -157,7 +157,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
         </div>
 
         {/* Next milestone */}
-        <div className="flex w-full shrink-0 items-center rounded-[26px] border border-[#96a0dc]/18 bg-gradient-to-br from-[#282046]/90 via-[#151532]/90 to-[#201b3e]/90 shadow-[0_14px_40px_rgba(0,0,0,0.4)] backdrop-blur-md lg:absolute lg:right-5 lg:bottom-5 lg:w-[346px]">
+        <div className="flex w-full shrink-0 items-center rounded-[26px] border border-[#96a0dc]/18 bg-gradient-to-br from-[#282046]/90 via-[#151532]/90 to-[#201b3e]/90 shadow-[0_14px_40px_rgba(0,0,0,0.4)] backdrop-blur-md lg:absolute lg:right-6 lg:bottom-6 lg:w-[346px]">
           <div className="flex flex-1 flex-col gap-3 py-4 pr-2 pl-6">
             <p className="text-xl leading-none font-bold text-white">Next Milestone</p>
             <p className="text-[15px] leading-none font-medium text-slate-200">{milestone.label.en}</p>
@@ -197,7 +197,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
 }
 
 const ACTION_CLASSES =
-  'inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-[#6b78ff] to-iris-600 px-6 py-3 text-[15px] font-extrabold text-white shadow-[0_12px_28px_-14px_var(--color-iris-500)] transition-transform hover:-translate-y-px active:translate-y-0';
+  'inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-[#6b78ff] to-iris-600 px-6 py-2.5 text-[15px] font-extrabold text-white shadow-[0_12px_28px_-14px_var(--color-iris-500)] transition-transform hover:-translate-y-px active:translate-y-0';
 
 /** One counted state. The first is drawn hollow, as the design does, to read as the "of total" anchor. */
 function Stat({
