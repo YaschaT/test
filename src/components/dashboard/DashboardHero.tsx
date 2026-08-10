@@ -8,7 +8,6 @@ import type { JlptLevel } from '../../types';
 
 interface DashboardHeroProps {
   greetingJa: string;
-  greetingEmoji: string;
   supportingText: string;
   ctaLabel: string;
   onStart: () => void;
@@ -25,7 +24,6 @@ interface DashboardHeroProps {
  */
 export function DashboardHero({
   greetingJa,
-  greetingEmoji,
   supportingText,
   ctaLabel,
   onStart,
@@ -44,7 +42,7 @@ export function DashboardHero({
     : [...STUDY_DURATION_PRESETS, durationMinutes].sort((a, b) => a - b);
 
   return (
-    <section className="relative isolate flex min-h-[280px] flex-col overflow-hidden rounded-3xl border border-ink-line bg-[radial-gradient(115%_150%_at_50%_38%,#0a1040_0%,#010723_72%)] sm:min-h-[300px]">
+    <section className="relative isolate flex min-h-[280px] flex-col overflow-hidden rounded-3xl border border-hairline bg-[radial-gradient(115%_150%_at_50%_38%,#0a1040_0%,#010723_72%)] sm:min-h-[300px]">
       {/* The scenery artwork is 3:2 with a soft alpha-masked edge, and the wide hero band is ~4:1 —
           stretching it to cover would crop the scene down to one flat strip. From `sm` it is sized off the
           hero's *height* instead, which keeps the moon, ridge, lanterns and torii together as one island
@@ -74,9 +72,10 @@ export function DashboardHero({
       <div className="relative flex flex-1 flex-col justify-between gap-6 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-xl">
-            <h1 className="jp-text text-fluid-hero-title font-extrabold text-white">
-              {greetingJa} {greetingEmoji}
-            </h1>
+            {/* Weight 700, not 800: the display face is specified at 700 everywhere, and the global
+                h1/h2/h3 rule already sets it — `font-extrabold` here was overriding the app's own rule
+                on the single largest piece of text in the product. */}
+            <h1 className="jp-text text-fluid-hero-title font-bold text-white">{greetingJa}</h1>
             <p className="mt-2 text-fluid-hero-sub text-slate-300">{supportingText}</p>
           </div>
 
