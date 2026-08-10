@@ -75,8 +75,10 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
         className="pointer-events-none absolute bottom-0 left-[46%] -z-10 hidden h-[82%] w-auto object-contain object-bottom drop-shadow-[0_16px_22px_rgba(0,0,0,0.55)] lg:block"
       />
 
-      {/* Streak · XP · level control, in the notched strip the design puts across the top right. */}
-      <div className="absolute top-0 right-0 flex items-center gap-4 rounded-bl-[26px] border-b border-l border-[#8c9bd7]/16 bg-[#03081a]/90 py-2.5 pr-4 pl-6 backdrop-blur-md sm:gap-5">
+      {/* Streak · XP · level control, in the notched strip the design puts across the top right.
+          `z-20` is load-bearing: the content block below is a later sibling and paints over this strip,
+          which left the level toggle visible but unclickable. */}
+      <div className="absolute top-0 right-0 z-20 flex items-center gap-4 rounded-bl-[26px] border-b border-l border-[#8c9bd7]/16 bg-[#03081a]/90 py-2.5 pr-4 pl-6 backdrop-blur-md sm:gap-5">
         {levels}
         <span className="hidden items-center gap-2 sm:flex">
           <img src="/assets/banner/icon-streak.png" alt="" aria-hidden="true" className="h-[23px] w-[18px] object-contain" />
