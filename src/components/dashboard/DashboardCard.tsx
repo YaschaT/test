@@ -12,13 +12,22 @@ interface DashboardCardProps {
   id?: string;
 }
 
-/** The shared section-card shell for the dashboard's main cards — one navy surface, a hairline border,
- * and a title row with a leading icon, an optional caption and an optional trailing action. */
+/**
+ * The shared section-card shell for the dashboard's main cards — one navy surface, a hairline border,
+ * and a title row with a leading icon, an optional caption and an optional trailing action.
+ *
+ * Radius is 2xl: the design system reserves 3xl for the hero and the stat strip, so a regular section
+ * card sitting at the same radius as the hero flattened that hierarchy.
+ *
+ * The shell is a flex column that owns the gap between its title row and its content. Cards used to
+ * push their own first child down with `mt-5`, which meant every card restated the same number and any
+ * card that forgot it sat tight against the title.
+ */
 export function DashboardCard({ title, icon, subtitle, action, children, className = '', id }: DashboardCardProps) {
   return (
     <section
       id={id}
-      className={`rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-ink-line dark:bg-ink-900 ${className}`}
+      className={`flex flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-hairline dark:bg-ink-900 ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

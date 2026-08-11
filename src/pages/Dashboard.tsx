@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, LineChart, RotateCcw } from 'lucide-react';
 import { CategoryBanner } from '../components/learning/CategoryBanner';
 import { SegmentedTabs } from '../components/SegmentedTabs';
-import { DashboardGoalBar } from '../components/dashboard/DashboardGoalBar';
+import { DashboardGoalPill } from '../components/dashboard/DashboardGoalPill';
 import { SummaryStrip } from '../components/dashboard/SummaryStrip';
 import { TodaySessionCard, type SessionStep } from '../components/dashboard/TodaySessionCard';
 import { WeeklyProgressCard } from '../components/dashboard/WeeklyProgressCard';
@@ -124,10 +124,13 @@ export function Dashboard() {
           />
         }
         action={{ label: primaryCta.label, onClick: primaryCta.onClick }}
+        // Start the session, and set how long it is — one row, since they're the same decision.
+        actionAside={<DashboardGoalPill durationMinutes={durationMinutes} onDurationChange={handleDurationChange} />}
+        // That row is longer than the other eight banners', and below 1600px it would run into the
+        // mascot. So on this one banner the bird takes a step right to make way; above 1600px there's
+        // room for both and it stands where it does everywhere else.
+        mascotClassName="max-[1599px]:left-[52%]"
       />
-
-      {/* The daily goal moved out of the hero with it — it belongs next to the numbers it governs. */}
-      <DashboardGoalBar durationMinutes={durationMinutes} onDurationChange={handleDurationChange} />
 
       <SummaryStrip
         minutesToday={minutesToday}

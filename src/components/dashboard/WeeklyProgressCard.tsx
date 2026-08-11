@@ -1,5 +1,6 @@
 import { CalendarDays, Check, ChevronRight } from 'lucide-react';
 import { CardAction, DashboardCard } from './DashboardCard';
+import { StatValue } from './StatValue';
 import type { WeekDay } from '../../lib/dashboardStats';
 
 interface WeeklyProgressCardProps {
@@ -32,14 +33,14 @@ export function WeeklyProgressCard({
       }
       className={`flex flex-col ${className}`}
     >
-      <div className="mt-5 flex flex-1 flex-wrap items-center justify-between gap-x-6 gap-y-4">
+      <div className="flex flex-1 flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div>
-          <p className="text-4xl font-extrabold leading-none text-slate-900 dark:text-white">
-            {studyDays} / {goalDays} <span className="text-[1.375rem] font-bold">days</span>
-          </p>
-          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-            {remaining === 0 ? 'Goal reached!' : 'Keep it up!'}
-          </p>
+          {/* The sub-line here used to read "Goal reached!" / "Keep it up!" — praise inflation and
+              exclamation marks, both of which the voice section bans outright. It's gone rather than
+              reworded: the bar below already states what's left, and the number carries the rest. */}
+          <StatValue unit="days">
+            {studyDays} / {goalDays}
+          </StatValue>
         </div>
 
         <ol className="flex items-start gap-2">
@@ -67,7 +68,7 @@ export function WeeklyProgressCard({
         </ol>
       </div>
 
-      <div className="mt-5 flex items-center gap-4">
+      <div className="flex items-center gap-4">
         <div
           role="progressbar"
           aria-valuenow={studyDays}

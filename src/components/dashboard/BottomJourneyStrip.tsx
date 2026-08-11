@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react';
  * action, and the supplied mascot tucked into the right edge. */
 export function BottomJourneyStrip({ message }: { message: string }) {
   return (
-    <aside className="relative flex min-h-16 items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-3 pr-28 dark:border-ink-line dark:bg-ink-900">
+    <aside className="relative flex min-h-16 items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-3 pr-28 dark:border-hairline dark:bg-ink-900">
       <Sparkles size={22} className="shrink-0 text-iris-400" aria-hidden="true" />
       <p className="text-sm text-slate-500 sm:text-base dark:text-slate-400">{message}</p>
       <img

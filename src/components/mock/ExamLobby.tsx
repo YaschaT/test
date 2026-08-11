@@ -6,7 +6,6 @@ import { EXAM_CONFIG, MOCK_SECTIONS, SCORING, SECTION_LABEL, examTotal } from '.
 import { SECTION_THEME } from './examTheme';
 import { CategoryBanner } from '../learning/CategoryBanner';
 import { playPrimaryAction, playSoftClick } from '../../lib/sound';
-import { MASCOTS } from '../../lib/mascots';
 
 interface ExamLobbyProps {
   level: JlptLevel;
@@ -67,14 +66,17 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
         }
       />
 
-      <MascotLine level={level} best={best} pass={scoring.overallPass} />
-
-      <div className="grid gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,1fr)] lg:gap-8 sm:p-7 dark:border-hairline dark:bg-ink-900">
+      {/* One column, read top to bottom: choose a level, see what that paper is, start it. The start
+          button used to sit in a second column alongside the level cards, vertically centred against
+          nothing — so the page's one action floated free of the choice it depends on, and changing level
+          silently rewrote a button you had already read. Now it comes after the choice, and the line of
+          facts between them is the thing that just changed. */}
+      <div className="flex flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7 dark:border-hairline dark:bg-ink-900">
         <div>
           <Eyebrow>Pick your level · Kies je niveau</Eyebrow>
           {/* The chosen level's card takes the room: the two you aren't sitting shrink to their letter,
               which is all you need from them until you choose one. */}
-          <div className="mt-3.5 flex h-48 items-stretch gap-2.5">
+          <div className="mt-3.5 flex h-44 items-stretch gap-2.5">
             {JLPT_LEVELS.map((lv) => {
               const active = lv === level;
               const rec = progress.mockExams[lv];
@@ -91,7 +93,9 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
                   }}
                   className={`relative flex flex-col overflow-hidden rounded-3xl border p-4 text-left transition-[flex,background,border-color,box-shadow] duration-300 sm:p-5 ${
                     active
-                      ? 'flex-[2.4] border-iris-400/55 bg-gradient-to-br from-iris-600 to-iris-800 shadow-[0_18px_40px_-18px_var(--color-iris-500)]'
+                      /* 1.5 : 1 : 1 — the chosen level still clearly leads, but across the card's full
+                         width the old 2.4 turned it into a slab with a hole in the middle. */
+                      ? 'flex-[1.5] border-iris-400/55 bg-gradient-to-br from-iris-600 to-iris-800 shadow-[0_18px_40px_-18px_var(--color-iris-500)]'
                       : 'flex-1 border-slate-200 bg-slate-50 hover:border-iris-400/40 dark:border-hairline dark:bg-white/[0.03]'
                   }`}
                 >
@@ -155,7 +159,7 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
           </p>
         </div>
 
-        <div className="flex flex-col justify-center">
+        <div>
           <button
             type="button"
             onClick={() => {
@@ -252,43 +256,6 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-/** Kai's line, pinned to the real best score — the first sitting, the gap to the pass mark, or a target beaten. */
-function MascotLine({ level, best, pass }: { level: JlptLevel; best?: MockExamRecord; pass: number }) {
-  const score = best?.bestScore;
-  const line =
-    score == null
-      ? {
-          en: 'Nothing here counts against you. This first score just becomes the one to beat.',
-          nl: 'Niets telt tegen je. Deze eerste score wordt je norm.',
-        }
-      : score >= pass
-        ? {
-            en: `You cleared ${level} with ${score}. Same paper — see how far you can push it.`,
-            nl: `${level} gehaald met ${score}. Kijk hoe ver je nu komt.`,
-          }
-        : {
-            en: `${pass - score} points short last time. That gap is the whole job today.`,
-            nl: `${pass - score} punten tekort. Daar gaan we vandaag overheen.`,
-          };
-
-  return (
-    <div className="flex items-center gap-4">
-      <img
-        src={MASCOTS['mock-exam']}
-        alt=""
-        aria-hidden="true"
-        width={76}
-        height={76}
-        className="h-[76px] w-[76px] shrink-0 object-contain"
-      />
-      <p className="min-w-0 flex-1 rounded-[18px] rounded-bl-[5px] border border-slate-200 bg-white px-5 py-3.5 dark:border-hairline dark:bg-white/[0.045]">
-        <span className="block text-base font-semibold text-slate-800 dark:text-slate-100">{line.en}</span>
-        <span className="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">{line.nl}</span>
-      </p>
     </div>
   );
 }

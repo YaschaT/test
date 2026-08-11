@@ -94,6 +94,13 @@ ruby rt {
 .text-fluid-section-title {
   font-size: clamp(1.0625rem, 0.86rem + 0.42vw, 1.375rem);
 }
+/* The headline number on a stat panel (minutes today, reviews due, days this week, level %). The design
+   system specifies one treatment for all of them; before this token there were four — 1.625rem, 4xl and
+   two xl, all at weight 800 in the body face — so the same kind of number looked different in every card
+   it appeared in. See <StatValue>, which is the only thing that should apply this. */
+.text-fluid-stat {
+  font-size: clamp(1.25rem, 0.8rem + 1.2vw, 2.5rem);
+}
 
 /* Native range-input thumbs render tiny and plain (esp. on Windows/Firefox) — a bigger white disc with a
    colored ring reads as a deliberate, premium control rather than a default browser widget. */
@@ -296,6 +303,23 @@ html {
   }
   .animate-sound-ripple {
     animation: sound-ripple 1.4s ease-out infinite;
+  }
+
+  /* The bar meter under Listening's play button. Same contract as the ripple above: the bars only carry
+     this class while TTS audio is genuinely playing, so the infinite loop is bounded by a real state that
+     ends on its own. Each bar gets its own duration and delay inline, which is what stops forty bars
+     moving as one block. */
+  @keyframes listening-meter {
+    0%,
+    100% {
+      transform: scaleY(0.25);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+  .animate-listening-meter {
+    animation: listening-meter 1s ease-in-out infinite;
   }
 
   @keyframes confetti-fall {

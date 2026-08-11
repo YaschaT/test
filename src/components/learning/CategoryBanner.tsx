@@ -19,6 +19,10 @@ interface CategoryBannerProps {
   levels?: ReactNode;
   /** Optional primary action, rendered under the stats. */
   action?: BannerAction;
+  /** Optional secondary control sitting on the action's row — the Dashboard puts its daily goal here. */
+  actionAside?: ReactNode;
+  /** Overrides on the mascot's placement, for a page whose action row needs more of the empty band. */
+  mascotClassName?: string;
 }
 
 const RING_RADIUS = 74;
@@ -35,7 +39,15 @@ const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
  *
  * Dark in both themes — it's a painted scene, and the artwork is lit for night.
  */
-export function CategoryBanner({ category, title, subtitle, levels, action }: CategoryBannerProps) {
+export function CategoryBanner({
+  category,
+  title,
+  subtitle,
+  levels,
+  action,
+  actionAside,
+  mascotClassName = '',
+}: CategoryBannerProps) {
   const progress = useProgress();
   const stats = categoryStats(category, progress);
   const milestone = milestoneFor(category, progress);
@@ -72,7 +84,7 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
         src={`/assets/banner/mascot/${category}.webp`}
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 left-[46%] -z-10 hidden h-[82%] w-auto object-contain object-bottom drop-shadow-[0_16px_22px_rgba(0,0,0,0.55)] lg:block"
+        className={`pointer-events-none absolute bottom-0 left-[46%] -z-10 hidden h-[82%] w-auto object-contain object-bottom drop-shadow-[0_16px_22px_rgba(0,0,0,0.55)] lg:block ${mascotClassName}`}
       />
 
       {/* Streak · XP · level control, in the notched strip the design puts across the top right.
@@ -141,17 +153,22 @@ export function CategoryBanner({ category, title, subtitle, levels, action }: Ca
             <Stat colour="#F5B740" value={stats.toLearn} suffix="to learn" />
           </div>
 
-          {action && (
-            <div className="mt-4">
-              {action.to ? (
-                <Link to={action.to} onClick={action.onClick} className={ACTION_CLASSES}>
-                  {action.label}
-                </Link>
-              ) : (
-                <button type="button" onClick={action.onClick} className={ACTION_CLASSES}>
-                  {action.label}
-                </button>
-              )}
+          {(action || actionAside) && (
+            // The banner's height is fixed from `lg` up, so a wrapped second line would be clipped:
+            // past that breakpoint the row is `w-max` and never wraps, overflowing the text column's
+            // 42% cap into the empty band before the mascot instead.
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2.5 lg:w-max lg:flex-nowrap">
+              {action &&
+                (action.to ? (
+                  <Link to={action.to} onClick={action.onClick} className={ACTION_CLASSES}>
+                    {action.label}
+                  </Link>
+                ) : (
+                  <button type="button" onClick={action.onClick} className={ACTION_CLASSES}>
+                    {action.label}
+                  </button>
+                ))}
+              {actionAside}
             </div>
           )}
         </div>

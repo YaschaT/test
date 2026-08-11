@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { RingStat } from './RingStat';
+import { StatValue } from './StatValue';
 import type { JlptLevel } from '../../types';
 
 interface SidebarLevelCardProps {
@@ -15,11 +16,15 @@ export function SidebarLevelCard({ level, percent }: SidebarLevelCardProps) {
   return (
     <NavLink
       to="/path"
-      className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 transition-colors hover:bg-slate-50 dark:border-ink-line dark:bg-ink-900 dark:hover:bg-ink-800"
+      className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 transition-colors hover:bg-slate-50 dark:border-hairline dark:bg-ink-900 dark:hover:bg-ink-800"
     >
       <span className="min-w-0 flex-1">
         <span className="block text-sm text-slate-500 dark:text-slate-400">{level} Progress</span>
-        <span className="mt-0.5 block text-xl font-extrabold text-slate-900 dark:text-white">{percent}%</span>
+        {/* `compact`: the sidebar is a fixed 256px, so this stat opts out of the fluid upper end that
+            only makes sense inside a card that grows with the window. */}
+        <StatValue unit="%" size="compact" className="mt-0.5">
+          {percent}
+        </StatValue>
       </span>
       <RingStat progress={percent / 100} color="var(--color-iris-500)" size={44} strokeWidth={5}>
         <span className="sr-only">{percent}% complete</span>

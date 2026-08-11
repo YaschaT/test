@@ -1,6 +1,6 @@
 import { VOCABULARY, VOCABULARY_VERIFIED_ROMAJI } from '../data/vocabulary';
 import { GRAMMAR_POINTS } from '../data/grammar';
-import type { JlptLevel } from '../types';
+import type { FuriganaSegment, JlptLevel } from '../types';
 
 export interface ListeningItem {
   id: string;
@@ -8,6 +8,13 @@ export interface ListeningItem {
   kana: string;
   romaji: string;
   en: string;
+  /**
+   * The sentence as authored, still split into kanji-chunk + reading pieces. Carried through rather than
+   * only the flattened string because the exercises that ask a learner to rebuild a sentence, or to hear
+   * which particle went by, need its parts — and because the answer breakdown puts furigana over each
+   * word. See `segmentWords` in listeningRounds.ts for the word-level grouping built on top of it.
+   */
+  segments: FuriganaSegment[];
 }
 
 function joinText(segments: { text: string }[]): string {
@@ -23,6 +30,7 @@ function vocabItems(words: typeof VOCABULARY, level?: JlptLevel): ListeningItem[
       kana: w.example.kana,
       romaji: w.example.romaji,
       en: w.example.en,
+      segments: w.example.segments,
     }));
 }
 
@@ -34,6 +42,7 @@ function grammarItems(level?: JlptLevel): ListeningItem[] {
       kana: ex.kana,
       romaji: ex.romaji,
       en: ex.en,
+      segments: ex.segments,
     })),
   );
 }

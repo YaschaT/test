@@ -27,7 +27,7 @@ export function AchievementCard({ progress, className = '' }: { progress: Progre
     >
       {/* `flex-1` on the featured panel: when the card is stretched by the dashboard's flexible row the
           extra height lands inside this surface (content stays centred) instead of below it. */}
-      <div className="mt-4 flex flex-1 items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-ink-line dark:bg-ink-800">
+      <div className="flex flex-1 items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-hairline dark:bg-ink-800">
         <img
           src={`${ILLUSTRATION_BASE}${featured.asset}`}
           alt={`${featured.label} achievement`}
@@ -60,13 +60,15 @@ export function AchievementCard({ progress, className = '' }: { progress: Progre
         <XpBadge xp={featured.xp} earned={featured.earned} />
       </div>
 
+      {/* Its own column with its own tighter rhythm, rather than two loose children of the card's
+          gap-5 — the badge grid and its count belong together. */}
       {showAll && (
-        <>
-          <ul className="mt-4 grid grid-cols-4 gap-3">
+        <div className="flex flex-col gap-3">
+          <ul className="grid grid-cols-4 gap-3">
             {badges.map((badge) => (
               <li
                 key={badge.id}
-                className="relative flex aspect-square items-center justify-center rounded-2xl border border-slate-200 p-2 dark:border-ink-line"
+                className="relative flex aspect-square items-center justify-center rounded-2xl border border-slate-200 p-2 dark:border-hairline"
               >
                 <img
                   src={`${ILLUSTRATION_BASE}${badge.asset}`}
@@ -83,10 +85,10 @@ export function AchievementCard({ progress, className = '' }: { progress: Progre
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             {earnedCount} of {badges.length} earned
           </p>
-        </>
+        </div>
       )}
     </DashboardCard>
   );

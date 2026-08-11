@@ -36,17 +36,17 @@ export function TodaySessionCard({ steps, totalMinutes, onSelect, onViewFullPlan
       {/* The rows share whatever height the card was given rather than bunching at the top: each step
           keeps its own minimum and grows evenly, so a stretched card reads as a roomy timeline instead
           of a short list with a void under it. */}
-      <ol className="mt-5 flex flex-1 flex-col gap-1">
+      <ol className="flex flex-1 flex-col gap-1">
         {steps.map((step, i) => (
           <SessionRow key={step.id} step={step} index={i} isLast={i === steps.length - 1} onSelect={onSelect} />
         ))}
       </ol>
 
-      <div className="pt-5">
+      <div>
         <button
           type="button"
           onClick={onViewFullPlan}
-          className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-ink-line dark:text-slate-200 dark:hover:bg-ink-800"
+          className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-hairline dark:text-slate-200 dark:hover:bg-ink-800"
         >
           <Map size={16} className="text-brand-500 dark:text-iris-400" aria-hidden="true" />
           View full plan
@@ -86,7 +86,7 @@ function SessionRow({
       >
         {!isLast && (
           <span
-            className="absolute left-1/2 top-[calc(50%+1.25rem)] h-[calc(100%-1rem)] w-px -translate-x-1/2 bg-slate-200 dark:bg-ink-line"
+            className="absolute left-1/2 top-[calc(50%+1.25rem)] h-[calc(100%-1rem)] w-px -translate-x-1/2 bg-slate-200 dark:bg-hairline"
             aria-hidden="true"
           />
         )}
