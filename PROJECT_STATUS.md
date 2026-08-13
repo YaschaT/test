@@ -3293,3 +3293,52 @@ and one drop-shadow reads correctly against all nine scenes.
 The N5/N4/N3 control lives in the top-right strip beside streak and XP, keeping it in the same corner
 on every screen. Dashboard keeps its own hero (a separate approved design); its background and mascot
 are installed and ready if it should switch too.
+
+### Splash screen — the Claude Design piece, paced by the real boot (2026-08-13)
+
+Replaced `BootLoader.tsx` with `SplashScreen.tsx`, built from the claude.ai/design **Splash Screen**
+composition: the violet field wakes, Kai rockets up through the frame on a motion-blur trail, overshoots
+and settles inside an XP ring as confetti clears, the wordmark rises, and a dark wipe hands off to the
+dashboard.
+
+**The brief was that the animation must not get rushed and must adapt to the connection.** The design
+ships as a 7.5s demo on a 2× loop — far too long for something seen on every load — so the authored cue
+table is kept **verbatim** in `src/lib/splashTimeline.ts` and only the *playhead speed* changes:
+
+- **Warp.** Each of the six scenes gets a production duration; the playhead runs it at
+  `authored / production`. Retiming this way instead of rewriting the offsets keeps the shape of every
+  move (the overshoot, the elastic settle, the stagger) intact. Floor: **2.86s**.
+- **Gates.** The playhead *stops* at two frames until real work catches up — before the first spark
+  streak (waiting for Kai's artwork to decode) and on the Charge/Ready boundary (waiting for the boot).
+  Both frames were chosen because every one-shot there has either not started or already finished, so a
+  hold reads as breathing, not freezing. Caps 1.8s / 5.2s, hard bail-out at 9s straight to the wipe.
+- **The ring is `min(authored sweep, real progress)`** — whichever is *slower*. Warm cache: the
+  animation paces it, so it sweeps instead of snapping. Slow link: the truth paces it, so it stalls
+  exactly where the network stalls. Never ahead of the work, never faster than it looks good.
+
+`lib/boot.ts` grew an `art` step (mascot `decode()`, preloaded from `index.html` so the request starts
+before the bundle parses), a `BootFrontId` grouping, `observeBoot()`, and `getConnectionGrade()` —
+Save-Data / 2G drops the ghosts, confetti and most motes but **never shortens a beat**, on the theory
+that a slow link usually means a modest device too.
+
+**Two deviations from the mockup, both deliberate.** (1) Painted in the app's palette: the design's four
+field stops sit almost exactly on the existing `iris-*` ramp and its `#FFA320` is the amber the app
+already spends on XP, so the map is near-lossless and the splash resolves *into* the app. (2) Nothing on
+it is decorative progress — the mockup's `+5 XP` / `streak 1` chips are dropped (boot is the one moment
+the app doesn't know either number), the three loader segments now carry the three real boot fronts
+(app / screen / data), and the tagline slot carries the live boot status.
+
+**Split clocks:** one-shots are driven from JS; the idle bob, sway, bloom and mote drift are CSS loops
+(motes as two counter-rotating layers, not 26 animated elements) — so a gate hold stays alive and the
+splash isn't stealing main-thread time from the boot it is covering.
+
+`avatar.png` was unimportable again, exactly as the design-import notes predicted (256 KiB cap consumed
+by the C2PA block; 1024×1024 but zero pixel data). Cut `public/assets/brand/splash-mascot.webp` (403²,
+46 KB) from `banner/mascot/kanji.webp` instead — Kai with the gold star wand, the only pose without a
+subject-specific prop. Source art tops out at 403px, so the stage scale is capped at 1.35.
+
+Validation: `tsc -b`, `eslint .`, `vite build` clean; **228 tests pass**, 20 of them new in
+`splashTimeline.test.ts` covering the floor, the warp, both gates, the cap, the bail-out, the
+long-frame jump guard, the ring's two pacing regimes, and that nothing is in flight at either gate
+frame. Verified in-browser at desktop and mobile: full composition renders, preload fires as a single
+`link` request, splash hands off to the dashboard, zero console errors.

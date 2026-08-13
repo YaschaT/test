@@ -10,6 +10,10 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kotobox</title>
+    <!-- The splash screen throws Kai up through the frame in its second beat, so his artwork has to be
+         in flight before the app bundle has even parsed. Without this the request doesn't start until
+         React mounts, and on a slow connection the splash sits waiting on its own mascot. -->
+    <link rel="preload" as="image" href="/assets/brand/splash-mascot.webp" type="image/webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

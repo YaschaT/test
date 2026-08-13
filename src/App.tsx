@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, type ComponentType, type LazyExoticComponent
 import { Routes, Route } from 'react-router-dom';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Layout } from './components/Layout';
-import { BootLoader } from './components/BootLoader';
+import { SplashScreen } from './components/SplashScreen';
 import { markScreenReady } from './lib/boot';
 import { useProgressSync } from './lib/progressSync';
 
@@ -56,7 +56,7 @@ function App() {
   return (
     <TooltipProvider>
       {/* Covers the app shell on a cold load and takes itself down when the boot work is really done. */}
-      <BootLoader />
+      <SplashScreen />
       <Routes>
         <Route
           path="/"
