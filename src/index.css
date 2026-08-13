@@ -210,6 +210,11 @@ h3 {
    this to auto, so it's already accessibility-safe. */
 html {
   scroll-behavior: smooth;
+  /* Keep the scrollbar's track reserved even when the page is short enough not to need one. Filtering a
+     list (the banner's level toggle, the shelf filters) can drop the page below one screen, and without
+     this the scrollbar vanishes, the viewport gets wider, and the whole layout — the banner most visibly,
+     since it's the widest thing on screen — jumps sideways. No-op where scrollbars overlay the content. */
+  scrollbar-gutter: stable;
 }
 
 /* Micro-interactions — entirely disabled under prefers-reduced-motion rather than just shortened,
