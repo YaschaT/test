@@ -1,22 +1,19 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, Check, Volume2 } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { SegmentedTabs } from '../SegmentedTabs';
 import { EngineNote, type SpeakingEngine } from './EngineNote';
 import { Phrasebook } from './Phrasebook';
 import { CategoryBanner } from '../learning/CategoryBanner';
 import { DIFFICULTY_LABELS, SCENARIOS, type Scenario } from '../../data/scenarios';
-import { getSpeakingDays, type ProgressState, type SpeakingSession } from '../../lib/progressStore';
+import { type ProgressState, type SpeakingSession } from '../../lib/progressStore';
 import {
   agoLabel,
   listOpenSessions,
-  phrasesForScenario,
   pickNextSpeak,
   scenarioState,
   sessionPercent,
-  weakestPhrase,
   type ScenarioState,
 } from '../../lib/speakingProgress';
-import { MASCOTS } from '../../lib/mascots';
 import type { JlptLevel } from '../../types';
 import { JLPT_LEVELS } from '../../types';
 
@@ -62,6 +59,16 @@ export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak 
             ]}
           />
         }
+        // The one thing the old Kai hero was for: it opens Kai's pick, or whatever conversation was
+        // left mid-way.
+        action={
+          next
+            ? {
+                label: next.kind === 'resume' ? 'Continue speaking' : 'Start speaking',
+                onClick: () => onPick(next.scenario),
+              }
+            : undefined
+        }
       />
 
       {/* Where Kai runs belongs beside the mode switch: it's a property of the conversation, and the
@@ -83,7 +90,6 @@ export function SpeakingHub({ progress, engine, tab, onTabChange, onPick, speak 
         <Phrasebook progress={progress} scenario={next?.scenario ?? null} speak={speak} />
       ) : (
         <div className="space-y-7">
-          {next && <RecommendedHero next={next} level={level} progress={progress} onPick={onPick} speak={speak} onDrill={() => onTabChange('phrases')} />}
           {open.length > 0 && <ContinueSection open={open} onPick={onPick} />}
           <Library progress={progress} level={level} filter={filter} onPick={onPick} />
         </div>
@@ -97,226 +103,6 @@ function TabLabel({ title, hint }: { title: string; hint: string }) {
     <span className="inline-flex items-center gap-2">
       {title}
       <span className="text-[11.5px] font-semibold opacity-70">{hint}</span>
-    </span>
-  );
-}
-
-// ── Kai's pick ────────────────────────────────────────────────────────────────
-interface RecommendedHeroProps {
-  next: NonNullable<ReturnType<typeof pickNextSpeak>>;
-  level: JlptLevel;
-  progress: ProgressState;
-  onPick: (scenario: Scenario) => void;
-  speak: (text: string) => void;
-  onDrill: () => void;
-}
-
-/**
- * The banner leads with the line Kai will actually open on, not a description of the scenario. You can
- * hear it before you commit, which is the difference between "start a conversation" being a leap and
- * being the obvious next click — and it's the same night-sky treatment the Dashboard and Reading
- * banners use, dark in both themes.
- */
-function RecommendedHero({ next, level, progress, onPick, speak, onDrill }: RecommendedHeroProps) {
-  const { scenario, kind, session } = next;
-  const resuming = kind === 'resume';
-  const percent = session ? Math.round(sessionPercent(session) * 100) : 0;
-
-  return (
-    <section
-      aria-label="Recommended by Kai"
-      className="relative isolate overflow-hidden rounded-3xl border border-white/10 bg-[#0a1024]"
-    >
-      <img
-        src="/assets/kotobox-dashboard/generated/hero-background.png"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgba(8,12,30,0.95)_0%,rgba(8,12,30,0.78)_46%,rgba(8,12,30,0.35)_100%)]"
-      />
-
-      <div className="flex items-start gap-8 p-6 sm:p-7">
-        <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-center gap-2.5 text-[11px] font-extrabold tracking-[0.16em] text-iris-400">
-            KAI · YOUR SPEAKING COACH
-            <span className="h-1 w-1 rounded-full bg-white/25" aria-hidden="true" />
-            <span className="font-bold tracking-[0.08em] text-slate-400">
-              {resuming ? 'WHERE YOU STOPPED' : `PICKED FOR ${level} · TODAY`}
-            </span>
-          </p>
-
-          <div className="relative mt-4 max-w-2xl rounded-[22px] rounded-tl-lg border border-brand-300/15 bg-white/[0.06] p-4 pr-14 sm:p-5 sm:pr-16">
-            <p className="jp-text text-xl leading-relaxed text-white sm:text-[23px]">{scenario.opening.ja}</p>
-            <p className="mt-2 text-[13px] italic text-slate-400">{scenario.opening.romaji}</p>
-            <p className="mt-1.5 text-sm text-slate-300">{scenario.opening.en}</p>
-            <button
-              type="button"
-              onClick={() => speak(scenario.opening.ja)}
-              aria-label="Hear Kai’s opening line"
-              className="absolute right-3.5 top-3.5 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.07] text-brand-300 transition-colors hover:bg-iris-500/35 hover:text-white"
-            >
-              <Volume2 size={16} aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h2 className="font-display text-xl font-bold text-white sm:text-2xl">{scenario.title.en}</h2>
-            <p className="text-sm text-slate-400">{scenario.blurb.en}</p>
-          </div>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[13px] text-slate-400">
-            <span className="font-semibold text-slate-300">{scenario.level}</span>
-            <Dot />
-            <span>{DIFFICULTY_LABELS[scenario.difficulty]}</span>
-            <Dot />
-            <span className="tabular-nums">about {scenario.minutes} min</span>
-            {resuming && session && (
-              <>
-                <Dot />
-                <span className="tabular-nums">
-                  {session.turns} of {session.turnGoal} turns · {percent}%
-                </span>
-              </>
-            )}
-          </p>
-
-          <div className="mt-6">
-            <button
-              type="button"
-              onClick={() => onPick(scenario)}
-              className="inline-flex items-center gap-3 rounded-[20px] bg-gradient-to-r from-iris-500 to-iris-600 px-6 py-3.5 text-base font-extrabold text-white shadow-[0_10px_28px_-10px_rgba(88,87,231,0.9)] transition-[filter,transform] hover:brightness-110 active:scale-[0.985]"
-            >
-              <Waveform />
-              {resuming ? 'Continue speaking' : 'Start speaking'}
-            </button>
-          </div>
-        </div>
-
-        <img
-          src={MASCOTS.speaking}
-          alt=""
-          aria-hidden="true"
-          width={176}
-          height={176}
-          className="hidden h-44 w-44 shrink-0 object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] lg:block"
-        />
-      </div>
-
-      <HeroFooter scenario={scenario} progress={progress} onDrill={onDrill} />
-    </section>
-  );
-}
-
-/**
- * The strip under the banner: one thing worth fixing on the left, the week's speaking on the right.
- *
- * Both only appear once they mean something — the coaching line needs a recorded attempt to point at,
- * and the week strip needs a week with speaking in it. An empty strip is dropped entirely rather than
- * padded with a row of grey squares.
- */
-function HeroFooter({
-  scenario,
-  progress,
-  onDrill,
-}: {
-  scenario: Scenario;
-  progress: ProgressState;
-  onDrill: () => void;
-}) {
-  const weak = useMemo(() => weakestPhrase(progress), [progress]);
-  const days = useMemo(() => getSpeakingDays(progress), [progress]);
-  const spokenDays = days.filter((d) => d.spoke).length;
-  const phraseCount = phrasesForScenario(scenario).length;
-
-  const note = weak ? (
-    <>
-      <p className="min-w-0 text-sm text-slate-300">
-        Your weakest line so far is{' '}
-        <span className="jp-text text-white">{weak.phrase.ja}</span> — the mic heard {weak.score}% of it
-        back.
-      </p>
-      <button
-        type="button"
-        onClick={onDrill}
-        className="shrink-0 text-[13.5px] font-bold text-brand-300 transition-colors hover:text-brand-200"
-      >
-        Drill it →
-      </button>
-    </>
-  ) : phraseCount > 0 ? (
-    <>
-      <p className="min-w-0 text-sm text-slate-300">
-        Kai will use {phraseCount} set phrases here — shadow them first and the conversation gets a lot
-        easier.
-      </p>
-      <button
-        type="button"
-        onClick={onDrill}
-        className="shrink-0 text-[13.5px] font-bold text-brand-300 transition-colors hover:text-brand-200"
-      >
-        Practise them →
-      </button>
-    </>
-  ) : null;
-
-  if (!note && spokenDays === 0) return null;
-
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-white/10 bg-black/30 px-6 py-3.5 sm:px-7">
-      {note && (
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-sm font-bold text-accent-500"
-          >
-            !
-          </span>
-          {note}
-        </div>
-      )}
-      {spokenDays > 0 && (
-        <div className="flex items-center gap-3">
-          <span className="text-[12.5px] font-semibold text-slate-400">
-            Spoke {spokenDays} of the last 7 days
-          </span>
-          <span className="flex gap-1.5" aria-hidden="true">
-            {days.map((day) => (
-              <span
-                key={day.date}
-                title={`${day.date} — ${day.spoke ? 'spoke with Kai' : 'no speaking'}`}
-                className={`h-2.5 w-2.5 rounded-[3px] ${day.spoke ? 'bg-iris-500' : 'bg-white/12'}`}
-              />
-            ))}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Waveform() {
-  // Five bars rather than a mic glyph: it reads as *your* voice going in, and it's the one mark the
-  // Speaking page owns.
-  const bars = [7, 14, 10, 16, 6];
-  return (
-    <span className="flex h-4 items-end gap-[2.5px]" aria-hidden="true">
-      {bars.map((height, i) => (
-        <span
-          key={i}
-          className="w-[3px] rounded-sm bg-white/85 first:bg-white/80 even:bg-white"
-          style={{ height }}
-        />
-      ))}
-    </span>
-  );
-}
-
-function Dot() {
-  return (
-    <span className="text-white/25" aria-hidden="true">
-      ·
     </span>
   );
 }
