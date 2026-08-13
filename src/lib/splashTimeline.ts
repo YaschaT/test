@@ -39,19 +39,13 @@ export const AUTHORED: Record<PhaseId, number> = {
 /**
  * What each scene is actually given, in real seconds, on a boot with nothing to wait for.
  *
- * They sum to 2.86s. That is the floor, not the typical case: `charge` is a gate, so a real cold start
- * on a real connection lands longer. The floor is set where it is because below roughly two seconds a
- * splash stops registering as a moment and starts reading as a flash of purple, and above roughly
- * three it starts costing the person something on every single visit.
+ * **These are the authored durations, 1:1** — the composition plays at exactly the tempo it was
+ * designed at, for a 7.5s floor. An earlier revision warped this to a 2.86s floor on the reasoning
+ * that a splash is seen on every load; that was overruled, and the design's own pacing is the
+ * requirement. The warp machinery below is kept because it is what makes the table adjustable at all,
+ * but at 1:1 every `speedAt` returns 1 and the playhead simply runs the scene.
  */
-export const PRODUCTION: Record<PhaseId, number> = {
-  spark: 0.32,
-  launch: 0.42,
-  settle: 0.44,
-  charge: 0.78,
-  ready: 0.58,
-  handoff: 0.32,
-};
+export const PRODUCTION: Record<PhaseId, number> = { ...AUTHORED };
 
 function cueTable(): Record<PhaseId, number> & { end: number } {
   let at = 0;
@@ -105,12 +99,12 @@ export const GATES: Gate[] = [
  * The bail-out. Past this the playhead jumps straight to the handoff wipe, whether or not the boot
  * ever finished — so the very worst case anyone can see is this plus the length of the wipe.
  *
- * This is the one place the splash is allowed to rush itself, and it should be: nine seconds without a
- * finished boot means something is wrong, the app underneath is already rendered and usable, and a
- * loader that can trap someone is worse than one that hands off a screen still filling in its last
- * card.
+ * This is the one place the splash is allowed to rush itself, and it should be: the composition itself
+ * only costs 7.5s, so reaching fourteen means something is genuinely wrong, the app underneath is
+ * already rendered and usable, and a loader that can trap someone is worse than one that hands off a
+ * screen still filling in its last card.
  */
-export const MAX_TOTAL_MS = 9000;
+export const MAX_TOTAL_MS = 14000;
 
 /** How fast the playhead moves through the scene containing `t`, in authored seconds per real second. */
 export function speedAt(t: number): number {
@@ -249,6 +243,10 @@ export interface Layout {
   statusSize: number;
   loadTop: number;
   loadW: number;
+  /** XP chip geometry: horizontal throw from centre, pill width, label size. */
+  chipX: number;
+  chipW: number;
+  chipFs: number;
   /** Mote field spread. */
   radBase: number;
   radSpan: number;
@@ -269,16 +267,44 @@ export const LAYOUTS: Record<'mobile' | 'desktop', Layout> = {
   mobile: {
     W: 1080, H: 1920, baseY: 700, av: 560, ring: 342, stroke: 16,
     markTop: 1268, markSize: 148, statusTop: 1452, statusSize: 44,
-    loadTop: 1650, loadW: 420,
+    loadTop: 1650, loadW: 420, chipX: 288, chipW: 180, chipFs: 34,
     radBase: 210, radSpan: 620, radX: 1, radY: 0.92, streakGap: 132,
   },
   desktop: {
     W: 1920, H: 1080, baseY: 404, av: 396, ring: 244, stroke: 13,
     markTop: 700, markSize: 118, statusTop: 852, statusSize: 36,
-    loadTop: 946, loadW: 360,
+    loadTop: 946, loadW: 360, chipX: 300, chipW: 156, chipFs: 28,
     radBase: 200, radSpan: 900, radX: 1.6, radY: 0.62, streakGap: 210,
   },
 };
+
+export interface ChipCue {
+  /** Authored time the chip is thrown. */
+  at: number;
+  /** Horizontal offset from the composition's centre line, as a multiple of `layout.chipX`. */
+  side: -1 | 1;
+  /** Extra horizontal nudge in composition pixels, as authored. */
+  nudge: number;
+  label: string;
+}
+
+/**
+ * The two XP chips that float up past Kai while the ring charges.
+ *
+ * Unlike everything in {@link Scene} these are *not* sampled per frame. They are fired as one-shot CSS
+ * animations the moment the playhead crosses their cue and then run on their own clock, because the
+ * second one is still in the air when the playhead reaches the work gate — sampled against this clock
+ * it would hang there, half-risen, for the whole of a slow boot.
+ */
+export const CHIP_DURATION_MS = 1250;
+
+export const CHIPS: ChipCue[] = [
+  { at: CUE.charge + 0.25, side: -1, nudge: 0, label: '+5 XP' },
+  { at: CUE.charge + 0.72, side: 1, nudge: -20, label: 'streak 1' },
+];
+
+/** How far a chip travels upward from its start, in composition pixels. */
+export const CHIP_RISE = 240;
 
 export interface Scene {
   /** Kai's centre, in authored composition pixels. */

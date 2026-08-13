@@ -3342,3 +3342,39 @@ Validation: `tsc -b`, `eslint .`, `vite build` clean; **228 tests pass**, 20 of 
 long-frame jump guard, the ring's two pacing regimes, and that nothing is in flight at either gate
 frame. Verified in-browser at desktop and mobile: full composition renders, preload fires as a single
 `link` request, splash hands off to the dashboard, zero console errors.
+
+#### Splash — restored to the design's own fidelity (2026-08-13)
+
+Feedback: the animation was too fast, and the XP chips and sound effects were missing. All three are
+now as authored.
+
+- **Pacing is 1:1 with the design.** `PRODUCTION` is now `{ ...AUTHORED }`, so the composition plays at
+  its full **7.5s**; the earlier 2.86s warp is gone. The warp machinery stays (it is what makes the
+  table adjustable), but every `speedAt` returns 1. `MAX_TOTAL_MS` raised 9s → 14s to leave room for
+  the gates on top of a 7.5s piece.
+- **XP chips are back**, both of them, with the mockup's own labels, geometry (`chipX/chipW/chipFs` per
+  layout) and 240px rise. They run as **fire-and-forget CSS**, started when the playhead crosses their
+  cue, rather than sampled per frame: the "streak 1" chip is still in the air at the work gate
+  (`3.92 + 1.25 = 5.17 > 4.8`), so sampled against the playhead it would hang there half-risen through
+  a slow boot. The design eases position with easeOutCubic and derives opacity from the *eased* value,
+  which no single CSS timing function reproduces — so that curve is sampled into the keyframes at each
+  tenth and played back linearly.
+- **The full sound kit** is ported verbatim to `src/lib/splashSound.ts`: synthesised WebAudio, no asset
+  files — master gain 0.55 into a convolver loaded with a 1.1s decaying-noise impulse at 0.22 wet, and
+  all seven scene cues (spark, launch, land, chip ×2, chime, handoff) plus the nine-step semitone run
+  under the ring sweep. Cues fire on authored-time crossings with the design's own 0.5s jump guard, so
+  a waking background tab can't dump a scene of audio at once.
+
+**Caveat on the audio:** browser autoplay policy blocks an AudioContext with no prior user gesture, and
+a splash runs before the visitor has touched anything. The design solved this with a "Tap for sound"
+button, which an app splash has nowhere to put. The context is created, a resume is attempted, and the
+first pointer/key event resumes it — so expect silence on a first-ever visit and sound on later ones in
+browsers that keep a media-engagement score. Skipped entirely under reduced motion.
+
+**Still open: the mascot artwork.** `avatar.png` remains unreachable — the 256 KiB transport cap is
+consumed by a 29 KB C2PA block plus the header, and the stream ends with **zero IDAT rows**; the
+`shots/` frames are blank too, so there is no fallback. The splash currently uses
+`splash-mascot.webp` cut from the repo's own Kai. Replacing it is a drop-in: same path, square canvas.
+
+Tests 228 → **233** (chips fire inside Charge and outlive the gate; the 16 sound cues are ordered and
+in-range; pacing is 1:1 and the floor is 7500ms). `tsc -b`, `eslint .`, `vite build`, `vitest` clean.

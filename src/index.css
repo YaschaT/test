@@ -451,6 +451,58 @@ html {
     animation: splash-status-in 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
   }
 
+  /* An XP chip floating up past Kai.
+     The composition eases this with easeOutCubic and then derives opacity from the *eased* value, which
+     no single CSS timing function reproduces. So the curve is sampled into the keyframes and played
+     back linearly: the stops below are easeOutCubic(u) at each tenth, and the opacity is the design's
+     `min(1, p*5) * (1 - max(0, (p - 0.55) / 0.45))` evaluated at that same p. --rise is set per chip in
+     composition pixels. */
+  @keyframes splash-chip-rise {
+    0% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+    10% {
+      transform: translateY(calc(var(--rise) * 0.271));
+      opacity: 1;
+    }
+    20% {
+      transform: translateY(calc(var(--rise) * 0.488));
+      opacity: 1;
+    }
+    30% {
+      transform: translateY(calc(var(--rise) * 0.657));
+      opacity: 0.762;
+    }
+    40% {
+      transform: translateY(calc(var(--rise) * 0.784));
+      opacity: 0.48;
+    }
+    50% {
+      transform: translateY(calc(var(--rise) * 0.875));
+      opacity: 0.278;
+    }
+    60% {
+      transform: translateY(calc(var(--rise) * 0.936));
+      opacity: 0.142;
+    }
+    70% {
+      transform: translateY(calc(var(--rise) * 0.973));
+      opacity: 0.06;
+    }
+    80% {
+      transform: translateY(calc(var(--rise) * 0.992));
+      opacity: 0.018;
+    }
+    100% {
+      transform: translateY(var(--rise));
+      opacity: 0;
+    }
+  }
+  .splash-chip-go {
+    animation: splash-chip-rise 1250ms linear both;
+  }
+
   /* The hairline along a section banner's top edge, drawing itself in from the left on load. Paired with
      the ring and the bottom rule, which animate from their own zero in JS — three strokes arriving
      together is what makes the header read as switched on rather than simply present. */
@@ -546,6 +598,12 @@ html {
    read one inherited variable cost one style recalc between them, where twelve independent animations
    would cost twelve — which matters here, because this fires while the app is still booting. Under
    reduced motion the component never renders these at all. */
+/* A chip is invisible until the playhead crosses its cue and JS adds .splash-chip-go. Declared outside
+   the reduced-motion gate so it can never flash into view at its resting state. */
+.splash-chip {
+  opacity: 0;
+}
+
 .splash-confetti {
   transform: translate(calc(var(--dx) * var(--burst)), calc(var(--dy) * var(--burst)))
     rotate(calc(var(--burst) * 220deg)) scale(calc(1 - var(--burst) * 0.4));

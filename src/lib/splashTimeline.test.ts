@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { SOUND_CUES } from './splashSound';
 import {
   advance,
   AUTHORED,
+  CHIPS,
+  CHIP_DURATION_MS,
   AUTHORED_TOTAL,
   CUE,
   FLOOR_MS,
@@ -46,11 +49,10 @@ describe('authored table', () => {
     expect(CUE.handoff).toBeCloseTo(6.6, 6);
   });
 
-  it('warps every scene faster than the demo, and none of them below half its authored length', () => {
+  it('plays at the authored tempo, 1:1', () => {
     for (const phase of PHASES) {
-      const speed = AUTHORED[phase] / PRODUCTION[phase];
-      expect(speed).toBeGreaterThan(1);
-      expect(speed).toBeLessThan(4);
+      expect(PRODUCTION[phase]).toBeCloseTo(AUTHORED[phase], 6);
+      expect(speedAt(CUE[phase] + AUTHORED[phase] / 2)).toBeCloseTo(1, 6);
     }
   });
 
@@ -70,9 +72,9 @@ describe('pacing', () => {
     expect(ms).toBeLessThanOrEqual(FLOOR_MS + FRAME);
   });
 
-  it('keeps the floor inside the attention budget a splash gets', () => {
-    expect(FLOOR_MS).toBeGreaterThan(2000);
-    expect(FLOOR_MS).toBeLessThan(3200);
+  it('runs the composition at its full authored length', () => {
+    expect(FLOOR_MS).toBeCloseTo(AUTHORED_TOTAL * 1000, 6);
+    expect(FLOOR_MS).toBeCloseTo(7500, 6);
   });
 
   it('never rushes a scene, however fast the boot was', () => {
@@ -109,8 +111,11 @@ describe('gates', () => {
   });
 
   it('holds on the Charge/Ready boundary while the boot is still working', () => {
+    // At 1:1 the boundary is 4.8s in, so this has to run past that before the hold can be observed.
     let state = initialState();
-    for (let ms = 0; ms < 3000; ms += FRAME) state = advance(state, FRAME, (g) => g !== 'work');
+    for (let ms = 0; ms < CUE.ready * 1000 + 500; ms += FRAME) {
+      state = advance(state, FRAME, (g) => g !== 'work');
+    }
     expect(state.holding).toBe('work');
     expect(state.t).toBeCloseTo(CUE.ready, 6);
   });
@@ -174,6 +179,46 @@ describe('the XP ring', () => {
         expect(ringProgress(t, real)).toBeLessThanOrEqual(real + 1e-9);
       }
     }
+  });
+});
+
+describe('the XP chips', () => {
+  it('carries both of the mockup\'s chips, thrown either side during Charge', () => {
+    expect(CHIPS.map((c) => c.label)).toEqual(['+5 XP', 'streak 1']);
+    expect(CHIPS.map((c) => c.side)).toEqual([-1, 1]);
+    for (const chip of CHIPS) {
+      expect(chip.at).toBeGreaterThanOrEqual(CUE.charge);
+      expect(chip.at).toBeLessThan(CUE.ready);
+    }
+  });
+
+  it('needs to outlive the work gate, which is why it is not sampled per frame', () => {
+    // This is the reason chips run as fire-and-forget CSS rather than off the playhead: the second one
+    // is still in the air when the playhead reaches the gate. Sampled against this clock it would hang
+    // there half-risen for the whole of a slow boot.
+    const last = CHIPS[CHIPS.length - 1];
+    expect(last.at + CHIP_DURATION_MS / 1000).toBeGreaterThan(CUE.ready);
+  });
+});
+
+describe('the sound cues', () => {
+  it('fires the composition\'s full kit inside the timeline', () => {
+    // Seven scene cues plus the nine-step run under the ring sweep.
+    expect(SOUND_CUES).toHaveLength(16);
+    for (const cue of SOUND_CUES) {
+      expect(cue.at).toBeGreaterThanOrEqual(0);
+      expect(cue.at).toBeLessThanOrEqual(AUTHORED_TOTAL);
+    }
+  });
+
+  it('is ordered, so a single frame crossing several fires them in sequence', () => {
+    const times = SOUND_CUES.map((c) => c.at);
+    expect([...times].sort((a, b) => a - b)).toEqual(times);
+  });
+
+  it('sounds the chime before the work gate, not stranded behind it', () => {
+    const chime = SOUND_CUES.filter((c) => c.at > CUE.charge && c.at < CUE.ready);
+    expect(chime.length).toBeGreaterThan(0);
   });
 });
 

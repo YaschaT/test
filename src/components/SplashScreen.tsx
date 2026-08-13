@@ -9,6 +9,8 @@ import {
   type BootSnapshot,
 } from '../lib/boot';
 import {
+  CHIPS,
+  CHIP_RISE,
   CUE,
   LAYOUTS,
   advance,
@@ -20,29 +22,33 @@ import {
   type GateId,
   type Layout,
 } from '../lib/splashTimeline';
+import { fireSoundCues, makeKit, type SoundKit } from '../lib/splashSound';
 
 /**
  * The cold-start splash: the violet field wakes, Kai rockets up through the frame and settles inside
  * an XP ring that fills with the app's real boot progress, the wordmark rises, and a dark wipe hands
  * off to the dashboard.
  *
- * The composition is the Claude Design "Splash Screen" piece, kept beat for beat. What it is *not* is
- * a fixed 7.5-second demo loop: the playhead is warped to a 2.9-second floor and gated on real work,
- * so the animation never rushes a beat and never finishes ahead of the app it is covering. See
- * lib/splashTimeline.ts for the clock and lib/boot.ts for what it is waiting on.
+ * The composition is the Claude Design "Splash Screen" piece, reproduced as authored: full 7.5s pacing,
+ * the XP chips, and the synthesised sound kit (see lib/splashSound.ts — note that autoplay policy
+ * usually mutes it on a first visit). What it adds is that the playhead *waits* for the real boot at
+ * two points, so it never finishes ahead of the app it is covering. See lib/splashTimeline.ts for the
+ * clock and lib/boot.ts for what it is waiting on.
  *
- * Two deviations from the mockup, both deliberate:
+ * Two things still differ from the mockup, and both are choices worth knowing about:
  *
  * - **It is painted in the app's own palette.** The mockup carries its own violet (#1B0E48 field,
  *   #FFA320 accent), which collides with DESIGN.md's Closed Vocabulary Rule. The field's four stops
  *   turn out to sit almost exactly on the existing `iris-*` ramp, and the orange accent is the amber
  *   the app already spends on XP and streaks — so the mapping is near-lossless and the splash resolves
  *   *into* the app rather than into a second brand.
- * - **Nothing on it is decorative progress.** The mockup's floating "+5 XP" and "streak 1" chips are
- *   the one moment the app genuinely does not yet know either number, and its three loader segments
- *   fill on a timer after the load is already over. The chips are gone; the segments now carry the
- *   three real fronts of the boot (the app, your screen, your data) and are on screen while there is
- *   still something to wait for. The tagline slot carries the live boot status for the same reason.
+ * - **The three loader segments carry real progress.** The mockup fills them on a timer after the load
+ *   is already over; here they are the three real fronts of the boot (the app, your screen, your data)
+ *   and they are on screen while there is still something to wait for. The tagline slot carries the
+ *   live boot status for the same reason.
+ *
+ * The chips' labels are the mockup's own fixed strings, not the visitor's numbers — at boot the app has
+ * not yet reconciled either one, which is the very thing the ring is waiting on.
  */
 
 /** Peak scale of the authored composition. Beyond this the 403px mascot art starts showing its seams. */
@@ -103,6 +109,7 @@ export function SplashScreen() {
   const streakRefs = useRef<(HTMLDivElement | null)[]>([]);
   const burstRef = useRef<HTMLDivElement>(null);
   const wipeRef = useRef<HTMLDivElement>(null);
+  const chipRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     if (!applies) return;
@@ -164,11 +171,26 @@ export function SplashScreen() {
     };
     document.addEventListener('visibilitychange', onVisibility);
 
+    // The sound kit. Created suspended under autoplay policy; a resume is attempted immediately and
+    // again on the first real gesture, so the splash is silent on a first-ever visit and audible on
+    // later ones wherever the browser keeps a media-engagement score. Skipped under reduced motion,
+    // where none of the beats it is cued to actually play.
+    let kit: SoundKit | null = calm ? null : makeKit();
+    const resumeAudio = () => {
+      void kit?.ctx.resume();
+    };
+    resumeAudio();
+    if (kit) {
+      window.addEventListener('pointerdown', resumeAudio, { once: true });
+      window.addEventListener('keydown', resumeAudio, { once: true });
+    }
+
     // Reduced motion opens on the settled frame: no launch, no confetti, no wipe — the mascot and the
     // wordmark are simply there, and the ring still reports the truth.
     let state = initialState(calm ? CUE.charge : 0);
     let last = performance.now();
     let raf = 0;
+    let firedChips = 0;
 
     const draw = (now: number) => {
       const dt = Math.min(now - last, 64);
@@ -177,10 +199,22 @@ export function SplashScreen() {
       easedReal += (boot.overall - easedReal) * 0.12;
       if (boot.overall - easedReal < 0.004) easedReal = boot.overall;
 
+      const prevT = state.t;
       state = advance(state, dt, isOpen);
       const t = state.t;
       const s = sampleScene(t, layout, lite || calm);
       const ring = ringProgress(t, easedReal);
+
+      if (kit) fireSoundCues(kit, prevT, t);
+
+      // Chips are launched, not sampled: crossing the cue starts a CSS animation that finishes on its
+      // own clock, so the one still in the air at the work gate doesn't hang there through a slow boot.
+      if (!calm) {
+        while (firedChips < CHIPS.length && t >= CHIPS[firedChips].at) {
+          chipRefs.current[firedChips]?.classList.add('splash-chip-go');
+          firedChips++;
+        }
+      }
 
       const root = rootRef.current;
       if (root) root.setAttribute('aria-valuenow', String(Math.round(ring * 100)));
@@ -278,6 +312,12 @@ export function SplashScreen() {
       stopObserving();
       window.removeEventListener('resize', fitStage);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pointerdown', resumeAudio);
+      window.removeEventListener('keydown', resumeAudio);
+      // Browsers cap how many AudioContexts a page may hold, and the splash's is finished with the
+      // moment it leaves.
+      void kit?.ctx.close().catch(() => undefined);
+      kit = null;
     };
     // Every input here is frozen at mount by design; the loop is the only thing that may run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -460,6 +500,32 @@ export function SplashScreen() {
             })}
           </div>
         )}
+
+        {/* The XP chips, thrown up past Kai as the ring charges. */}
+        {!calm &&
+          CHIPS.map((chip, i) => (
+            <div
+              key={chip.label}
+              ref={(el) => {
+                chipRefs.current[i] = el;
+              }}
+              className="splash-chip absolute text-center font-display font-bold text-white"
+              style={{
+                left: CX + chip.side * layout.chipX + chip.nudge - layout.chipW / 2,
+                top: layout.baseY + 120,
+                width: layout.chipW,
+                padding: '14px 0',
+                borderRadius: 99,
+                background: 'rgba(255,255,255,.14)',
+                border: '2px solid rgba(255,255,255,.3)',
+                fontSize: layout.chipFs,
+                backdropFilter: 'blur(6px)',
+                ['--rise' as string]: `${-CHIP_RISE}px`,
+              }}
+            >
+              {chip.label}
+            </div>
+          ))}
 
         <div
           ref={markRef}
