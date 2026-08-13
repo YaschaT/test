@@ -51,7 +51,7 @@ import { fireSoundCues, makeKit, type SoundKit } from '../lib/splashSound';
  * not yet reconciled either one, which is the very thing the ring is waiting on.
  */
 
-/** Peak scale of the authored composition. Beyond this the 403px mascot art starts showing its seams. */
+/** Peak scale of the authored composition. Beyond this the 657px avatar art starts showing its seams. */
 const MAX_STAGE_SCALE = 1.35;
 
 /** Mote count, full and lite. */

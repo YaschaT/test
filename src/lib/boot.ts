@@ -58,7 +58,15 @@ function whenFontsReady(): Promise<void> {
   return document.fonts.ready.then(() => undefined);
 }
 
-/** Kai, cut square so the splash can scale and rotate him about his own centre. */
+/**
+ * Kai's avatar — the face mark, cut from `navigation-image.png` (the artwork the composition's own
+ * `avatar.png` is, which the design transport cannot deliver: its 256 KiB cap is spent on a C2PA block
+ * and the stream ends with zero image rows). Keyed on chroma rather than circle-masked, so the crest
+ * above the disc survives, then padded square so the splash can scale and rotate it about its centre.
+ *
+ * Replacing this with the design's own export is a drop-in: same path, square canvas, transparent
+ * outside the mark.
+ */
 export const SPLASH_MASCOT_SRC = '/assets/brand/splash-mascot.webp';
 
 let artPromise: Promise<void> | null = null;

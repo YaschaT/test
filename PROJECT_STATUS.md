@@ -3371,10 +3371,14 @@ button, which an app splash has nowhere to put. The context is created, a resume
 first pointer/key event resumes it — so expect silence on a first-ever visit and sound on later ones in
 browsers that keep a media-engagement score. Skipped entirely under reduced motion.
 
-**Still open: the mascot artwork.** `avatar.png` remains unreachable — the 256 KiB transport cap is
+**The avatar is now the right face.** `avatar.png` itself is unreachable — the 256 KiB transport cap is
 consumed by a 29 KB C2PA block plus the header, and the stream ends with **zero IDAT rows**; the
-`shots/` frames are blank too, so there is no fallback. The splash currently uses
-`splash-mascot.webp` cut from the repo's own Kai. Replacing it is a drop-in: same path, square canvas.
+`shots/` frames are blank too. The user identified the source artwork as the repo's own
+`navigation-image.png`, so `splash-mascot.webp` is now cut from that: keyed on chroma (saturation
+> 0.58, plus a brightness rule for the white belly) with interior holes flood-filled, rather than
+circle-masked, so the crest above the disc survives. 657² native, 55 KB, 21.7% transparent — an
+inscribed circle is 21.5%, which is the check that the cut landed on the disc and not out in its
+bloom. The earlier full-body Kai (wand pose, cut from `banner/mascot/kanji.webp`) is gone.
 
 Tests 228 → **233** (chips fire inside Charge and outlive the gate; the 16 sound cues are ordered and
 in-range; pacing is 1:1 and the floor is 7500ms). `tsc -b`, `eslint .`, `vite build`, `vitest` clean.
