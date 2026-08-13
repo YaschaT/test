@@ -144,36 +144,39 @@ export function ExamLobby({ level, onLevelChange, onBegin }: ExamLobbyProps) {
             })}
           </div>
 
-          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-slate-50 px-5 py-3.5 text-[15px] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
-            <span>
-              <Strong>{total}</Strong> questions
-            </span>
-            <Sep />
-            <span>
-              <Strong>{config.minutes}</Strong> minutes
-            </span>
-            <Sep />
-            <span>
-              pass mark <Strong>{scoring.overallPass}</Strong>/{scoring.total}
-            </span>
-          </p>
-        </div>
+          {/* The facts and the action share one row: what the paper is, then the button that starts it,
+              so the sentence you read ends on the thing you press. It was a full-bleed slab on its own
+              line under here — the page's one action doesn't need 900px of button to be found, and at
+              that size it outweighed the level choice it depends on. */}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <p className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-slate-50 px-5 py-3.5 text-[15px] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+              <span>
+                <Strong>{total}</Strong> questions
+              </span>
+              <Sep />
+              <span>
+                <Strong>{config.minutes}</Strong> minutes
+              </span>
+              <Sep />
+              <span>
+                pass mark <Strong>{scoring.overallPass}</Strong>/{scoring.total}
+              </span>
+            </p>
 
-        <div>
-          <button
-            type="button"
-            onClick={() => {
-              playPrimaryAction();
-              onBegin();
-            }}
-            className="exam-sheen relative isolate w-full overflow-hidden rounded-[20px] border-0 bg-gradient-to-b from-[#6b78ff] to-[#3d4ce8] p-5 font-display text-xl font-semibold text-white shadow-[0_14px_34px_-14px_var(--color-iris-500),inset_0_1px_0_rgba(255,255,255,0.24)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <span className="relative">Start the {level} exam</span>
-          </button>
-          <p className="mt-3 text-center text-[13.5px] leading-relaxed text-slate-400 dark:text-slate-500">
-            Starts after a 3-second countdown. You can leave whenever you want.
-            <br />
-            Je kunt altijd stoppen.
+            <button
+              type="button"
+              onClick={() => {
+                playPrimaryAction();
+                onBegin();
+              }}
+              className="exam-sheen relative isolate shrink-0 overflow-hidden rounded-2xl border-0 bg-gradient-to-b from-[#6b78ff] to-[#3d4ce8] px-7 py-3.5 font-display text-base font-bold text-white shadow-[0_12px_30px_-14px_var(--color-iris-500),inset_0_1px_0_rgba(255,255,255,0.24)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <span className="relative">Start the {level} exam</span>
+            </button>
+          </div>
+
+          <p className="mt-2.5 text-[13px] leading-relaxed text-slate-400 sm:text-right dark:text-slate-500">
+            Starts after a 3-second countdown · you can leave whenever you want · je kunt altijd stoppen.
           </p>
         </div>
       </div>
