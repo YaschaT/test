@@ -71,10 +71,19 @@ function whenFontsReady(): Promise<void> {
  * Kai's avatar — the face mark, cut from `navigation-image.png` (the artwork the composition's own
  * `avatar.png` is, which the design transport cannot deliver: its 256 KiB cap is spent on a C2PA block
  * and the stream ends with zero image rows). Keyed on chroma rather than circle-masked, so the crest
- * above the disc survives, then padded square so the splash can scale and rotate it about its centre.
+ * above the disc survives.
+ *
+ * **The framing is part of the composition, not just the artwork.** The splash draws this square at
+ * `layout.av` — 396 desktop, 560 mobile — against a ring of 488/684 diameter, so how much of the square
+ * the mark actually fills decides how big Kai reads inside his ring. It is reproduced at the source
+ * artwork's own framing: a 1024² canvas with the 657px mark centred at (516, 487.5), i.e. filling 64%
+ * of the box, which is exactly where `navigation-image.png` places it. An earlier revision shipped the
+ * mark alpha-trimmed to its own edges, which silently scaled Kai up by 1.56× — the ring then hugged his
+ * head and the crest crossed it. It also restores the meaning of the composition's `50% 60%` transform
+ * origin: 60% down this box is the underside of the head, which is the pivot the squash was drawn for.
  *
  * Replacing this with the design's own export is a drop-in: same path, square canvas, transparent
- * outside the mark.
+ * outside the mark, mark at the artwork's framing rather than trimmed to it.
  */
 export const SPLASH_MASCOT_SRC = '/assets/brand/splash-mascot.webp';
 

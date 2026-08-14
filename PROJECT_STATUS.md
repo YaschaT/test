@@ -3409,3 +3409,32 @@ audible.**
 Tests 233 → **236** (`src/lib/boot.test.ts`: run counter + subscribers, and the screen step re-arming).
 `tsc -b`, `eslint .`, `vite build`, `vitest` clean; verified in-browser that /login shows no splash, that
 "Continue without an account" mounts it over the dashboard, and that a cold /dashboard still does.
+
+### Splash: avatar framing and the authored loader (2026-08-15)
+
+Re-read the Claude Design source (`Splash Screen.dc.html`, `splash-scene.jsx`, `animations-v3.jsx`) and
+closed the two places our port had drifted from it.
+
+**Kai was 1.56× too big.** The composition draws `avatar.png` at `layout.av` (396 desktop / 560 mobile)
+inside a ring of 488/684 diameter, so the artwork's *own framing* — how much of that square the mark
+fills — is what sets his size. Our `splash-mascot.webp` was alpha-trimmed to the mark's own edges, so it
+filled 100% of the box: the ring hugged his head and the crest crossed it. Rebuilt at the source
+artwork's framing instead — a 1024² canvas with the 657px mark centred at (516, 487.5), i.e. 64% of the
+box, exactly where `navigation-image.png` places it (49.6 KB). That also restores the meaning of the
+composition's `50% 60%` transform origin: 60% down this box is the underside of the head, which is the
+pivot the squash-and-stretch was drawn around.
+
+**The loader is the design's again.** It had been moved early (Settle + 0.35) and rewired to show live
+per-front boot progress. It is back in its authored slot: the row fades up at Ready + 0.2, then the
+three segments fill **one after another**, each starting 0.42s after the last (`Ready + 0.35 + i*0.42`
+→ `+0.95 + i*0.42`), finishing at Ready + 1.79 — a hair before the handoff wipe. Each segment is still
+capped by its real front (`min(authored, real)`), which is invisible in the ordinary case (the work gate
+has passed, so all three are complete) and stops a segment short only on a boot that stalled past its
+cap. The tagline slot keeps the live boot status rather than the mockup's "A little every day": the
+design shows the tagline in Ready, which is *after* the gate, so on a slow connection it would arrive
+only once the waiting was over.
+
+Tests 236 → **237** (the loader fills sequentially, starts no earlier than the end of the ring sweep, and
+is full before the wipe). `tsc -b`, `eslint .`, `vite build`, `vitest` clean. Verified by freezing the
+playhead at Ready + 0.1 / +0.8 / +1.6 in both formats: Kai sits inside his ring with air around him, and
+the dashes fill one, then two, then three. The login handoff from the previous session still fires.

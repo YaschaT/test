@@ -323,6 +323,8 @@ export interface Scene {
   statusY: number;
   statusO: number;
   loadO: number;
+  /** Authored fill of each loader segment, 0–1. One per segment, in on-screen order. */
+  segs: number[];
   streaks: number[];
   burst: number;
   wipe: number;
@@ -370,9 +372,12 @@ export function sampleScene(t: number, layout: Layout, lite = false): Scene {
     markO: enter({ from: 0, to: 1, start: CUE.charge + 0.35, end: CUE.charge + 0.9 })(t),
     statusY: enter({ from: 26, to: 0, start: CUE.charge + 0.55, end: CUE.charge + 1.3 })(t),
     statusO: enter({ from: 0, to: 1, start: CUE.charge + 0.55, end: CUE.charge + 1.1 })(t),
-    // The segments come up with the ring rather than after it, because they carry real per-front
-    // progress and are only useful while there is still something to be waiting for.
-    loadO: enter({ from: 0, to: 1, start: CUE.settle + 0.35, end: CUE.settle + 0.85 })(t),
+    // The loader is the composition's closing beat, in its authored slot: the row fades up once the
+    // ring has finished sweeping, and then the three segments fill one after another, 0.42s apart.
+    loadO: enter({ from: 0, to: 1, start: CUE.ready + 0.2, end: CUE.ready + 0.7 })(t),
+    segs: [0, 1, 2].map((i) =>
+      enter({ from: 0, to: 1, start: CUE.ready + 0.35 + i * 0.42, end: CUE.ready + 0.95 + i * 0.42 })(t),
+    ),
     // The design's `fieldO` is not sampled here on purpose. It fades in over authored 0.02–0.9, which
     // straddles the art gate at 0.14 — keyed to this clock it would freeze the screen at 13% lit, a
     // near-black hold. It runs as a CSS fade instead, off its own wall-clock, so the field finishes

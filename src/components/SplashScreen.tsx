@@ -43,10 +43,15 @@ import { fireSoundCues, makeKit, type SoundKit } from '../lib/splashSound';
  *   turn out to sit almost exactly on the existing `iris-*` ramp, and the orange accent is the amber
  *   the app already spends on XP and streaks — so the mapping is near-lossless and the splash resolves
  *   *into* the app rather than into a second brand.
- * - **The three loader segments carry real progress.** The mockup fills them on a timer after the load
- *   is already over; here they are the three real fronts of the boot (the app, your screen, your data)
- *   and they are on screen while there is still something to wait for. The tagline slot carries the
- *   live boot status for the same reason.
+ * - **The tagline slot carries the live boot status.** The mockup's "A little every day" appears in the
+ *   Ready scene, which is *after* the playhead's work gate — so on a slow connection it would arrive
+ *   only once the waiting was already over. The status line takes the slot and comes up during Charge
+ *   instead, so there is something honest on screen for the whole of a hold.
+ *
+ * The loader row is the composition's, filling one segment after another in the Ready scene as
+ * authored. Each segment is still capped by its real boot front (app / screen / data), which changes
+ * nothing in the ordinary case — the gate has already passed, so all three are complete — and stops a
+ * segment short in the one case where it would otherwise lie: a boot that stalled past its cap.
  *
  * The chips' labels are the mockup's own fixed strings, not the visitor's numbers — at boot the app has
  * not yet reconciled either one, which is the very thing the ring is waiting on.
@@ -268,7 +273,11 @@ export function SplashScreen() {
       if (barsRef.current) barsRef.current.style.opacity = String(s.loadO);
       for (let i = 0; i < FRONTS.length; i++) {
         const fill = barFillRefs.current[i];
-        if (fill) fill.style.transform = `scaleX(${boot.fronts[FRONTS[i]]})`;
+        // Same rule as the ring: whichever is slower, the authored fill or the truth. The row plays
+        // after the work gate, so in the ordinary case every front is already at 1 and what you see is
+        // the composition's own staggered fill, exactly as authored. It is only when the gate has been
+        // forced open on a stalled boot that a segment stops short — and then it should.
+        if (fill) fill.style.transform = `scaleX(${Math.min(s.segs[i], boot.fronts[FRONTS[i]])})`;
       }
 
       // One-shot decoration.

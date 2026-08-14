@@ -250,6 +250,24 @@ describe('the scene', () => {
     }
   });
 
+  it('fills the loader one segment at a time, and only once the ring has finished sweeping', () => {
+    // The ring's sweep ends at Charge + 1.15; the row may not start before that.
+    expect(sampleScene(CUE.charge + 1.15, layout).segs).toEqual([0, 0, 0]);
+    expect(sampleScene(CUE.ready, layout).loadO).toBe(0);
+
+    // Then one after another, each ahead of the next, never all together.
+    const mid = sampleScene(CUE.ready + 0.9, layout).segs;
+    expect(mid[0]).toBeGreaterThan(mid[1]);
+    expect(mid[1]).toBeGreaterThan(mid[2]);
+    expect(mid[2]).toBe(0);
+    expect(sampleScene(CUE.ready + 1.3, layout).segs[0]).toBe(1);
+
+    // And the last one is full before the wipe starts, so the row is never cut off mid-fill.
+    const done = sampleScene(CUE.handoff, layout);
+    expect(done.segs).toEqual([1, 1, 1]);
+    expect(done.loadO).toBe(1);
+  });
+
   it('finishes every one-shot by the end', () => {
     const end = sampleScene(AUTHORED_TOTAL, layout);
     expect(end.markO).toBe(1);
