@@ -93,18 +93,38 @@ export async function syncProgressAfterSignIn(userId: string): Promise<void> {
 }
 
 /**
- * Resolves the first time this device has finished catching up with the cloud (or failed trying).
+ * Resolves once this device has finished catching up with the cloud (or failed trying).
  *
  * The boot loader waits on it so "Syncing progress" is a real step rather than a caption over a timer.
- * It only ever settles once — later focus re-merges aren't boot work.
+ * It re-arms whenever a sign-in merge starts, because the splash plays a second time on the handoff out
+ * of the auth screens (see boot.ts `requestSplash`) and that run has a genuinely outstanding merge to
+ * wait on. Only the sign-in merge re-arms it — the throttled focus re-merges aren't boot work.
+ *
+ * Re-arming is deliberately owned by the code that is about to *start* a sync, never by a caller that
+ * merely hopes one is coming: a gate closed with nothing behind it would hold the splash open for the
+ * whole of its cap.
  */
-let settleFirstSync: (() => void) | null = null;
-const firstSyncSettled = new Promise<void>((resolve) => {
-  settleFirstSync = resolve;
-});
+function syncDeferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((r) => {
+    resolve = r;
+  });
+  return { promise, resolve, settled: false };
+}
 
-export function whenFirstSyncSettled(): Promise<void> {
-  return firstSyncSettled;
+let syncGate = syncDeferred();
+
+function markSyncPending(): void {
+  if (syncGate.settled) syncGate = syncDeferred();
+}
+
+function markSyncSettled(): void {
+  syncGate.settled = true;
+  syncGate.resolve();
+}
+
+export function whenSyncSettled(): Promise<void> {
+  return syncGate.promise;
 }
 
 /**
@@ -131,10 +151,12 @@ export function useProgressSync(): void {
     let hydrated = false;
     let lastRefresh = Date.now();
 
-    // 1. Catch up with the cloud before this device is allowed to push anything.
+    // 1. Catch up with the cloud before this device is allowed to push anything. The gate closes here,
+    //    synchronously with the merge starting, so a splash covering this sign-in waits for it.
+    markSyncPending();
     syncProgressAfterSignIn(userId).finally(() => {
       if (!cancelled) hydrated = true;
-      settleFirstSync?.();
+      markSyncSettled();
     });
 
     // 2. Keep the cloud current afterwards.

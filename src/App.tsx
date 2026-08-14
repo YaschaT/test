@@ -1,9 +1,16 @@
-import { lazy, Suspense, useEffect, type ComponentType, type LazyExoticComponent } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useSyncExternalStore,
+  type ComponentType,
+  type LazyExoticComponent,
+} from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Layout } from './components/Layout';
 import { SplashScreen } from './components/SplashScreen';
-import { markScreenReady } from './lib/boot';
+import { getSplashRun, markScreenReady, subscribeSplashRun } from './lib/boot';
 import { useProgressSync } from './lib/progressSync';
 
 // Every route is code-split so no visitor pays for screens they aren't on: the public homepage
@@ -52,11 +59,15 @@ function page(Page: LazyExoticComponent<ComponentType>) {
 
 function App() {
   useProgressSync();
+  // Remount key: run 0 is the cold load, every run after it is a handoff into the app from the auth
+  // screens (lib/boot.ts). Keying on it gives each run a clean timeline rather than a reset one.
+  const splashRun = useSyncExternalStore(subscribeSplashRun, getSplashRun, getSplashRun);
 
   return (
     <TooltipProvider>
-      {/* Covers the app shell on a cold load and takes itself down when the boot work is really done. */}
-      <SplashScreen />
+      {/* Covers the app shell on a cold load, and again on the way in from login/register/guest, and
+          takes itself down when the boot work behind it is really done. */}
+      <SplashScreen key={splashRun} />
       <Routes>
         <Route
           path="/"

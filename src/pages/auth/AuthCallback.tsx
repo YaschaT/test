@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { syncProgressAfterSignIn } from '../../lib/progressSync';
+import { requestSplash } from '../../lib/boot';
 import '../../components/auth/auth.css';
 
 /**
@@ -25,6 +26,9 @@ export function AuthCallback() {
       if (finished) return;
       finished = true;
       await syncProgressAfterSignIn(userId);
+      // Same handoff as the email forms: the splash covers the arrival rather than the dashboard
+      // appearing mid-load behind "Signing you in…".
+      requestSplash();
       navigate('/dashboard', { replace: true });
     }
 

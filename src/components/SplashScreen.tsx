@@ -4,6 +4,7 @@ import {
   SPLASH_MASCOT_SRC,
   getConnectionGrade,
   isAppRoute,
+  isSplashRequested,
   observeBoot,
   type BootFrontId,
   type BootSnapshot,
@@ -87,9 +88,12 @@ function pickLayout(vw: number, vh: number): Layout {
 const FRONTS: BootFrontId[] = ['app', 'screen', 'data'];
 
 export function SplashScreen() {
-  // Decided once, from the URL the tab actually opened on: a client-side navigation into the app is
-  // not a boot, and this component never remounts on one.
-  const [applies] = useState(() => typeof window !== 'undefined' && isAppRoute(window.location.pathname));
+  // Decided once, at mount. Either the tab opened straight onto an app route — a cold boot — or this
+  // is a requested replay, which only happens on the handoff into the app from the auth screens
+  // (lib/boot.ts `requestSplash`). Ordinary in-app navigation is neither, and never remounts this.
+  const [applies] = useState(
+    () => isSplashRequested() || (typeof window !== 'undefined' && isAppRoute(window.location.pathname)),
+  );
   const [calm] = useState(prefersReducedMotion);
   const [lite] = useState(() => getConnectionGrade() === 'lite');
   const [gone, setGone] = useState(false);

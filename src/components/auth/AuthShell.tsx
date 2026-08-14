@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
+import { requestSplash } from '../../lib/boot';
 import './auth.css';
 
 type AuthMode = 'login' | 'register';
@@ -35,6 +36,17 @@ export function AuthShell({ mode }: AuthShellProps) {
   const navigate = useNavigate();
   const copy = COPY[mode];
 
+  /**
+   * Every way out of this screen and into the app. The splash is asked for first, in the same handler,
+   * so the two updates batch and the loader is already covering the screen when the dashboard mounts
+   * behind it — this is the boot it was built for: the dashboard chunk is still to download, and a
+   * sign-in has a cloud merge running behind it.
+   */
+  function enterApp() {
+    requestSplash();
+    navigate('/dashboard');
+  }
+
   return (
     <div className="au-surface">
       <header className="au-topbar">
@@ -56,9 +68,9 @@ export function AuthShell({ mode }: AuthShellProps) {
           <p className="au-lede">{copy.sub}</p>
 
           {mode === 'login' ? (
-            <LoginForm onAuthenticated={() => navigate('/dashboard')} />
+            <LoginForm onAuthenticated={enterApp} />
           ) : (
-            <RegisterForm onAuthenticated={() => navigate('/dashboard')} />
+            <RegisterForm onAuthenticated={enterApp} />
           )}
 
           <p className="au-alt">
@@ -78,7 +90,7 @@ export function AuthShell({ mode }: AuthShellProps) {
               </>
             )}
           </p>
-          <button type="button" onClick={() => navigate('/dashboard')} className="au-quiet">
+          <button type="button" onClick={enterApp} className="au-quiet">
             Continue without an account
           </button>
         </section>

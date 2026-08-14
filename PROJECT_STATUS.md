@@ -3382,3 +3382,30 @@ bloom. The earlier full-body Kai (wand pose, cut from `banner/mascot/kanji.webp`
 
 Tests 228 → **233** (chips fire inside Charge and outlive the gate; the 16 sound cues are ordered and
 in-range; pacing is 1:1 and the floor is 7500ms). `tsc -b`, `eslint .`, `vite build`, `vitest` clean.
+
+### The splash now plays on the way in from login/register (2026-08-14)
+
+The loader covered the cold load but never the one moment it was built for: **arriving in the app from
+the auth screens.** Logging in, creating an account, or choosing "Continue without an account" is a
+client-side navigation, which doesn't remount the app — and `SplashScreen` reads the URL once, at mount,
+so it never knew the handoff had happened. The dashboard simply appeared, mid-load.
+
+`requestSplash()` (lib/boot.ts) now bumps a **splash run counter**, which `App` uses as the component's
+remount key, so each run gets a genuinely fresh timeline, sound kit and refs rather than a half-reset
+one. It's called immediately before `navigate('/dashboard')` at all four entry points — login, register,
+guest continue (`AuthShell.enterApp`) and the Google OAuth callback — in the same handler, so the two
+updates batch and the splash is already covering the screen when the dashboard mounts behind it.
+
+The run is a real boot, so its steps re-arm rather than reporting stale completions: `requestSplash`
+re-opens the **screen** step (the dashboard chunk has never been downloaded in this tab), and
+progressSync re-opens the **data** step itself at the instant it starts a sign-in merge — deliberately
+not from `requestSplash`, because a gate closed on the *hope* of a sync would hold the splash open for
+its whole 5.2s cap if none ever started. Focus re-merges still don't count as boot work.
+
+One consequence worth knowing: the splash's sound kit is normally muted on a cold load (no prior user
+gesture), but this run follows a click, so **the login handoff is the one splash that will actually be
+audible.**
+
+Tests 233 → **236** (`src/lib/boot.test.ts`: run counter + subscribers, and the screen step re-arming).
+`tsc -b`, `eslint .`, `vite build`, `vitest` clean; verified in-browser that /login shows no splash, that
+"Continue without an account" mounts it over the dashboard, and that a cold /dashboard still does.

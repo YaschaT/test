@@ -1,5 +1,5 @@
 import { getAuthSnapshot, subscribeAuth } from './authStore';
-import { whenFirstSyncSettled } from './progressSync';
+import { whenSyncSettled } from './progressSync';
 
 /**
  * What "loading" actually consists of when the app cold-starts, so the splash screen can report real
@@ -41,7 +41,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-const screenReady = deferred();
+let screenReady = deferred();
 
 /**
  * Called from inside the app's route Suspense boundary, so it fires when the route's lazily-loaded
@@ -50,6 +50,15 @@ const screenReady = deferred();
  */
 export function markScreenReady(): void {
   screenReady.resolve();
+}
+
+/**
+ * Re-arms the screen step for a splash that is about to cover a *second* boot. See
+ * {@link requestSplash}: the handoff out of the auth screens loads a route chunk this tab has never
+ * had, so the step is honestly outstanding again.
+ */
+function resetScreenStep(): void {
+  screenReady = deferred();
 }
 
 function whenFontsReady(): Promise<void> {
@@ -115,7 +124,9 @@ async function whenProgressReady(): Promise<void> {
   await whenAccountReady();
   // A guest has no cloud copy to reconcile with, so this step is already done for them.
   if (getAuthSnapshot().status !== 'signed-in') return;
-  await whenFirstSyncSettled();
+  // Read after the await, never before: signing in closes this gate again, and the account step above
+  // is what resolves at the very moment that happens.
+  await whenSyncSettled();
 }
 
 export const BOOT_STEPS: BootStep[] = [
@@ -241,4 +252,57 @@ const APP_PATHS = [
 
 export function isAppRoute(pathname: string): boolean {
   return APP_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+/* ── Playing the splash again on the way in from the auth screens ───────────────────────────────── */
+
+/**
+ * How many times the splash has been asked to play. Run 0 is the cold load, where the splash simply
+ * mounts with the app on an app route. Every run after that is an explicit handoff: someone logged in,
+ * created an account, or chose to continue as a guest, and is being taken to the dashboard.
+ *
+ * That handoff deserves the splash for the same reason a cold load does — it is a real boot. The tab
+ * has been sitting on the auth screens, so the dashboard's chunk has never been downloaded, and a
+ * sign-in has a cloud merge running behind it. Without this the entry into the app was the one moment
+ * the loader was built for and the only one it never covered: a client-side navigation doesn't remount
+ * the app, so the splash — which reads the URL once, at mount — never knew it had happened.
+ *
+ * The counter is the remount key (see App.tsx), so each run gets a genuinely fresh timeline, sound kit
+ * and set of refs rather than a half-reset one.
+ */
+let splashRun = 0;
+const splashListeners = new Set<() => void>();
+
+export function getSplashRun(): number {
+  return splashRun;
+}
+
+/** Whether the splash on screen is a requested replay rather than the cold-load one. */
+export function isSplashRequested(): boolean {
+  return splashRun > 0;
+}
+
+export function subscribeSplashRun(listener: () => void): () => void {
+  splashListeners.add(listener);
+  return () => {
+    splashListeners.delete(listener);
+  };
+}
+
+/**
+ * Plays the splash over an entry into the app from outside it.
+ *
+ * Call it immediately *before* the `navigate` that leaves an auth screen for the dashboard, in the same
+ * event handler: the two state updates batch into one render, so the splash mounts already covering the
+ * screen the visitor is arriving at rather than flashing the dashboard first.
+ *
+ * Re-arming the screen step is safe because the navigation that follows is what settles it. The data
+ * step is deliberately *not* re-armed here — a gate closed on the hope that a sync is coming would hold
+ * the splash open for its whole cap if none ever started. progressSync closes that one itself, at the
+ * instant it actually begins a merge.
+ */
+export function requestSplash(): void {
+  resetScreenStep();
+  splashRun += 1;
+  for (const listener of splashListeners) listener();
 }
