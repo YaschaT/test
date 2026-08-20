@@ -310,7 +310,9 @@ export function ReviewComplete({
       </section>
 
       {graded > 0 && (
-        <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <>
+          {/* The horizon runs the full width: it is a wide, horizontal read, and the five nodes need
+              the room for their labels to stay on one line. */}
           <section className={`${PANEL} rc-rise rc-delay-1`}>
             <h2 className="text-[15px] font-bold text-slate-800 dark:text-slate-100">
               When these come back{' '}
@@ -323,7 +325,7 @@ export function ReviewComplete({
               brings them back on its own.
             </p>
 
-            <div className="relative mt-9 mb-1">
+            <div className="relative mx-auto mt-9 mb-1 max-w-[46rem]">
               <div
                 aria-hidden="true"
                 className="absolute top-[15px] h-px bg-slate-200 dark:bg-white/[0.12]"
@@ -362,7 +364,9 @@ export function ReviewComplete({
             </div>
           </section>
 
-          <div className="flex flex-col gap-4 md:gap-5">
+          {/* Two card lists, side by side when both exist — a lone one takes the width rather than
+              leaving a column of nothing beside it. */}
+          <div className={`grid gap-4 md:gap-5 ${masteredChips.length > 0 ? 'lg:grid-cols-2' : ''}`}>
             <section className={`${PANEL} rc-rise rc-delay-2`}>
               <h2 className="text-[15px] font-bold text-slate-800 dark:text-slate-100">
                 Worth another look{' '}
@@ -419,7 +423,6 @@ export function ReviewComplete({
                 </div>
               )}
             </section>
-
             {masteredChips.length > 0 && (
               <section className={`${PANEL} rc-rise rc-delay-3`}>
                 <h2 className="flex items-center gap-1.5 text-[15px] font-bold text-emerald-700 dark:text-emerald-300">
@@ -455,10 +458,10 @@ export function ReviewComplete({
               </section>
             )}
           </div>
-        </div>
+        </>
       )}
 
-      <div className="rc-rise rc-delay-3 flex flex-wrap items-center justify-center gap-3 pt-1 pb-2">
+      <div className="rc-rise rc-delay-4 flex flex-wrap items-center justify-center gap-3 pt-1 pb-2">
         {nextRound ? (
           <>
             {/* The one gradient button on the screen, per the app's single-primary-action rule. */}

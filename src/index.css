@@ -370,6 +370,9 @@ html {
   .rc-delay-3 {
     animation-delay: 240ms;
   }
+  .rc-delay-4 {
+    animation-delay: 320ms;
+  }
 
   /* One mark per grade press, wiping in left-to-right so the strip reads as the session replaying. */
   @keyframes rc-trace-in {
