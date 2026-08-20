@@ -12,8 +12,13 @@ export const GRADE_META: Record<
   SrsRating,
   {
     label: string;
+    /** Dutch pairing for the grade name, per the app's bilingual convention. */
+    labelNl: string;
     key: string;
     dotClass: string;
+    /** The same colour as `dotClass`, as a literal — for inline styles (the completion screen's
+     * per-card session trace sets a fill per element, which a Tailwind class can't do). */
+    hex: string;
     keycapClass: string;
     hoverClass: string;
     pressedClass: string;
@@ -21,32 +26,40 @@ export const GRADE_META: Record<
 > = {
   again: {
     label: 'Again',
+    labelNl: 'Opnieuw',
     key: '1',
     dotClass: 'bg-[#e8735c]',
+    hex: '#e8735c',
     keycapClass: 'bg-[#e8735c]/15 text-[#b0452e] dark:text-[#f2a08c] border-[#e8735c]/30',
     hoverClass: 'hover:border-[#e8735c]/50 hover:bg-[#e8735c]/10',
     pressedClass: 'ring-2 ring-[#e8735c]/40 border-[#e8735c]/50 bg-[#e8735c]/10',
   },
   hard: {
     label: 'Hard',
+    labelNl: 'Moeilijk',
     key: '2',
     dotClass: 'bg-amber-400',
+    hex: '#fbbf24',
     keycapClass: 'bg-amber-400/15 text-amber-700 dark:text-amber-300 border-amber-400/30',
     hoverClass: 'hover:border-amber-400/50 hover:bg-amber-400/10',
     pressedClass: 'ring-2 ring-amber-400/40 border-amber-400/50 bg-amber-400/10',
   },
   good: {
     label: 'Good',
+    labelNl: 'Goed',
     key: '3',
     dotClass: 'bg-brand-500',
+    hex: '#4c6ef0',
     keycapClass: 'bg-brand-500/15 text-brand-700 dark:text-brand-300 border-brand-500/30',
     hoverClass: 'hover:border-brand-500/50 hover:bg-brand-500/10',
     pressedClass: 'ring-2 ring-brand-500/40 border-brand-500/50 bg-brand-500/10',
   },
   easy: {
     label: 'Easy',
+    labelNl: 'Makkelijk',
     key: '4',
     dotClass: 'bg-emerald-500',
+    hex: '#10b981',
     keycapClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
     hoverClass: 'hover:border-emerald-500/50 hover:bg-emerald-500/10',
     pressedClass: 'ring-2 ring-emerald-500/40 border-emerald-500/50 bg-emerald-500/10',

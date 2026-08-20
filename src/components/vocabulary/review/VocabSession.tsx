@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { PrimaryButton } from '../../PrimaryButton';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ReviewHeader } from './ReviewHeader';
 import { ReviewCarousel } from '../../review/ReviewCarousel';
 import { DeckPager } from '../../review/DeckPager';
 import { ReviewCard } from './ReviewCard';
 import { ReviewAnswerControls } from './ReviewAnswerControls';
 import { ReviewSessionRail, type ReviewSessionCounts } from './ReviewSessionRail';
-import { GRADE_META, GRADE_ORDER } from './gradeTheme';
+import { ReviewComplete, type ReviewCompleteItem } from '../../review/ReviewComplete';
+import { GRADE_ORDER } from './gradeTheme';
 import { Kbd } from './Kbd';
 import type { DisplayPrefs } from '../../DisplayToggles';
-import { getSrsCard, reviewItem, useProgress } from '../../../lib/progressStore';
+import { getProgressSnapshot, getSrsCard, reviewItem, useProgress } from '../../../lib/progressStore';
+import { buildReviewSummary, captureReviewBaseline, type GradedCard } from '../../../lib/reviewSummary';
 import { readStorage, writeStorage } from '../../../lib/storage';
 import { playCorrect, playSoftClick, playWrong } from '../../../lib/sound';
 import { speakJapaneseBrowser } from '../../../lib/tts/browserTts';
@@ -32,6 +33,11 @@ interface VocabSessionProps {
   mode: 'review' | 'browse';
   title: string;
   exitTo: string;
+  /**
+   * Offered on the completion screen when another queue can genuinely be built right now — the page
+   * owns this because only it holds the full deck. Absent means there is nothing left to start.
+   */
+  nextRound?: { count: number; onStart: () => void };
 }
 
 /**
@@ -41,13 +47,27 @@ interface VocabSessionProps {
  * showed the example sentence and then dead-ended — no way to move to the next word, and nothing
  * recorded. Same component, same modes, same keys as KanjiSession so the two decks behave identically.
  */
-export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: VocabSessionProps) {
+export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo, nextRound }: VocabSessionProps) {
   const progress = useProgress();
-  const navigate = useNavigate();
   const [position, setPosition] = useState(initialIndex);
   const [revealed, setRevealed] = useState(mode === 'browse');
   const [counts, setCounts] = useState<ReviewSessionCounts>({ again: 0, hard: 0, good: 0, easy: 0 });
   const [correctStreak, setCorrectStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  // Every grade press in order — the completion screen replays the session from this.
+  const [graded, setGraded] = useState<GradedCard[]>([]);
+  // Time spent on cards, stamped at each grade — so it stops at the last one rather than counting
+  // however long the completion screen stays open.
+  const [sessionSeconds, setSessionSeconds] = useState(0);
+  // What the deck looked like before the first card, so the debrief can report what *this* session
+  // changed (XP, first sightings, cards that crossed into mastery) rather than restating totals.
+  const [baseline] = useState(() =>
+    captureReviewBaseline(
+      'vocabulary',
+      queue.map((w) => w.id),
+      getProgressSnapshot(),
+    ),
+  );
   const [pressedRating, setPressedRating] = useState<SrsRating | null>(null);
   const [railOpen, setRailOpen] = useState(false);
   const [prefs, setPrefs] = useState<DisplayPrefs>(() =>
@@ -60,6 +80,22 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
   const touchStartXRef = useRef<number | null>(null);
 
   const word = queue[position];
+  const items = useMemo(
+    () =>
+      new Map<string, ReviewCompleteItem>(
+        queue.map((w) => [
+          w.id,
+          {
+            id: w.id,
+            japanese: w.japanese,
+            reading: w.kana === w.japanese ? undefined : w.kana,
+            meaning: w.meaning.en,
+            href: `/vocabulary/${w.id}`,
+          },
+        ]),
+      ),
+    [queue],
+  );
   const reviewedCount = counts.again + counts.hard + counts.good + counts.easy;
   const transitioning = pressedRating !== null;
   const browsing = mode === 'browse';
@@ -115,11 +151,17 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
   function rate(rating: SrsRating) {
     if (!word || !revealed || transitioning) return;
     reviewItem('vocabulary', word.id, rating);
-    const graded = reviewedCount + 1;
+    const gradedCount = reviewedCount + 1;
     const elapsed = (Date.now() - sessionStartRef.current) / 1000;
-    setSecondsPerCard(Math.min(45, Math.max(8, elapsed / graded)));
+    setSecondsPerCard(Math.min(45, Math.max(8, elapsed / gradedCount)));
+    setSessionSeconds(Math.round(elapsed));
     setCounts((c) => ({ ...c, [rating]: c[rating] + 1 }));
-    setCorrectStreak((s) => (rating === 'again' ? 0 : rating === 'hard' ? s : s + 1));
+    setGraded((g) => [...g, { id: word.id, rating }]);
+    setCorrectStreak((s) => {
+      const next = rating === 'again' ? 0 : rating === 'hard' ? s : s + 1;
+      setBestStreak((best) => Math.max(best, next));
+      return next;
+    });
     if (rating === 'good' || rating === 'easy') playCorrect();
     else if (rating === 'again') playWrong();
     else playSoftClick();
@@ -136,7 +178,8 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || !word) return;
-      const onControl = e.target instanceof HTMLElement && e.target.closest('button, a, input, [role="button"]');
+      const onControl =
+        e.target instanceof HTMLElement && e.target.closest('button, a, input, [role="button"]');
       if (e.code === 'Space') {
         if (onControl) return;
         e.preventDefault();
@@ -162,7 +205,9 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
   if (queue.length === 0) {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Nothing to review right now</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+          Nothing to review right now
+        </h1>
         <p className="text-slate-500 dark:text-slate-400 mb-4">Come back later, or browse the full deck.</p>
         <Link to={exitTo} className="text-brand-600 dark:text-brand-300 font-semibold hover:underline">
           Back to vocabulary
@@ -173,26 +218,19 @@ export function VocabSession({ queue, initialIndex = 0, mode, title, exitTo }: V
 
   if (position >= queue.length) {
     return (
-      <div className="max-w-lg mx-auto text-center py-16">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
-          {browsing ? 'End of the deck' : 'Review complete'}
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mb-6">
-          You studied {reviewedCount} {reviewedCount === 1 ? 'word' : 'words'} this session.
-        </p>
-        {reviewedCount > 0 && (
-          <ul className="flex justify-center gap-5 mb-8">
-            {GRADE_ORDER.map((rating) => (
-              <li key={rating} className="flex items-center gap-1.5 text-sm">
-                <span aria-hidden="true" className={`w-2 h-2 rounded-full ${GRADE_META[rating].dotClass}`} />
-                <span className="text-slate-500 dark:text-slate-400">{GRADE_META[rating].label}</span>
-                <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{counts[rating]}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <PrimaryButton onClick={() => navigate(exitTo)}>Back to vocabulary</PrimaryButton>
-      </div>
+      <ReviewComplete
+        summary={buildReviewSummary('vocabulary', graded, baseline, progress)}
+        trace={graded.map((g) => g.rating)}
+        items={items}
+        mascot="vocabulary"
+        noun={{ en: 'words', nl: 'woorden' }}
+        seconds={sessionSeconds}
+        bestStreak={bestStreak}
+        browsing={browsing}
+        exitTo={exitTo}
+        exitLabel={{ en: 'Back to vocabulary', nl: 'Terug naar woordenschat' }}
+        nextRound={browsing ? undefined : nextRound}
+      />
     );
   }
 

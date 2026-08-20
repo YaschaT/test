@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { KanjiSession } from '../../components/kanji/review/KanjiSession';
 import { KANJI_LIST } from '../../data/kanji';
 import { useProgress } from '../../lib/progressStore';
@@ -11,8 +11,30 @@ import { buildReviewQueue } from '../../lib/reviewQueue';
  */
 export function KanjiReview() {
   const progress = useProgress();
-  // Captured once per mount so the queue doesn't reshuffle mid-session as cards update.
-  const queue = useMemo(() => buildReviewQueue(KANJI_LIST, 'kanji', progress, 10), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [round, setRound] = useState(0);
 
-  return <KanjiSession queue={queue} mode="review" title="Kanji review" exitTo="/kanji" />;
+  // Captured once per round so the queue doesn't reshuffle mid-session as cards update; starting
+  // another round bumps `round`, which rebuilds it and remounts the session through the key below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const queue = useMemo(() => buildReviewQueue(KANJI_LIST, 'kanji', progress, 10), [round]);
+
+  // What a queue built *right now* would hold — see VocabReview for why this is honest at the point
+  // the completion screen reads it.
+  const nextRoundCount = useMemo(
+    () => buildReviewQueue(KANJI_LIST, 'kanji', progress, 10).length,
+    [progress],
+  );
+
+  return (
+    <KanjiSession
+      key={round}
+      queue={queue}
+      mode="review"
+      title="Kanji review"
+      exitTo="/kanji"
+      nextRound={
+        nextRoundCount > 0 ? { count: nextRoundCount, onStart: () => setRound((r) => r + 1) } : undefined
+      }
+    />
+  );
 }

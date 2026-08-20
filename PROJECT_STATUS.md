@@ -1,5 +1,48 @@
 # Project Status — Kotobox (JLPT N5→N4 app)
 
+## Review session debrief — the end-of-session screen (2026-08-20)
+
+Replaced the sober end of both SRS review sessions. It used to be a centred text block that restated the
+one thing the learner already knew ("You studied 22 words this session") over four grade dots, then dead-
+ended on a Back button — no bilingual pairing, no mascot, no reason to feel anything, and nowhere to go.
+
+The new **`ReviewComplete`** (`src/components/review/ReviewComplete.tsx`) is shared by Vocabulary and
+Kanji and answers what the session actually bought:
+
+- **Hero** on the review's own `.review-card-surface` material: section mascot, bilingual title, an XP
+  pill, a tiered EN/NL verdict line, and the signature **RingStat** showing session recall (share graded
+  Good/Easy) — emerald with a bounded halo on a clean sweep of four or more cards.
+- **Session trace:** one coloured mark per grade press, in the order pressed, wiping in left-to-right —
+  the session replaying as an artifact. Shown from four cards up; below that the tally alone.
+- **Stat row:** cards reviewed, time on cards, best run, met-for-the-first-time. All real.
+- **"When these come back":** the standout. A horizon rail bucketing every graded card by the interval
+  the scheduler *actually* assigned (Tomorrow / In 2–5 days / In 3 weeks / …), labelled from the real
+  min–max days in each bucket, with the 21-day+ bucket in the mastered emerald.
+- **"Worth another look":** the cards last graded Again or Hard, as chips linking to their detail pages —
+  or a clean-sweep state. Plus **"Now mastered"** when cards crossed `MASTERED_INTERVAL_DAYS`.
+- **One primary action:** "Another round · N words" when a queue can genuinely be rebuilt right now
+  (`VocabReview` / `KanjiReview` own that check and remount the session via a round key), otherwise the
+  exit link takes the single gradient button.
+
+**Nothing is estimated.** `src/lib/reviewSummary.ts` captures a pre-session baseline (XP, which ids were
+unseen, which were already mastered) and reads the horizon/mastery back out of the real SRS store
+afterwards; XP earned is the difference between two real `calculateXp` reads, so it includes milestone
+rungs. 9 new tests in `reviewSummary.test.ts` cover bucketing, re-grading the same card, mastery
+attribution, XP, and the empty session.
+
+Also fixed along the way: sessions now log every grade press and a best-run streak; time is stamped at
+each grade rather than measured off the completion screen; all muted Dutch pairings moved from
+`slate-400`/`slate-500` to the design system's real Muted Ink pair (the old pairing measured 2.6:1 light
+and 3.4:1 dark — every text/background pair on the screen now clears 4.5:1); focus moves to the heading
+when the grading controls unmount. Every `rc-*` animation lives inside the `prefers-reduced-motion:
+no-preference` gate, so under `reduce` the classes are inert and the panels render at rest — verified by
+enumerating the CSSOM.
+
+Validation: `tsc -b`, `eslint .`, `vite build`, `vitest` (246/246) all clean. Browser-verified on
+port 5199 in dark and light, at 1180px and 375px: a 24-card mixed session, a 16-card clean sweep (emerald
+dial, "Nothing to redo", mastered chips), a first session with no prior schedule, and the browse-mode
+"End of the deck" with a single graded card. Zero console errors beyond the headless AudioContext warning.
+
 ## N3 extension — batch 1: schema, 22-week path, first N3 content (2026-07-26)
 
 Began extending the app from N5–N4 toward N3. Started with an inspection pass and an honest

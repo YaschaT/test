@@ -1,17 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { PrimaryButton } from '../../PrimaryButton';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ReviewHeader } from '../../vocabulary/review/ReviewHeader';
 import { ReviewCarousel } from '../../review/ReviewCarousel';
 import { DeckPager } from '../../review/DeckPager';
 import { ReviewAnswerControls } from '../../vocabulary/review/ReviewAnswerControls';
 import { ReviewSessionRail, type ReviewSessionCounts } from '../../vocabulary/review/ReviewSessionRail';
-import { GRADE_META, GRADE_ORDER } from '../../vocabulary/review/gradeTheme';
+import { GRADE_ORDER } from '../../vocabulary/review/gradeTheme';
+import { ReviewComplete, type ReviewCompleteItem } from '../../review/ReviewComplete';
 import { Kbd } from '../../vocabulary/review/Kbd';
 import { KanjiReviewCard } from './KanjiReviewCard';
 import { KanjiStudyPanel } from './KanjiStudyPanel';
 import type { DisplayPrefs } from '../../DisplayToggles';
-import { getSrsCard, markKanjiLearned, reviewItem, useProgress } from '../../../lib/progressStore';
+import {
+  getProgressSnapshot,
+  getSrsCard,
+  markKanjiLearned,
+  reviewItem,
+  useProgress,
+} from '../../../lib/progressStore';
+import { buildReviewSummary, captureReviewBaseline, type GradedCard } from '../../../lib/reviewSummary';
 import { readStorage, writeStorage } from '../../../lib/storage';
 import { playCorrect, playSoftClick, playWrong } from '../../../lib/sound';
 import type { KanjiEntry, SrsRating } from '../../../types';
@@ -31,6 +38,11 @@ interface KanjiSessionProps {
   mode: 'review' | 'browse';
   title: string;
   exitTo: string;
+  /**
+   * Offered on the completion screen when another queue can genuinely be built right now — the page
+   * owns this because only it holds the full deck. Absent means there is nothing left to start.
+   */
+  nextRound?: { count: number; onStart: () => void };
 }
 
 /**
@@ -38,13 +50,27 @@ interface KanjiSessionProps {
  * both the SRS review queue and the "open a kanji from the grid" flow so studying kanji never means
  * bouncing back to the list between characters.
  */
-export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: KanjiSessionProps) {
+export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo, nextRound }: KanjiSessionProps) {
   const progress = useProgress();
-  const navigate = useNavigate();
   const [position, setPosition] = useState(initialIndex);
   const [revealed, setRevealed] = useState(mode === 'browse');
   const [counts, setCounts] = useState<ReviewSessionCounts>({ again: 0, hard: 0, good: 0, easy: 0 });
   const [correctStreak, setCorrectStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  // Every grade press in order — the completion screen replays the session from this.
+  const [graded, setGraded] = useState<GradedCard[]>([]);
+  // Time spent on cards, stamped at each grade — so it stops at the last one rather than counting
+  // however long the completion screen stays open.
+  const [sessionSeconds, setSessionSeconds] = useState(0);
+  // What the deck looked like before the first card, so the debrief can report what *this* session
+  // changed (XP, first sightings, cards that crossed into mastery) rather than restating totals.
+  const [baseline] = useState(() =>
+    captureReviewBaseline(
+      'kanji',
+      queue.map((k) => k.id),
+      getProgressSnapshot(),
+    ),
+  );
   const [pressedRating, setPressedRating] = useState<SrsRating | null>(null);
   const [railOpen, setRailOpen] = useState(false);
   const [prefs, setPrefs] = useState<DisplayPrefs>(() =>
@@ -56,6 +82,22 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
   const touchStartXRef = useRef<number | null>(null);
 
   const kanji = queue[position];
+  const items = useMemo(
+    () =>
+      new Map<string, ReviewCompleteItem>(
+        queue.map((k) => [
+          k.id,
+          {
+            id: k.id,
+            japanese: k.character,
+            reading: k.onyomi[0] ?? k.kunyomi[0],
+            meaning: k.meaning.en,
+            href: `/kanji/${k.id}`,
+          },
+        ]),
+      ),
+    [queue],
+  );
   const reviewedCount = counts.again + counts.hard + counts.good + counts.easy;
   const transitioning = pressedRating !== null;
   const browsing = mode === 'browse';
@@ -108,11 +150,17 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
     if (!kanji || !revealed || transitioning) return;
     reviewItem('kanji', kanji.id, rating);
     markKanjiLearned(kanji.id);
-    const graded = reviewedCount + 1;
+    const gradedCount = reviewedCount + 1;
     const elapsed = (Date.now() - sessionStartRef.current) / 1000;
-    setSecondsPerCard(Math.min(60, Math.max(8, elapsed / graded)));
+    setSecondsPerCard(Math.min(60, Math.max(8, elapsed / gradedCount)));
+    setSessionSeconds(Math.round(elapsed));
     setCounts((c) => ({ ...c, [rating]: c[rating] + 1 }));
-    setCorrectStreak((s) => (rating === 'again' ? 0 : rating === 'hard' ? s : s + 1));
+    setGraded((g) => [...g, { id: kanji.id, rating }]);
+    setCorrectStreak((s) => {
+      const next = rating === 'again' ? 0 : rating === 'hard' ? s : s + 1;
+      setBestStreak((best) => Math.max(best, next));
+      return next;
+    });
     if (rating === 'good' || rating === 'easy') playCorrect();
     else if (rating === 'again') playWrong();
     else playSoftClick();
@@ -129,7 +177,8 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || !kanji) return;
-      const onControl = e.target instanceof HTMLElement && e.target.closest('button, a, input, [role="button"]');
+      const onControl =
+        e.target instanceof HTMLElement && e.target.closest('button, a, input, [role="button"]');
       if (e.code === 'Space') {
         if (onControl) return;
         e.preventDefault();
@@ -155,7 +204,9 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
   if (queue.length === 0) {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Nothing to review right now</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+          Nothing to review right now
+        </h1>
         <p className="text-slate-500 dark:text-slate-400 mb-4">Come back later, or browse the full deck.</p>
         <Link to="/kanji" className="text-brand-600 dark:text-brand-300 font-semibold hover:underline">
           Back to kanji
@@ -166,26 +217,19 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
 
   if (position >= queue.length) {
     return (
-      <div className="max-w-lg mx-auto text-center py-16">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
-          {browsing ? 'End of the deck' : 'Review complete'}
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mb-6">
-          You studied {reviewedCount} kanji this session.
-        </p>
-        {reviewedCount > 0 && (
-          <ul className="flex justify-center gap-5 mb-8">
-            {GRADE_ORDER.map((rating) => (
-              <li key={rating} className="flex items-center gap-1.5 text-sm">
-                <span aria-hidden="true" className={`w-2 h-2 rounded-full ${GRADE_META[rating].dotClass}`} />
-                <span className="text-slate-500 dark:text-slate-400">{GRADE_META[rating].label}</span>
-                <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{counts[rating]}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <PrimaryButton onClick={() => navigate('/kanji')}>Back to kanji</PrimaryButton>
-      </div>
+      <ReviewComplete
+        summary={buildReviewSummary('kanji', graded, baseline, progress)}
+        trace={graded.map((g) => g.rating)}
+        items={items}
+        mascot="kanji"
+        noun={{ en: 'kanji', nl: 'kanji' }}
+        seconds={sessionSeconds}
+        bestStreak={bestStreak}
+        browsing={browsing}
+        exitTo={exitTo}
+        exitLabel={{ en: 'Back to kanji', nl: 'Terug naar kanji' }}
+        nextRound={browsing ? undefined : nextRound}
+      />
     );
   }
 
@@ -256,7 +300,9 @@ export function KanjiSession({ queue, initialIndex = 0, mode, title, exitTo }: K
               />
             )}
             renderGhost={(k) => (
-              <p className="jp-text text-6xl font-semibold text-slate-500/80 dark:text-slate-400/60">{k.character}</p>
+              <p className="jp-text text-6xl font-semibold text-slate-500/80 dark:text-slate-400/60">
+                {k.character}
+              </p>
             )}
           />
 
