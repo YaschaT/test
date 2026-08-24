@@ -1,5 +1,66 @@
 # Project Status — Kotobox (JLPT N5→N4 app)
 
+## Grammar lesson & practice — the taught layer (2026-08-24)
+
+Implemented the `Grammar Lesson & Practice.dc.html` design import. Grammar used to be a reference card
+plus a two-question multiple-choice quiz; it is now a lesson that takes the pattern apart and a practice
+run that climbs a ladder from recognising it to producing it under exam pressure.
+
+**Lesson** (`GrammarLessonIntro.tsx`, `components/grammar/lesson/`)
+- Chrome bar with the learner's real position in the level, and a **Mastery** readout that is the point's
+  own SRS interval (`getLearningProgress`) with the date the scheduler actually set beside it — "New /
+  First time through" until the point has been practised once.
+- **Step 1 — Read the sentence:** `SentenceAnatomy` breaks the headline sentence into tappable chunks,
+  each explaining the job it does (EN + NL), with TTS on the whole line.
+- **Step 2 — four angles**, as a tab strip that only shows tabs with real content: Examples (furigana +
+  audio), **Try the pattern** (`ConjugationPlayground` — swap topic and predicate, toggle past/negative/
+  casual, and watch the form change), Politeness (`RegisterLadder`, casual/polite/formal), and Don't
+  confuse (`ContrastTable`, the lookalikes + the stacking mistake).
+- Watch-out card, then one sticky primary action.
+
+**Practice** (`GrammarPractice.tsx`, `components/grammar/practice/`)
+- Four tiers — **Recognise → Produce → Real life → Exam sprint** — with a segmented progress bar grouped
+  by tier, a live XP counter, a combo counter, and an unlock banner the first time each tier opens.
+- Eight drill kinds: multiple choice, listening (TTS + 0.6× replay), typing, spot-the-mistake, build-the-
+  sentence tiles, match pairs, roleplay (a two-turn conversation where a wrong reply is logged, explained,
+  and rolled back on retry), and JLPT-format items on a 25-second clock that grades a timeout as a miss.
+- A footer that always says what happened: correct/not-quite, the answer it wanted, and **why**, bilingual.
+  Producing kinds (typing, build, roleplay) offer "Try again" with the hint revealed.
+
+**Everything reported is measured, not estimated** (`GrammarSessionSummary.tsx`). A baseline snapshot is
+taken before the run; XP earned is the difference between two real `calculateXp` reads, mastery is shown
+before → after, and the schedule line is read off the SRS card. The session now also **records a real quiz
+result** (it never did before, so grammar answers earned no XP) and grades the SRS card from **first-try
+accuracy** via `ratingForAccuracy` instead of the fixed `'good'` it always sent.
+
+**Every point gets a real ladder** (`lib/grammarDrills.ts`). 〜です has the full hand-authored 18-drill
+ladder from the design (`data/grammarLessons.ts`), including both roleplays and four JLPT items. Every
+other point's ladder is **derived from its own authored content** — its quiz questions become the recognise
+tier, its example sentences become typing and tile-ordering drills, and three or more examples also yield
+a matching drill and two listening drills. Nothing is invented to fill a tier: the exam tier is only ever
+hand-authored, and a tier that can't be built simply isn't shown. Current spread across the 42 points:
+1 point at 18 drills, 12 at 10, 23 at 6, 4 at 5, 1 at 4. The 28 two-tier points are two-tier because they
+carry only two example sentences — that is a content gap, not a code one.
+
+`tilesFromSegments` chunks an example into orderable tiles from its furigana segments (kanji keeps its
+okurigana, particles stand alone, loanwords stand alone, a one-character kana prefix keeps its kanji,
+punctuation is a boundary), and returns null rather than forcing a bad split — so a sentence that doesn't
+chunk into 3–7 tiles just doesn't get that drill. Also fixed the furigana grouping of 子供 in the 〜とき
+example, which was segmented 子[こ]+供[ども].
+
+**Notes.** Both cards dropped `overflow-hidden` — it was silently making each card its own scroll container
+and stopping the sticky footers pinning; the image and header bar round their own corners instead. The
+sticky bars sit at `bottom-20 md:bottom-4` so they clear the mobile tab bar (verified: bar bottom 732px,
+nav top 746px at 375×812). All motion reuses the existing `prefers-reduced-motion`-gated utilities; no new
+keyframes. `.jp-text` is applied only to strings that actually contain Japanese.
+
+Validation: `tsc -b`, `eslint .`, `vite build`, `vitest` (270/270, 24 new in `grammarDrills.test.ts`) all
+clean. Browser-verified on port 5199 at 1280×900 and 375×812, light and dark: the full 18-drill 〜です run
+including a deliberate wrong answer, a mispaired match, a failed build with retry, a failed roleplay reply
+with rollback, and a real 25-second exam timeout — plus a complete derived run on 〜ます/〜ません and the
+derived build drill on 〜ましょう. The summary's +46 XP checks out exactly (13 first-try × 2 + 20 for the
+point). Zero console errors beyond the headless AudioContext warning.
+
 ## Review session debrief — the end-of-session screen (2026-08-20)
 
 Replaced the sober end of both SRS review sessions. It used to be a centred text block that restated the

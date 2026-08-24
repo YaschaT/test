@@ -55,6 +55,241 @@ export interface GrammarPoint {
   quiz: QuizQuestion[];
 }
 
+/* ------------------------------------------------------------------------------------------------
+ * Grammar lesson extras
+ *
+ * A GrammarPoint carries the reference material every point has (structure, explanation, examples,
+ * common mistake, quiz). The types below are the *taught* layer on top of it — the sentence taken
+ * apart piece by piece, the same idea at three politeness levels, the lookalikes it gets confused
+ * with, and a slot machine for the pattern's own conjugation. All of it is hand-authored per point
+ * and every field is optional, because a section with nothing real to say simply does not render.
+ * ---------------------------------------------------------------------------------------------- */
+
+/** One tappable chunk of the lesson's headline sentence. */
+export interface GrammarAnatomyToken {
+  /** The chunk itself, e.g. 「は」. */
+  text: string;
+  /** Two or three words naming the job it does, e.g. "particle". */
+  role: Translatable;
+  /** Panel heading — the chunk plus what it is. */
+  title: string;
+  /** What the chunk does, in the learner's own language. */
+  body: Translatable;
+}
+
+/** Politeness ladder: the same sentence at three social distances. */
+export type GrammarRegister = 'casual' | 'polite' | 'formal';
+
+export interface GrammarRegisterLine {
+  register: GrammarRegister;
+  japanese: string;
+  /** Who you would actually say it to. */
+  note: Translatable;
+}
+
+/** One row of the "don't confuse this with" table. */
+export interface GrammarContrastRow {
+  form: string;
+  usedFor: Translatable;
+  example: string;
+}
+
+export interface GrammarContrast {
+  rows: GrammarContrastRow[];
+  /** The mistake the table exists to prevent, e.g. stacking two of the forms. */
+  warning: Translatable;
+  /** The broken Japanese the warning is about, shown struck through in red. */
+  warningJapanese?: string;
+}
+
+/**
+ * Which of the eight polite/casual × present/past × affirmative/negative forms is showing.
+ * Every form is authored as a finished string — no morphology is computed in code, because a
+ * conjugation engine that is subtly wrong teaches the learner something subtly wrong.
+ */
+export type GrammarFormKey =
+  | 'polite-present-affirmative'
+  | 'polite-present-negative'
+  | 'polite-past-affirmative'
+  | 'polite-past-negative'
+  | 'casual-present-affirmative'
+  | 'casual-present-negative'
+  | 'casual-past-affirmative'
+  | 'casual-past-negative';
+
+export const GRAMMAR_FORM_KEYS: GrammarFormKey[] = [
+  'polite-present-affirmative',
+  'polite-present-negative',
+  'polite-past-affirmative',
+  'polite-past-negative',
+  'casual-present-affirmative',
+  'casual-present-negative',
+  'casual-past-affirmative',
+  'casual-past-negative',
+];
+
+export interface GrammarPlaygroundPredicate {
+  /** Dictionary form, shown on the chip. */
+  japanese: string;
+  /** The finished predicate + tail for each form, e.g. 学生でした. */
+  forms: Record<GrammarFormKey, string>;
+  /** The same eight forms in kana — what gets spoken, so no reading is ever guessed by the voice. */
+  formsKana: Record<GrammarFormKey, string>;
+  /** The whole sentence in English and Dutch, per form — authored, not assembled from fragments. */
+  meaning: Record<GrammarFormKey, Translatable>;
+}
+
+/**
+ * Predicates hang off their topic rather than off the playground, so the two slots can only ever
+ * produce sentences that mean something: 今日は暑いです is offered, 今日は学生です is not.
+ */
+export interface GrammarPlaygroundTopic {
+  japanese: string;
+  kana: string;
+  label: Translatable;
+  predicates: GrammarPlaygroundPredicate[];
+}
+
+export interface GrammarPlayground {
+  topicLabel: Translatable;
+  predicateLabel: Translatable;
+  topics: GrammarPlaygroundTopic[];
+  /** The rule the learner just watched fire, one line per form. */
+  notes: Record<GrammarFormKey, Translatable>;
+}
+
+/**
+ * Practice ladder tiers, in order. A drill's tier is what decides where it sits in the session and
+ * which unlock message announces it.
+ */
+export type GrammarDrillTier = 'recognise' | 'produce' | 'reallife' | 'exam';
+
+export const GRAMMAR_DRILL_TIERS: GrammarDrillTier[] = ['recognise', 'produce', 'reallife', 'exam'];
+
+interface GrammarDrillCommon {
+  id: string;
+  tier: GrammarDrillTier;
+  /** The task, as an instruction. */
+  instruction: Translatable;
+  /** Optional second line under the instruction. */
+  subhead?: Translatable;
+  /** Where this is happening, e.g. "Museum ticket desk". */
+  scenario?: Translatable;
+  /** Why the right answer is right — shown after grading, always. */
+  why: Translatable;
+  /** The pattern in one line, e.g. "Topic は + noun + です". */
+  rule?: Translatable;
+  /** JLPT-format item: kana only, no hints, and the clock runs. */
+  exam?: boolean;
+}
+
+export interface GrammarChoiceOption {
+  japanese: string;
+  /** Reading or gloss shown beside the option — omitted entirely in exam format. */
+  hint?: string;
+}
+
+/** Pick one of N written options. */
+export interface GrammarChoiceDrill extends GrammarDrillCommon {
+  kind: 'choice';
+  promptJapanese?: string;
+  promptEn?: Translatable;
+  options: GrammarChoiceOption[];
+  answerIndex: number;
+  /** Why *that* wrong option is wrong, keyed by option index. */
+  wrongWhy?: Record<number, Translatable>;
+}
+
+/** Hear a sentence, pick which one it was. */
+export interface GrammarListenDrill extends GrammarDrillCommon {
+  kind: 'listen';
+  /** Kana fed to TTS — the app speaks kana, never kanji, so readings are never guessed. */
+  audioKana: string;
+  options: GrammarChoiceOption[];
+  answerIndex: number;
+}
+
+/** Type the missing word, or the whole sentence. */
+export interface GrammarTypeDrill extends GrammarDrillCommon {
+  kind: 'type';
+  promptJapanese?: string;
+  promptEn?: Translatable;
+  /** Every spelling that counts — kanji and kana forms both. Compared with punctuation stripped. */
+  accepts: string[];
+  hint: Translatable;
+  placeholder: string;
+}
+
+/** One token in the sentence is wrong — tap it. */
+export interface GrammarMistakeDrill extends GrammarDrillCommon {
+  kind: 'mistake';
+  tokens: string[];
+  answerIndex: number;
+  /** The repaired sentence. */
+  fixed: string;
+}
+
+/** Tap tiles in order to build the sentence. */
+export interface GrammarBuildDrill extends GrammarDrillCommon {
+  kind: 'build';
+  promptEn: Translatable;
+  /** Shuffled at run time from this authored order. */
+  tiles: string[];
+  target: string[];
+}
+
+/** Pair each sentence with its meaning. */
+export interface GrammarMatchDrill extends GrammarDrillCommon {
+  kind: 'match';
+  pairs: { japanese: string; meaning: Translatable }[];
+}
+
+export interface GrammarRoleplayChoice {
+  japanese: string;
+  hint: Translatable;
+  ok: boolean;
+  /** Required on the wrong replies: what that reply actually lands as. */
+  why?: Translatable;
+}
+
+export interface GrammarRoleplayTurn {
+  npc: { japanese: string; kana: string; meaning: Translatable };
+  choices: GrammarRoleplayChoice[];
+  /** What the learner got right by picking well — shown once the turn is passed. */
+  why: Translatable;
+}
+
+/** Hold your side of a short conversation. */
+export interface GrammarRoleplayDrill extends GrammarDrillCommon {
+  kind: 'roleplay';
+  partner: { avatar: string; name: string; role: Translatable };
+  turns: GrammarRoleplayTurn[];
+}
+
+export type GrammarDrill =
+  | GrammarChoiceDrill
+  | GrammarListenDrill
+  | GrammarTypeDrill
+  | GrammarMistakeDrill
+  | GrammarBuildDrill
+  | GrammarMatchDrill
+  | GrammarRoleplayDrill;
+
+/**
+ * Everything a point can teach beyond its reference card. Points without an entry still get a real
+ * lesson and a real practice run — the sections below just don't appear, and the drills are built
+ * from the point's own examples and quiz instead (see lib/grammarDrills.ts).
+ */
+export interface GrammarLessonExtras {
+  /** The one sentence the lesson takes apart, and its pieces. */
+  anatomy?: { sentence: string; kana: string; tokens: GrammarAnatomyToken[] };
+  registers?: GrammarRegisterLine[];
+  contrast?: GrammarContrast;
+  playground?: GrammarPlayground;
+  /** The authored practice ladder. Replaces the derived one entirely when present. */
+  drills?: GrammarDrill[];
+}
+
 export interface VocabWord {
   id: string;
   level: JlptLevel;

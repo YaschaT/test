@@ -483,7 +483,7 @@ const GRAMMAR_CORE: GrammarPoint[] = [
         'Wanneer ik naar school ga, neem ik de bus.',
       ),
       sentence(
-        [s('子', 'こ'), s('供', 'ども'), s('のとき'), s('、'), s('よく'), s('公園', 'こうえん'), s('で'), s('遊', 'あそ'), s('びました'), s('。')],
+        [s('子供', 'こども'), s('のとき'), s('、'), s('よく'), s('公園', 'こうえん'), s('で'), s('遊', 'あそ'), s('びました'), s('。')],
         'こどものとき、よくこうえんであそびました。',
         'Kodomo no toki, yoku kouen de asobimashita.',
         'When I was a child, I often played at the park.',
