@@ -8,7 +8,10 @@ import { releaseDateLabel, type Release } from '../../data/releases';
 
 interface WhatsNewDialogProps {
   release: Release;
-  onDismiss: () => void;
+  /** Escape, the backdrop, the close button — the announcement is over, but nothing is acknowledged. */
+  onClose: () => void;
+  /** They followed the release somewhere. That counts as read. */
+  onEngage: () => void;
   onOpenAll: () => void;
 }
 
@@ -18,12 +21,16 @@ interface WhatsNewDialogProps {
  * This is the only release surface that interrupts, and it earns that by doing something the corner card
  * cannot: taking the learner straight to the thing that changed. Reserved for `tier: 'major'` — a dialog
  * on every patch would train people to close it unread, which costs you the one time it mattered.
+ *
+ * Closing it is not the same as reading it: Escape and the backdrop only end the announcement, and the
+ * sidebar's dot stays until the learner opens the full panel or follows the release somewhere. Modals
+ * get dismissed reflexively, and losing the release to a reflex is the failure worth designing out.
  */
-export function WhatsNewDialog({ release, onDismiss, onOpenAll }: WhatsNewDialogProps) {
+export function WhatsNewDialog({ release, onClose, onEngage, onOpenAll }: WhatsNewDialogProps) {
   const navigate = useNavigate();
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onDismiss()}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogPortal>
         <DialogOverlay className="!bg-slate-950/70 backdrop-blur-sm" />
         <DialogPrimitive.Content
@@ -56,7 +63,7 @@ export function WhatsNewDialog({ release, onDismiss, onOpenAll }: WhatsNewDialog
               <button
                 type="button"
                 onClick={() => {
-                  onDismiss();
+                  onEngage();
                   navigate(release.cta!.to);
                 }}
                 className={`${PRIMARY_BUTTON_CLASSES} w-full justify-center py-3.5 text-[15px]`}

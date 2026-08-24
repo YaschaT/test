@@ -7,6 +7,7 @@ import { SECTION_THEME } from './examTheme';
 import { MASCOTS } from '../../lib/mascots';
 import { XP_RULES } from '../../lib/xp';
 import { playComplete, playMilestone } from '../../lib/sound';
+import { markStudyMoment } from '../../lib/releaseNotes';
 import { useCountUp } from '../../lib/useCountUp';
 
 interface ExamResultsProps {
@@ -46,6 +47,10 @@ export function ExamResults({
   onRetake,
   onExit,
 }: ExamResultsProps) {
+  // Finishing a session is the one moment a release note is welcome: the intention the learner arrived
+  // with is spent, and they are already looking at a "what now" screen. See lib/releaseNotes.ts.
+  useEffect(markStudyMoment, []);
+
   const result = scoreExamOfficial(level, questions, answers);
   const content = scoreByContent(questions, answers);
   const { scaled, total, overallPass, passed, failedOnSection, correct } = result;

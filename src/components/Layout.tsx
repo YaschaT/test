@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Flame, Moon, Sun, Volume2, VolumeX, Music2, LogIn, LogOut, Sparkles } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/nav';
 import { useAwayTitle } from '../lib/awayTitle';
@@ -23,7 +23,7 @@ import { WhatsNewNavItem } from './releases/WhatsNewNavItem';
 import { WhatsNewPanel } from './releases/WhatsNewPanel';
 import { WhatsNewCard } from './releases/WhatsNewCard';
 import { WhatsNewDialog } from './releases/WhatsNewDialog';
-import { hasPriorActivity, useReleaseNotes } from '../lib/releaseNotes';
+import { hasPriorActivity, recordSectionVisit, useReleaseNotes } from '../lib/releaseNotes';
 import { IconButton } from './ui/IconButton';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
@@ -50,9 +50,11 @@ export function Layout() {
   const levelPercent = levelProgressPercent(progress);
   const auth = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   // Release notes: the dot is always there to be ignored, and only a feature or major release says
-  // anything louder than that. See lib/releaseNotes.ts for who gets told what.
-  const releases = useReleaseNotes(hasPriorActivity(progress));
+  // anything louder than that — and only once the learner has finished something. See
+  // lib/releaseNotes.ts for who gets told what, and when.
+  const releases = useReleaseNotes(hasPriorActivity(progress), location.pathname);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   useStudyTimer();
   // Scoped to the app shell rather than the whole site: a first-time visitor still reading the
@@ -63,9 +65,18 @@ export function Layout() {
     if (streakPulsing) playMilestone();
   }, [streakPulsing]);
 
+  // Opening a section is what clears its "New" badge — discovery happens at the door, not in a changelog.
+  // A deep link into /grammar/desu counts as visiting /grammar.
+  useEffect(() => {
+    const section = NAV_ITEMS.find(
+      (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`),
+    );
+    if (section) recordSectionVisit(section.path);
+  }, [location.pathname]);
+
   function openWhatsNew() {
     setWhatsNewOpen(true);
-    releases.markAllSeen();
+    releases.markAcknowledged();
   }
 
   function toggleSound() {
@@ -100,6 +111,12 @@ export function Layout() {
                 <NavLink to={item.path} end={item.path === '/'} className={({ isActive }) => NAV_ITEM_CLASSES(isActive)}>
                   <item.icon size={24} aria-hidden="true" />
                   {item.label.en}
+                  {releases.sectionBadges.has(item.path) && (
+                    <>
+                      <span aria-hidden="true" className="ml-auto h-2 w-2 shrink-0 rounded-full bg-brand-500" />
+                      <span className="sr-only">has something new</span>
+                    </>
+                  )}
                 </NavLink>
               </div>
             ))}
@@ -228,13 +245,22 @@ export function Layout() {
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) =>
-                `flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1 px-1 py-2 text-center text-[11px] font-medium leading-tight ${
+                `relative flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1 px-1 py-2 text-center text-[11px] font-medium leading-tight ${
                   isActive ? 'text-brand-600 dark:text-brand-300' : 'text-slate-500 dark:text-slate-400'
                 }`
               }
             >
               <item.icon size={18} aria-hidden="true" />
               <span className="w-full">{item.label.en}</span>
+              {releases.sectionBadges.has(item.path) && (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-1.5 right-4 h-1.5 w-1.5 rounded-full bg-brand-500"
+                  />
+                  <span className="sr-only">has something new</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -249,13 +275,14 @@ export function Layout() {
         releases.announce.tier === 'major' ? (
           <WhatsNewDialog
             release={releases.announce}
-            onDismiss={releases.markAllSeen}
+            onClose={releases.markAnnounced}
+            onEngage={releases.markAcknowledged}
             onOpenAll={openWhatsNew}
           />
         ) : releases.announce.tier === 'feature' ? (
           <WhatsNewCard
             release={releases.announce}
-            onDismiss={releases.markAllSeen}
+            onClose={releases.markAnnounced}
             onOpenAll={openWhatsNew}
           />
         ) : null

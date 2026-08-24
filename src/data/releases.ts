@@ -26,6 +26,13 @@ export interface ReleaseChange {
 export interface Release {
   /** Stable id, also the release date. Used to remember what a learner has already seen. */
   id: string;
+  /**
+   * Nav paths this release actually changed. Each one wears a "New" badge until the learner visits it,
+   * which is where discovery really happens — a badge on the door they were already walking towards
+   * beats a dialog asking them to context-switch. Keep it to the one or two sections that genuinely
+   * changed; badging five at once is noise.
+   */
+  sections?: string[];
   title: Translatable;
   tier: ReleaseTier;
   changes: ReleaseChange[];
@@ -36,6 +43,7 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     id: '2026-08-24',
+    sections: ['/grammar'],
     tier: 'major',
     title: { en: 'Grammar, taught properly', nl: 'Grammatica, echt uitgelegd' },
     changes: [
@@ -65,6 +73,7 @@ export const RELEASES: Release[] = [
   },
   {
     id: '2026-08-20',
+    sections: ['/vocabulary', '/kanji'],
     tier: 'feature',
     title: { en: 'What your review session bought', nl: 'Wat je herhaalsessie opleverde' },
     changes: [
@@ -87,6 +96,7 @@ export const RELEASES: Release[] = [
   },
   {
     id: '2026-08-05',
+    sections: ['/kanji'],
     tier: 'feature',
     title: { en: 'Kanji you can actually flip through', nl: 'Kanji waar je echt doorheen bladert' },
     changes: [
@@ -108,6 +118,7 @@ export const RELEASES: Release[] = [
   },
   {
     id: '2026-08-02',
+    sections: ['/kanji'],
     tier: 'feature',
     title: { en: 'Real stroke order', nl: 'Echte streekvolgorde' },
     changes: [
@@ -122,6 +133,7 @@ export const RELEASES: Release[] = [
   },
   {
     id: '2026-07-26',
+    sections: ['/path'],
     tier: 'feature',
     title: { en: 'A 22-week path towards N3', nl: 'Een pad van 22 weken richting N3' },
     changes: [

@@ -8,6 +8,7 @@ import { PRIMARY_BUTTON_CLASSES, SECONDARY_BUTTON_CLASSES } from '../../lib/butt
 import { MASCOTS, type MascotName } from '../../lib/mascots';
 import { MASTERED_INTERVAL_DAYS } from '../../lib/learningState';
 import { playComplete, playMilestone } from '../../lib/sound';
+import { markStudyMoment } from '../../lib/releaseNotes';
 import { useCountUp } from '../../lib/useCountUp';
 import type { ReviewSummary } from '../../lib/reviewSummary';
 import type { SrsRating } from '../../types';
@@ -103,6 +104,10 @@ export function ReviewComplete({
   exitLabel,
   nextRound,
 }: ReviewCompleteProps) {
+  // Finishing a session is the one moment a release note is welcome: the intention the learner arrived
+  // with is spent, and they are already looking at a "what now" screen. See lib/releaseNotes.ts.
+  useEffect(markStudyMoment, []);
+
   const { graded, correct, accuracy, counts, buckets, weakIds, masteredIds, xpEarned, firstLearned } =
     summary;
   const perfect = graded >= SWEEP_MIN_CARDS && accuracy === 1;

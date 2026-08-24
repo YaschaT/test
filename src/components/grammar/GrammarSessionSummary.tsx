@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { GrammarBilingual, Eyebrow } from './GrammarBilingual';
 import { TIER_NAME } from '../../lib/grammarDrills';
 import { MASCOTS } from '../../lib/mascots';
+import { markStudyMoment } from '../../lib/releaseNotes';
 import type { GrammarDrillTier, GrammarPoint, Translatable } from '../../types';
 
 /** One drill that needed a second look, with the answer it wanted and why. */
@@ -57,6 +59,10 @@ export function GrammarSessionSummary({
   onNext,
   onBackToList,
 }: GrammarSessionSummaryProps) {
+  // Finishing a session is the one moment a release note is welcome: the intention the learner arrived
+  // with is spent, and they are already looking at a "what now" screen. See lib/releaseNotes.ts.
+  useEffect(markStudyMoment, []);
+
   const accuracy = total > 0 ? Math.round((firstTryCorrect / total) * 100) : 0;
   const clean = weak.length === 0;
 

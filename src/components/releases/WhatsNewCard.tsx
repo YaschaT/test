@@ -4,7 +4,8 @@ import { releaseDateLabel, type Release } from '../../data/releases';
 
 interface WhatsNewCardProps {
   release: Release;
-  onDismiss: () => void;
+  /** Ends the announcement without marking it read — the sidebar dot stays. */
+  onClose: () => void;
   onOpenAll: () => void;
 }
 
@@ -17,7 +18,7 @@ interface WhatsNewCardProps {
  *
  * Lifted clear of the mobile tab bar (bottom-20) the same way the practice footers are.
  */
-export function WhatsNewCard({ release, onDismiss, onOpenAll }: WhatsNewCardProps) {
+export function WhatsNewCard({ release, onClose, onOpenAll }: WhatsNewCardProps) {
   return (
     <section
       aria-labelledby="whats-new-card-title"
@@ -29,7 +30,7 @@ export function WhatsNewCard({ release, onDismiss, onOpenAll }: WhatsNewCardProp
         </p>
         <button
           type="button"
-          onClick={onDismiss}
+          onClick={onClose}
           aria-label="Dismiss what's new"
           className="-mt-1 -mr-1 shrink-0 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
         >

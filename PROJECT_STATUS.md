@@ -1,5 +1,39 @@
 # Project Status — Kotobox (JLPT N5→N4 app)
 
+## What's new — announce once, keep the opportunity alive (2026-08-24, same day)
+
+The first cut announced a release once and then treated it as spent. Three problems with that, all fixed
+here:
+
+**Closing is no longer the same as reading.** There are now two markers, not one. `release-announced`
+records that the release has had its moment on screen, so it is never shown twice. `release-seen` records
+that the learner actually engaged — opened the full panel, or followed the release's own call to action.
+Escape and a backdrop click end the announcement without clearing the dot. People dismiss modals
+reflexively, before reading; the cost of keeping a dot someone has already filed is one small dot, and the
+cost of clearing it wrongly is losing the release for good. The asymmetry is the whole argument.
+
+**Discovery moved to the door.** Each release names the `sections` it changed, and those nav items wear a
+small dot until the learner opens them (`recordSectionVisit`, cleared by a deep link into the section too).
+A badge on a door someone is already walking towards converts; a dialog asking them to context-switch at
+app open does not. Both the sidebar and the mobile tab bar carry it, with `sr-only` text so it is not
+colour alone.
+
+**The announcement waits for a receptive moment.** It no longer fires on cold load, when the learner
+arrived with an intention the announcement can only compete with. `markStudyMoment()` is called by the
+three real end-of-session screens — `ReviewComplete`, `GrammarSessionSummary` and `ExamResults` — and the
+surface then waits until the learner navigates away from the screen that reported it, so it never stacks
+on a session summary that is itself worth reading. Session-scoped module state: "just finished studying"
+is not worth persisting past the tab.
+
+`visited` moved into a module store read through `useSyncExternalStore`, because it is written from a
+route-change effect and that is the shape React actually wants for syncing an external system.
+
+Validation: `tsc -b`, `eslint .`, `vite build`, `vitest` (293/293, 7 more in `releaseNotes.test.ts`) all
+clean. Browser-verified end to end on port 5199: cold load shows no dialog but does show the Grammar badge
+and the sidebar dot; visiting Grammar clears its badge and leaves the dot; finishing a practice run and
+then navigating away raises the dialog; Escape closes it with the dot intact and it does not return on the
+next navigation; opening the panel clears the dot. Zero console errors.
+
 ## What's new — release notes in the app (2026-08-24)
 
 Learners had no way to know anything had changed. There is now a release-notes surface, and how loudly it

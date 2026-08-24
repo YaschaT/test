@@ -1,6 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import { hasPriorActivity, unseenReleases } from './releaseNotes';
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  getStudyMomentPath,
+  hasPriorActivity,
+  markStudyMoment,
+  resetStudyMoment,
+  sectionsWithNews,
+  unseenReleases,
+} from './releaseNotes';
 import { LATEST_RELEASE_ID, RELEASES, releaseDateLabel } from '../data/releases';
+import { NAV_ITEMS } from './nav';
 import { createInitialSrsCard } from './srs';
 import type { ProgressState } from './progressStore';
 
@@ -108,5 +116,55 @@ describe('releaseDateLabel', () => {
   it('reads as a date a person would say', () => {
     expect(releaseDateLabel('2026-08-24')).toBe('24 August 2026');
     expect(releaseDateLabel('2026-07-26')).toBe('26 July 2026');
+  });
+});
+
+describe('sectionsWithNews', () => {
+  const latest = RELEASES[0];
+
+  it('badges the sections the newest release actually touched, and no others', () => {
+    const badges = sectionsWithNews({}, true);
+    expect([...badges].sort()).toEqual([...(latest.sections ?? [])].sort());
+  });
+
+  it('badges nothing for someone who has never used the app', () => {
+    expect(sectionsWithNews({}, false).size).toBe(0);
+  });
+
+  it('clears a badge once that section has been opened, and leaves the others alone', () => {
+    const path = (latest.sections ?? [])[0];
+    const badges = sectionsWithNews({ [path]: LATEST_RELEASE_ID }, true);
+    expect(badges.has(path)).toBe(false);
+    for (const other of (latest.sections ?? []).slice(1)) {
+      expect(badges.has(other), `${other} should still be badged`).toBe(true);
+    }
+  });
+
+  it('only ever names a section the sidebar actually has', () => {
+    const navPaths = NAV_ITEMS.map((item) => item.path);
+    for (const release of RELEASES) {
+      for (const path of release.sections ?? []) {
+        expect(navPaths, `${release.id} points at ${path}`).toContain(path);
+      }
+    }
+  });
+});
+
+describe('the study moment', () => {
+  beforeEach(resetStudyMoment);
+
+  it('starts unset — a fresh session has not finished anything yet', () => {
+    expect(getStudyMomentPath()).toBeNull();
+  });
+
+  it('remembers the screen that reported it', () => {
+    markStudyMoment('/vocabulary/review');
+    expect(getStudyMomentPath()).toBe('/vocabulary/review');
+  });
+
+  it('keeps the first one: finishing a second session does not move the goalposts', () => {
+    markStudyMoment('/vocabulary/review');
+    markStudyMoment('/kanji/review');
+    expect(getStudyMomentPath()).toBe('/vocabulary/review');
   });
 });
