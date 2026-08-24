@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Flame, Moon, Sun, Volume2, VolumeX, Music2, LogIn, LogOut } from 'lucide-react';
+import { Flame, Moon, Sun, Volume2, VolumeX, Music2, LogIn, LogOut, Sparkles } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/nav';
 import { useAwayTitle } from '../lib/awayTitle';
 import { levelProgressPercent } from '../lib/dashboardStats';
@@ -19,6 +19,11 @@ import { signOut } from '../lib/auth';
 import { SidebarLevelCard } from './dashboard/SidebarLevelCard';
 import { LevelUpDialog } from './LevelUpDialog';
 import { AccountNavItem } from './AccountNavItem';
+import { WhatsNewNavItem } from './releases/WhatsNewNavItem';
+import { WhatsNewPanel } from './releases/WhatsNewPanel';
+import { WhatsNewCard } from './releases/WhatsNewCard';
+import { WhatsNewDialog } from './releases/WhatsNewDialog';
+import { hasPriorActivity, useReleaseNotes } from '../lib/releaseNotes';
 import { IconButton } from './ui/IconButton';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
@@ -45,6 +50,10 @@ export function Layout() {
   const levelPercent = levelProgressPercent(progress);
   const auth = useAuth();
   const navigate = useNavigate();
+  // Release notes: the dot is always there to be ignored, and only a feature or major release says
+  // anything louder than that. See lib/releaseNotes.ts for who gets told what.
+  const releases = useReleaseNotes(hasPriorActivity(progress));
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   useStudyTimer();
   // Scoped to the app shell rather than the whole site: a first-time visitor still reading the
   // marketing or login page has nothing to be missed from yet.
@@ -53,6 +62,11 @@ export function Layout() {
   useEffect(() => {
     if (streakPulsing) playMilestone();
   }, [streakPulsing]);
+
+  function openWhatsNew() {
+    setWhatsNewOpen(true);
+    releases.markAllSeen();
+  }
 
   function toggleSound() {
     const next = !soundOn;
@@ -92,7 +106,10 @@ export function Layout() {
           </nav>
         </ScrollArea>
         <Separator className="bg-slate-100 dark:bg-ink-line" />
-        <div className="px-3 pt-2 pb-1">
+        <div className="px-3 pt-2">
+          <WhatsNewNavItem unreadCount={releases.unseen.length} onOpen={openWhatsNew} />
+        </div>
+        <div className="px-3 pb-1">
           <AccountNavItem />
         </div>
         <div className="px-3 pb-3">
@@ -159,6 +176,26 @@ export function Layout() {
               onClick={toggleDark}
               size={16}
             />
+            {/* The sidebar is desktop-only, so the mobile bar carries its own way in. */}
+            <span className="relative flex">
+              <IconButton
+                icon={Sparkles}
+                label={
+                  releases.unseen.length > 0
+                    ? `What's new — ${releases.unseen.length} unread`
+                    : "What's new"
+                }
+                active={releases.unseen.length > 0}
+                onClick={openWhatsNew}
+                size={16}
+              />
+              {releases.unseen.length > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1 right-1 h-2 w-2 rounded-full bg-brand-500 ring-2 ring-white dark:ring-slate-900"
+                />
+              )}
+            </span>
             {auth.status === 'signed-in' ? (
               <IconButton icon={LogOut} label="Sign out" onClick={() => signOut()} size={16} />
             ) : auth.status === 'signed-out' ? (
@@ -204,6 +241,25 @@ export function Layout() {
       </div>
 
       {newLevel !== null && <LevelUpDialog level={newLevel} title={levelInfo.title} onDismiss={dismissLevelUp} />}
+
+      <WhatsNewPanel open={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
+
+      {/* A level-up is a rarer, more earned moment — it gets the screen to itself. */}
+      {releases.announce && !whatsNewOpen && newLevel === null && (
+        releases.announce.tier === 'major' ? (
+          <WhatsNewDialog
+            release={releases.announce}
+            onDismiss={releases.markAllSeen}
+            onOpenAll={openWhatsNew}
+          />
+        ) : releases.announce.tier === 'feature' ? (
+          <WhatsNewCard
+            release={releases.announce}
+            onDismiss={releases.markAllSeen}
+            onOpenAll={openWhatsNew}
+          />
+        ) : null
+      )}
     </div>
   );
 }

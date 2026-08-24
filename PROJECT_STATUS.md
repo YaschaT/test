@@ -1,5 +1,43 @@
 # Project Status — Kotobox (JLPT N5→N4 app)
 
+## What's new — release notes in the app (2026-08-24)
+
+Learners had no way to know anything had changed. There is now a release-notes surface, and how loudly it
+announces itself is tiered by how big the release is — a dialog on every patch trains people to close it
+unread, which costs you the one time it mattered.
+
+- **`patch`** — the sidebar entry's dot, and nothing else. Costs nothing to ignore.
+- **`feature`** — `WhatsNewCard`, a dismissible card in the corner. Doesn't block the study the learner
+  actually opened the app for.
+- **`major`** — `WhatsNewDialog`, the one surface that interrupts, and it earns that by taking the learner
+  straight to the thing that changed (`release.cta`).
+
+**`WhatsNewNavItem`** is the permanent home, pinned above the account row rather than dropped into the
+scrolling nav — with nine destinations above it a tenth falls below the fold on a laptop. The mobile top
+bar carries its own entry, since the sidebar is desktop-only. Both lead to **`WhatsNewPanel`**: the full
+history as a dialog rather than a route, so reading the changelog never costs you your place in a lesson.
+
+**Content is hand-written per release** (`src/data/releases.ts`), not generated from commits — a learner
+should read "practice climbs four tiers", not "Let the horizon have the width it was asking for". Five real
+entries, EN + NL throughout, each change tagged New / Improved / Fixed. Only "New" carries colour, and it
+borrows the identity indigo: the four learning-state colours stay locked to learning states.
+
+**Who gets told what** (`src/lib/releaseNotes.ts`): the last-seen release id lives in the existing
+namespaced storage. A learner with study history and no marker sees the newest release only — not the whole
+back catalogue. A brand-new device is silently marked caught-up, because someone opening the app for the
+first time has nothing to catch up on; `hasPriorActivity` is what separates the two, and it is frozen at
+mount so finishing a first lesson can't pop a release note mid-session.
+
+Designed first on a Claude Design canvas (three directions in situ, the panel, and a states sheet), which
+is where the pinned-sidebar placement came from — the entry didn't survive being the tenth item in the nav.
+
+Validation: `tsc -b`, `eslint .`, `vite build`, `vitest` (286/286, 16 new in `releaseNotes.test.ts`) all
+clean. Browser-verified on port 5199 in dark and light at 1280×800 and 375×812: the major-release dialog on
+load, "See all updates" into the panel with all five entries, dismissal clearing the dot, the sidebar dot
+returning with "2 unread updates" for an older marker, the feature card in the corner (checked by
+temporarily downgrading the tier), and the mobile header entry opening the panel. The splash sits at
+`z-100` above the dialog's `z-50`, so a cold load still opens on the splash and reveals the dialog after.
+
 ## Grammar lesson & practice — the taught layer (2026-08-24)
 
 Implemented the `Grammar Lesson & Practice.dc.html` design import. Grammar used to be a reference card
