@@ -42,9 +42,46 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-08-25',
+    sections: ['/reading'],
+    tier: 'major',
+    title: { en: 'Reading, as reading', nl: 'Lezen als lezen' },
+    changes: [
+      {
+        kind: 'new',
+        text: {
+          en: 'A book is prose now, set in the serif face Japanese books actually use — no numbered rows, and no translation printed under every line.',
+          nl: 'Een boek is nu lopende tekst, gezet in de schreefletter die Japanse boeken echt gebruiken — geen genummerde regels en geen vertaling onder elke zin.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          en: 'Meanings are something you ask for: tap a line to open it, and the reader counts how many you needed. Or keep them dimmed on screen if you would rather.',
+          nl: 'Betekenissen vraag je zelf op: tik op een regel om hem te openen, en de lezer telt hoeveel je er nodig had. Of laat ze gedimd staan als je dat liever hebt.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          en: 'A vertical mode that sets the text top to bottom, right to left — the way the book would really be printed.',
+          nl: 'Een verticale modus die de tekst van boven naar beneden en van rechts naar links zet — zoals het boek echt gedrukt zou zijn.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          en: 'Every book on the shelf has a real cover, and the one you are part-way through is waiting at the top of the library.',
+          nl: 'Elk boek in de kast heeft nu een echte omslag, en het boek waar je middenin zit staat bovenaan de bibliotheek.',
+        },
+      },
+    ],
+    cta: { label: { en: 'Open the library', nl: 'Open de bibliotheek' }, to: '/reading' },
+  },
+  {
     id: '2026-08-24',
     sections: ['/grammar'],
-    tier: 'major',
+    tier: 'feature',
     title: { en: 'Grammar, taught properly', nl: 'Grammatica, echt uitgelegd' },
     changes: [
       {

@@ -1,5 +1,54 @@
 # Project Status — Kotobox (JLPT N5→N4 app)
 
+## Reading — a reader instead of a glossed transcript (2026-08-25)
+
+The library page taught the three rules of extensive reading — no dictionary, guess from context, skip
+what slows you down — and then the reader opened with **English and Dutch both on by default**, printing
+the answer under every sentence, in numbered cards. The interface argued against the method it had just
+taught. That was the design problem; the styling was downstream of it.
+
+**The reader** (`ReadingDetail.tsx`, `components/reading/`) is now the grammar screens' surface — one dark
+card, a chrome bar at the top, a sticky control bar at the bottom — carrying a page of prose:
+
+- **Continuous text, no rows.** No numbers, no cards, no per-sentence borders. Measure capped at 640px,
+  line-height 2.1 so furigana has room.
+- **The book face.** A new `.jp-serif` utility (`--font-jp-serif`) sets passages in mincho, which is what
+  Japanese books actually use — the rest of the UI stays gothic. Deliberately a *system* stack (Hiragino
+  Mincho ProN, Yu Mincho, then generic serif): a webfont CJK serif is several megabytes.
+- **Meaning is a pull, not a push.** Three modes (`lib/readingPrefs.ts`, remembered between books):
+  `hidden` (default — tap a line to open it, and the bar counts how many you needed), `dim` (on screen but
+  quiet, brightening on the line you are on), `shown` (the old behaviour, for people studying rather than
+  reading).
+- **Tategaki.** A vertical toggle sets the passage top-to-bottom, right-to-left. The `<ol>` is deliberately
+  *not* a flex container: in `vertical-rl` a block's children already stack along the block axis, which
+  runs right to left — the column order a real book has. Flex would run the passage downwards instead.
+  Meanings move to one slab under the passage, since tategaki has nowhere to put them inline.
+- **Read aloud** now plays the whole passage straight through, not only one sentence at a time.
+- Reference material (about, vocabulary, grammar, other books at this level) moved out of the sidebar,
+  where it competed with the text, into collapsibles after the book.
+
+Everything the old reader did survives: position tracking with the 1.5s dwell, resume-where-you-stopped,
+save, copy, restart, mark-as-read, the optional comprehension quiz, and the SRS re-entry on finishing.
+
+**The library** keeps its layout and gains a real shelf. `BookCover` is one shared component: painted art
+where a book has it, and where it doesn't, the book's own Japanese title set in the book face on its level
+tint — 4 of 32 books have art, and the emoji-in-a-box fallback was what made the shelf read as half
+finished. Read books get a folded corner, in-progress books a bar across the cover, and the book you are
+part-way through now sits above the shelf as a card with its own cover instead of a button label in the
+banner.
+
+**One bug worth naming**: the first pass used `text-slate-800 dark:text-slate-100` on the passage, which is
+wrong on a card that is dark in *both* themes — in light mode the Japanese rendered dark-on-navy and was
+effectively invisible. Fixed colours now, same as the grammar screens, and `BookCover` takes `onDark` for
+the same reason. The control bar also went icon-only under `sm`, where labels wrapped it onto three rows
+and it ate a quarter of a phone screen.
+
+Validation: `tsc -b`, `eslint .`, `vite build`, `vitest` (293/293) all clean. Browser-verified on port 5199
+in dark and light at 1280px and 375px: hidden/dimmed/shown, the opened-lines counter, tategaki column order
+measured right-to-left (618 → 349px), prefs persisting across books, the shelf's read/reading/unread states
+against real ids, and the control bar clearing the mobile tab bar. Shipped with a release-notes entry, so
+the app tells people about it.
+
 ## What's new — announce once, keep the opportunity alive (2026-08-24, same day)
 
 The first cut announced a release once and then treated it as spent. Three problems with that, all fixed

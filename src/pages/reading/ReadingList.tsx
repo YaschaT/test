@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ban, BookMarked, Bookmark, Check, Wind } from 'lucide-react';
+import { ArrowRight, Ban, BookMarked, Bookmark, Wind } from 'lucide-react';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
+import { BookCover } from '../../components/reading/BookCover';
 import { CategoryBanner } from '../../components/learning/CategoryBanner';
-import { READINGS, readingMinutes, TADOKU_LEVEL_INFO } from '../../data/readings';
+import { READINGS, readingMinutes, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
 import { useProgress } from '../../lib/progressStore';
 import { bookPercent, pickNextRead } from '../../lib/readingProgress';
 import { getSavedReadingIds, toggleReadingSaved } from '../../lib/savedReadings';
@@ -17,29 +18,6 @@ const GOLDEN_RULES = [
   { icon: BookMarked, en: 'Bored? Pick another', ja: 'つまらなければ別の本へ' },
 ];
 
-/** Per-shelf identity: a solid badge accent and the soft tint used behind an emoji-only cover. */
-const LEVEL_ACCENT: Record<number, string> = {
-  0: 'bg-sky-500',
-  1: 'bg-emerald-500',
-  2: 'bg-indigo-500',
-  3: 'bg-amber-500',
-  4: 'bg-rose-500',
-  5: 'bg-violet-500',
-};
-/**
- * The tinted panel behind an emoji-only cover. Sitting next to painted covers these have to hold
- * their own, so the dark values are a ring plus a real tint rather than the 15%-over-slate wash they
- * started as — at that strength every shelf read as the same grey box.
- */
-const LEVEL_COVER: Record<number, string> = {
-  0: 'bg-sky-100 ring-1 ring-inset ring-sky-500/20 dark:bg-sky-500/25 dark:ring-sky-400/25',
-  1: 'bg-emerald-100 ring-1 ring-inset ring-emerald-500/20 dark:bg-emerald-500/25 dark:ring-emerald-400/25',
-  2: 'bg-indigo-100 ring-1 ring-inset ring-indigo-500/20 dark:bg-indigo-500/25 dark:ring-indigo-400/25',
-  3: 'bg-amber-100 ring-1 ring-inset ring-amber-500/20 dark:bg-amber-500/25 dark:ring-amber-400/25',
-  4: 'bg-rose-100 ring-1 ring-inset ring-rose-500/20 dark:bg-rose-500/25 dark:ring-rose-400/25',
-  5: 'bg-violet-100 ring-1 ring-inset ring-violet-500/20 dark:bg-violet-500/25 dark:ring-violet-400/25',
-};
-
 export function ReadingList() {
   const progress = useProgress();
   const completed = progress.completedReadingIds;
@@ -47,7 +25,9 @@ export function ReadingList() {
   const [level, setLevel] = useState<JlptLevel>(progress.level);
   const [shelf, setShelf] = useState<TadokuLevel | 'all'>('all');
 
-  const doneSet = useMemo(() => new Set(completed), [completed]);  const next = useMemo(() => pickNextRead(progress, level), [progress, level]);
+  const doneSet = useMemo(() => new Set(completed), [completed]);
+  const next = useMemo(() => pickNextRead(progress, level), [progress, level]);
+  const stats = readingStats(completed);
 
   const booksAtLevel = useMemo(
     () => READINGS.filter((book) => book.level === level),
@@ -102,6 +82,42 @@ export function ReadingList() {
         }
       />
 
+      {/* The book you are part-way through, with its own cover — it used to be a bare button label in
+          the banner, which is a thin way to represent the one thing you were in the middle of. */}
+      {next && (
+        <Link
+          to={`/reading/${next.passage.id}`}
+          className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-3 transition-colors hover:border-brand-400/60 sm:gap-5 sm:p-4 dark:border-hairline dark:bg-ink-900 dark:hover:border-brand-400/50"
+        >
+          <BookCover
+            book={next.passage}
+            state={next.kind === 'resume' ? 'reading' : 'unread'}
+            percent={next.percent}
+            className="w-28 shrink-0 sm:w-36"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600 dark:text-brand-300">
+              {next.kind === 'resume' ? 'Keep reading' : 'Start here'}
+            </span>
+            <span className="jp-serif mt-1.5 block text-lg font-semibold text-slate-900 sm:text-xl dark:text-white">
+              {next.passage.titleJa}
+            </span>
+            <span className="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">
+              {next.passage.title.en} · L{next.passage.tadokuLevel} · {next.passage.wordCount} words
+            </span>
+            {next.kind === 'resume' && (
+              <span className="mt-2 block text-[13px] text-slate-600 dark:text-slate-300">
+                {Math.round(next.percent * 100)}% through
+              </span>
+            )}
+          </span>
+          <span className="hidden shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition-[filter] group-hover:brightness-110 sm:inline-flex">
+            {next.kind === 'resume' ? 'Continue' : 'Open'}
+            <ArrowRight size={16} aria-hidden="true" />
+          </span>
+        </Link>
+      )}
+
       {/* Shelf filter */}
       <div className="flex flex-wrap gap-2">
         <FilterChip active={activeShelf === 'all'} onClick={() => setShelf('all')}>
@@ -124,6 +140,11 @@ export function ReadingList() {
           {activeShelf === 'all'
             ? `${visible.length} book${visible.length === 1 ? '' : 's'} graded for ${level}, shortest first.`
             : TADOKU_LEVEL_INFO[activeShelf].blurb.en}
+          {' · '}
+          <span className="font-semibold text-slate-700 tabular-nums dark:text-slate-200">
+            {stats.booksRead} of {stats.totalBooks} read
+          </span>
+          {stats.wordsRead > 0 && `, ${stats.wordsRead.toLocaleString()} words`}
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
@@ -154,43 +175,12 @@ function BookCard({ book, done, percent }: { book: ReadingPassage; done: boolean
         to={`/reading/${book.id}`}
         className="flex flex-1 flex-col rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
       >
-        {/* Cover. Books with painted art show it; the rest keep the tinted emoji cover, at the same
-            aspect ratio so a mixed shelf still lines up. */}
-        <div className={`relative overflow-hidden rounded-xl ${book.cover ? 'bg-slate-100 dark:bg-slate-800' : LEVEL_COVER[book.tadokuLevel]}`}>
-          {book.cover ? (
-            <img
-              src={book.cover}
-              alt=""
-              aria-hidden="true"
-              width={640}
-              height={450}
-              loading="lazy"
-              className="aspect-[64/45] w-full object-cover"
-            />
-          ) : (
-            <div className="flex aspect-[64/45] w-full items-center justify-center">
-              <span className="text-5xl transition-transform duration-200 ease-out group-hover:scale-110" aria-hidden="true">
-                {book.coverEmoji}
-              </span>
-            </div>
-          )}
-          <span
-            className={`absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm ${LEVEL_ACCENT[book.tadokuLevel]}`}
-          >
-            L{book.tadokuLevel}
-          </span>
-          {done && (
-            <span
-              className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm ring-2 ring-white dark:ring-slate-900"
-              aria-label="Read"
-            >
-              <Check size={13} strokeWidth={3} aria-hidden="true" />
-            </span>
-          )}
-        </div>
+        {/* One cover treatment for the whole shelf: painted art where a book has it, the book's own
+            title set on its level tint where it doesn't. See BookCover. */}
+        <BookCover book={book} state={done ? 'read' : started ? 'reading' : 'unread'} percent={percent} />
 
         <div className="flex flex-1 flex-col px-1 pt-2.5">
-          <p className="jp-text line-clamp-2 font-bold leading-snug text-slate-900 dark:text-white">
+          <p className="jp-serif line-clamp-2 font-semibold leading-snug text-slate-900 dark:text-white">
             {book.titleJa}
           </p>
           <p className="mt-0.5 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">{book.title.en}</p>
@@ -200,17 +190,9 @@ function BookCard({ book, done, percent }: { book: ReadingPassage; done: boolean
             <span className="tabular-nums">~{readingMinutes(book.wordCount)} min</span>
           </p>
           {started && (
-            <div className="mt-2 flex items-center gap-2">
-              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                <span
-                  className="block h-full rounded-full bg-brand-500"
-                  style={{ width: `${Math.round(percent * 100)}%` }}
-                />
-              </span>
-              <span className="text-[11px] font-semibold text-slate-500 tabular-nums dark:text-slate-400">
-                {Math.round(percent * 100)}%
-              </span>
-            </div>
+            <p className="mt-1.5 text-[11px] font-semibold text-brand-600 tabular-nums dark:text-brand-300">
+              {Math.round(percent * 100)}% read
+            </p>
           )}
         </div>
       </Link>
@@ -225,7 +207,7 @@ function BookCard({ book, done, percent }: { book: ReadingPassage; done: boolean
           saved
             ? 'bg-brand-600 text-white'
             : 'bg-black/35 text-white/80 opacity-0 hover:bg-black/55 hover:text-white focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100'
-        } ${done ? 'right-11' : ''}`}
+        }`}
       >
         <Bookmark size={15} className={saved ? 'fill-current' : ''} aria-hidden="true" />
       </button>

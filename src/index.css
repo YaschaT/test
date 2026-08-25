@@ -6,6 +6,16 @@
   --font-sans: 'Nunito', system-ui, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   --font-display: 'Baloo 2', 'Nunito', system-ui, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   --font-jp: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  /**
+   * The face a *book* is set in. Japanese books are set in mincho (serif), not in the gothic (sans)
+   * face the rest of the UI uses — so the reader switches and nothing else does.
+   *
+   * Deliberately a system stack with no webfont: a full CJK serif is several megabytes, and macOS and
+   * Windows both ship a good mincho already. Where neither exists the generic `serif` resolves to the
+   * platform's own CJK serif (Noto Serif CJK on Android and most Linux), and in the worst case the
+   * reader simply renders in the sans face it uses today.
+   */
+  --font-jp-serif: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Noto Serif JP', 'Songti SC', serif;
 
   --color-brand-50: #f2f6ff;
   --color-brand-100: #e2eaff;
@@ -77,6 +87,11 @@ ruby rt {
 
 .jp-text {
   font-family: var(--font-jp);
+}
+
+/** The book face — see --font-jp-serif. Only the text of a passage uses this, never UI chrome. */
+.jp-serif {
+  font-family: var(--font-jp-serif);
 }
 
 /* Fluid typography for the Dashboard's most prominent text — scales continuously with viewport width

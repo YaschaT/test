@@ -1,25 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Bookmark,
-  BookOpen,
   Check,
   ChevronDown,
   ClipboardList,
   Copy,
-  Info,
   MoreHorizontal,
-  Pause,
-  Play,
   RotateCcw,
 } from 'lucide-react';
-import { Card } from '../../components/Card';
 import { Celebration } from '../../components/Celebration';
-import { JapaneseText } from '../../components/JapaneseText';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { RingStat } from '../../components/dashboard/RingStat';
 import { ReadingQuestionPlayer } from '../../components/ReadingQuestionPlayer';
+import { BookCover } from '../../components/reading/BookCover';
+import { ReaderControls } from '../../components/reading/ReaderControls';
+import { ReaderSentence } from '../../components/reading/ReaderSentence';
 import { getReading, readingStats, READINGS } from '../../data/readings';
 import { getVocabWord } from '../../data/vocabulary';
 import { getGrammarPoint } from '../../data/grammar';
@@ -31,36 +27,48 @@ import {
   recordReadingPosition,
   useProgress,
 } from '../../lib/progressStore';
-import { resumeSentenceIndex } from '../../lib/readingProgress';
+import { bookPercent, resumeSentenceIndex } from '../../lib/readingProgress';
+import { useReadingPrefs } from '../../lib/readingPrefs';
 import { isReadingSaved, toggleReadingSaved } from '../../lib/savedReadings';
 import { speakJapaneseBrowser, useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
 
-interface ReadingPrefs {
-  furigana: boolean;
-  romaji: boolean;
-  english: boolean;
-  dutch: boolean;
-}
-
+/**
+ * The reader.
+ *
+ * It used to print every sentence as a numbered card with English and Dutch underneath, both switched on
+ * by default — while the library page taught the three rules of extensive reading, one of which is "no
+ * dictionary". This screen now reads as prose, in the face a Japanese book is set in, with the meaning as
+ * something you pull rather than something pushed at you. See lib/readingPrefs.ts for the three modes.
+ */
 export function ReadingDetail() {
   const { id } = useParams<{ id: string }>();
   const progress = useProgress();
   const voiceAvailable = useJapaneseVoiceAvailable();
+  const [prefs, setPrefs] = useReadingPrefs();
 
-  const [prefs, setPrefs] = useState<ReadingPrefs>({ furigana: true, romaji: false, english: true, dutch: true });
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const [readingAloud, setReadingAloud] = useState(false);
+  const [opened, setOpened] = useState<number[]>([]);
   const [saved, setSaved] = useState(() => (id ? isReadingSaved(id) : false));
   const [showMore, setShowMore] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [result, setResult] = useState<{ correct: number; total: number } | null>(null);
+
   const quizRef = useRef<HTMLDivElement>(null);
   const sentenceRefs = useRef<(HTMLLIElement | null)[]>([]);
   const furthestRef = useRef(0);
+  const aloudRef = useRef(false);
 
   const passage = id ? getReading(id) : undefined;
 
   // Stop any in-flight speech when leaving the page.
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+  useEffect(
+    () => () => {
+      aloudRef.current = false;
+      window.speechSynthesis?.cancel();
+    },
+    [],
+  );
 
   /**
    * Reading position, measured rather than guessed: the furthest sentence actually read is what drives
@@ -116,7 +124,8 @@ export function ReadingDetail() {
       observer.disconnect();
       timers.forEach(clearTimeout);
     };
-  }, [passage]);
+    // Re-observes when the layout changes direction, since tategaki remounts the sentence nodes.
+  }, [passage, prefs.vertical]);
 
   // Re-opening a part-read book drops you back where you stopped, one sentence early for context.
   useEffect(() => {
@@ -132,22 +141,51 @@ export function ReadingDetail() {
   }, [passage?.id]);
 
   const grammarPoints = useMemo(
-    () => (passage ? passage.grammarHighlightIds.map(getGrammarPoint).filter((g): g is NonNullable<typeof g> => !!g) : []),
+    () =>
+      passage
+        ? passage.grammarHighlightIds.map(getGrammarPoint).filter((g): g is NonNullable<typeof g> => !!g)
+        : [],
     [passage],
+  );
+
+  const stopAloud = useCallback(() => {
+    aloudRef.current = false;
+    window.speechSynthesis?.cancel();
+    setReadingAloud(false);
+    setPlayingIndex(null);
+  }, []);
+
+  /** Reads the passage straight through, so a learner can listen and follow the text at the same time. */
+  const speakFrom = useCallback(
+    (index: number) => {
+      if (!passage || !aloudRef.current) return;
+      if (index >= passage.sentences.length) {
+        stopAloud();
+        return;
+      }
+      speakJapaneseBrowser(passage.sentences[index].kana, 1, {
+        onStart: () => setPlayingIndex(index),
+        onEnd: () => speakFrom(index + 1),
+        onError: stopAloud,
+      });
+    },
+    [passage, stopAloud],
   );
 
   if (!passage) return <Navigate to="/reading" replace />;
 
   const read = progress.completedReadingIds.includes(passage.id);
   const stats = readingStats(progress.completedReadingIds);
-  const grammarLabel = grammarPoints.map((g) => g.title).join(' · ') || '—';
-  // "More books at this level" — same Tadoku shelf, easiest first.
+  const percent = bookPercent(progress, passage);
+  const position = Math.min(passage.sentences.length, Math.max(furthestRef.current, Math.round(percent * passage.sentences.length)));
+  const lastOpened = opened.length > 0 ? passage.sentences[opened[opened.length - 1]] : null;
   const otherPassages = READINGS.filter(
     (r) => r.id !== passage.id && r.tadokuLevel === passage.tadokuLevel,
   ).sort((a, b) => a.wordCount - b.wordCount);
 
   function playSentence(index: number) {
     if (!voiceAvailable) return;
+    if (readingAloud) stopAloud();
     if (playingIndex === index) {
       window.speechSynthesis.cancel();
       setPlayingIndex(null);
@@ -158,6 +196,20 @@ export function ReadingDetail() {
       onEnd: () => setPlayingIndex((cur) => (cur === index ? null : cur)),
       onError: () => setPlayingIndex((cur) => (cur === index ? null : cur)),
     });
+  }
+
+  function readAloud() {
+    if (readingAloud) {
+      stopAloud();
+      return;
+    }
+    aloudRef.current = true;
+    setReadingAloud(true);
+    speakFrom(0);
+  }
+
+  function openMeaning(index: number) {
+    setOpened((prev) => (prev.includes(index) ? prev : [...prev, index]));
   }
 
   function toggleSaved() {
@@ -188,263 +240,176 @@ export function ReadingDetail() {
   }
 
   function copyText() {
-    navigator.clipboard?.writeText(passage!.sentences.map((s) => s.segments.map((seg) => seg.text).join('')).join('\n'));
+    navigator.clipboard?.writeText(
+      passage!.sentences.map((s) => s.segments.map((seg) => seg.text).join('')).join('\n'),
+    );
   }
 
   function restart() {
     setResult(null);
     setShowQuiz(false);
-    setPlayingIndex(null);
-    window.speechSynthesis?.cancel();
+    setOpened([]);
+    stopAloud();
   }
 
-  const toggles: Array<[keyof ReadingPrefs, string]> = [
-    ['furigana', 'Furigana'],
-    ['romaji', 'Romaji'],
-    ['english', 'English'],
-    ['dutch', 'Dutch'],
-  ];
+  const sentences = passage.sentences.map((sentence, i) => (
+    <ReaderSentence
+      key={i}
+      sentence={sentence}
+      index={i}
+      furigana={prefs.furigana}
+      romaji={prefs.romaji}
+      meaning={prefs.meaning}
+      opened={opened.includes(i)}
+      playing={playingIndex === i}
+      voiceAvailable={voiceAvailable}
+      vertical={prefs.vertical}
+      onOpen={() => openMeaning(i)}
+      onPlay={() => playSentence(i)}
+      innerRef={(node) => {
+        sentenceRefs.current[i] = node;
+      }}
+    />
+  ));
 
   return (
-    // Full-bleed like every other screen. Safe for a reader because the passage is one sentence per
-    // row, not flowing paragraphs — nothing here wraps into an unreadably long line.
-    <div className="w-full space-y-5 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both duration-300 ease-out">
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-3">
-        <Link
-          to="/reading"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-        >
-          <ArrowLeft size={16} aria-hidden="true" /> Back to reading
-        </Link>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleSaved}
-            aria-pressed={saved}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-colors ${
-              saved
-                ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500/60 dark:bg-brand-500/15 dark:text-brand-300'
-                : 'border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-            }`}
+    <div className="flex w-full flex-1 flex-col">
+      {/* No overflow-hidden: it would make this card the scroll container for the sticky control bar
+          and stop it pinning. The header bar rounds its own corners instead. */}
+      <div className="relative flex flex-col rounded-3xl border border-white/10 bg-gradient-to-br from-[#141d36] via-[#0f1830] to-[#0b1222]">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-t-3xl border-b border-white/[0.07] bg-[#0b1222]/70 px-5 py-3.5 backdrop-blur lg:px-8">
+          <Link
+            to="/reading"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-white/55 transition-colors hover:text-white"
           >
-            <Bookmark size={15} className={saved ? 'fill-current' : ''} aria-hidden="true" />
-            {saved ? 'Saved' : 'Save'}
-          </button>
-          <OverflowMenu onCopy={copyText} onRestart={restart} />
-        </div>
-      </div>
+            <ArrowLeft size={16} aria-hidden="true" /> Library
+          </Link>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-slate-950">
-        <img
-          src="/assets/kotobox-dashboard/generated/hero-background.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover opacity-90"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/40 to-slate-950/20" aria-hidden="true" />
-        <div className="relative z-10 grid gap-6 p-6 md:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white ring-1 ring-inset ring-white/20">
-                <span aria-hidden="true">{passage.coverEmoji}</span> Tadoku Level {passage.tadokuLevel}
-              </span>
-              <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
-                {passage.level}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-bold text-white/70 ring-1 ring-inset ring-white/15">
-                <BookOpen size={12} aria-hidden="true" /> {passage.wordCount} words
-              </span>
-              {passage.genre && (
-                <span className="rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-white/60 ring-1 ring-inset ring-white/15">
-                  {passage.genre}
-                </span>
-              )}
-            </div>
-            {/* The book's own Japanese title leads — this is a reading page, so the first thing on it
-                should be Japanese. English sits underneath as the gloss. */}
-            <h1 className="jp-text mt-3 text-4xl font-bold text-white">{passage.titleJa}</h1>
-            <p className="mt-1.5 text-lg text-white/70">{passage.title.en}</p>
-            <p className="text-sm text-white/50">{passage.title.nl}</p>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              {toggles.map(([key, label]) => {
-                const on = prefs[key];
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setPrefs((p) => ({ ...p, [key]: !p[key] }))}
-                    className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-                      on
-                        ? 'bg-brand-600 text-white shadow-sm'
-                        : 'bg-white/5 text-white/70 ring-1 ring-inset ring-white/15 hover:bg-white/10'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
+          {/* One mark per sentence — how far through this book you are, at a glance. */}
+          <div
+            className="flex min-w-[140px] flex-1 gap-1"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={passage.sentences.length}
+            aria-valuenow={position}
+            aria-label="Progress through this book"
+          >
+            {passage.sentences.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1 flex-1 rounded-full transition-colors ${
+                  i < position ? 'bg-brand-500' : 'bg-white/[0.12]'
+                }`}
+              />
+            ))}
           </div>
+          <span className="shrink-0 text-xs font-bold tabular-nums text-slate-400">
+            {position} / {passage.sentences.length}
+          </span>
 
-          {/* Library volume so far */}
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm lg:w-[300px]">
-            <RingStat progress={stats.totalBooks > 0 ? stats.booksRead / stats.totalBooks : 0} color="var(--color-brand-400)" trackColor="white" size={96} strokeWidth={8} displaySize="84px">
-              <span className="text-lg font-bold text-white tabular-nums">{stats.booksRead}</span>
-            </RingStat>
-            <div className="min-w-0">
-              <p className="text-sm text-white/60">You’ve read</p>
-              <p className="mt-0.5 text-2xl font-bold text-white tabular-nums">
-                {stats.wordsRead.toLocaleString()} words
-              </p>
-              <p className="text-sm text-white/60 tabular-nums">across {stats.booksRead} of {stats.totalBooks} books</p>
-            </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={toggleSaved}
+              aria-pressed={saved}
+              aria-label={saved ? 'Remove from saved' : 'Save this book'}
+              className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                saved ? 'text-brand-300' : 'text-slate-400 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Bookmark size={16} className={saved ? 'fill-current' : ''} aria-hidden="true" />
+            </button>
+            <OverflowMenu onCopy={copyText} onRestart={restart} />
           </div>
         </div>
-      </section>
 
-      {/* Content */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        {/* Passage */}
-        <div className="space-y-5">
-          <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
-            <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-            <p>Read for enjoyment — no dictionary. Guess unknown words from context, and skip anything that slows you down.</p>
+        <div className="px-5 pb-6 pt-9 lg:px-8">
+          <div className="mx-auto max-w-[640px]">
+            <h1 className="jp-serif text-3xl font-semibold text-white lg:text-4xl">{passage.titleJa}</h1>
+            <p className="mt-2 text-[15px] text-slate-300">{passage.title.en}</p>
+            <p className="text-sm text-slate-400">{passage.title.nl}</p>
+            <p className="mt-3.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+              {passage.level} · Tadoku L{passage.tadokuLevel} · {passage.wordCount} words
+              {passage.genre ? ` · ${passage.genre}` : ''}
+            </p>
           </div>
-          <Card className="overflow-hidden p-2 sm:p-3">
-            <ul>
-              {passage.sentences.map((sentence, i) => {
-                const isPlaying = playingIndex === i;
-                return (
-                  <li
-                    key={i}
-                    ref={(node) => {
-                      sentenceRefs.current[i] = node;
-                    }}
-                    data-sentence-index={i}
-                    className={`flex items-start gap-4 rounded-2xl border-b border-slate-100 p-4 last:border-b-0 sm:p-5 dark:border-white/[0.06] ${
-                      isPlaying ? 'bg-brand-50 ring-1 ring-inset ring-brand-500/40 dark:bg-brand-500/10' : ''
-                    }`}
-                  >
-                    <span
-                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
-                        isPlaying
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                      }`}
-                    >
-                      {i + 1}
-                    </span>
 
-                    <div className="min-w-0 flex-1">
-                      <JapaneseText segments={sentence.segments} showFurigana={prefs.furigana} className="text-2xl leading-relaxed text-slate-900 dark:text-white" />
-                      {prefs.romaji && <p className="mt-1 text-sm text-brand-600 dark:text-brand-300">{sentence.romaji}</p>}
-                      {prefs.english && <p className="mt-2 text-slate-600 dark:text-slate-300">{sentence.en}</p>}
-                      {prefs.dutch && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{sentence.nl}</p>}
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-2">
-                      {isPlaying && <Equalizer />}
-                      <button
-                        type="button"
-                        onClick={() => playSentence(i)}
-                        disabled={!voiceAvailable}
-                        aria-label={isPlaying ? `Stop sentence ${i + 1}` : `Play sentence ${i + 1}`}
-                        title={voiceAvailable ? undefined : 'No Japanese voice available on this device'}
-                        className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                          isPlaying
-                            ? 'bg-brand-600 text-white hover:brightness-110'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                        }`}
-                      >
-                        {isPlaying ? <Pause size={18} aria-hidden="true" /> : <Play size={18} className="ml-0.5" aria-hidden="true" />}
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {otherPassages.length > 0 && (
-              <div className="border-t border-slate-100 p-3 dark:border-white/[0.06]">
-                <button
-                  type="button"
-                  onClick={() => setShowMore((v) => !v)}
-                  aria-expanded={showMore}
-                  className="mx-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+          {/* The passage. Tategaki sets it the way a Japanese book is: top to bottom, right to left. */}
+          {prefs.vertical ? (
+            <div className="mt-9">
+              {/* The passage sizes itself to its own columns — in vertical writing mode a block's width
+                  is content-determined — so a flex wrapper is what centres it in the pane. It is not a
+                  flex container itself: in vertical-rl the children already stack along the block axis,
+                  which runs right to left, and that is exactly the column order a Japanese book has. */}
+              <div className="flex justify-center">
+                <ol
+                  className="jp-serif h-[min(58vh,560px)] max-w-full overflow-x-auto [writing-mode:vertical-rl] [&>li]:ml-7 [&>li:first-child]:ml-0"
+                  style={{ letterSpacing: '0.04em' }}
                 >
-                  {showMore ? 'Hide other books' : `More books at Level ${passage.tadokuLevel}`}
-                  <ChevronDown size={16} className={`transition-transform ${showMore ? 'rotate-180' : ''}`} aria-hidden="true" />
-                </button>
-                {showMore && (
-                  <ul className="mt-2 space-y-1">
-                    {otherPassages.map((r) => (
-                      <li key={r.id}>
-                        <Link
-                          to={`/reading/${r.id}`}
-                          className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.03]"
-                        >
-                          <span className="flex items-center gap-2 font-medium text-slate-800 dark:text-slate-100">
-                            <span aria-hidden="true">{r.coverEmoji}</span>
-                            {r.title.en}
-                          </span>
-                          <span className="text-xs font-semibold tabular-nums text-slate-400">{r.wordCount} words</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  {sentences}
+                </ol>
+              </div>
+              {/* Tategaki has nowhere to put an inline translation without breaking the column, so the
+                  line you most recently opened lands here instead. */}
+              <div className="mx-auto mt-6 min-h-[76px] max-w-[640px] rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-4">
+                {lastOpened ? (
+                  <div className="animate-review-reveal-in">
+                    <p className="text-[15px] leading-relaxed text-slate-200">{lastOpened.en}</p>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-slate-400">{lastOpened.nl}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Tap a line to open its meaning here. Vertical text reads top to bottom, starting on the
+                    right.
+                  </p>
                 )}
               </div>
-            )}
-          </Card>
-
-          {/* Finishing the book is the goal — not passing a quiz. */}
-          {read ? (
-            <Card className="flex flex-col items-center gap-4 overflow-hidden p-5 text-center sm:flex-row sm:text-left">
-              <img
-                src="/assets/reading/award.png"
-                alt=""
-                aria-hidden="true"
-                width={128}
-                height={128}
-                className="h-32 w-32 shrink-0 object-contain"
-              />
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Book finished</h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  This book’s {passage.wordCount} words are counted in your total — {stats.wordsRead.toLocaleString()}{' '}
-                  across {stats.booksRead} book{stats.booksRead === 1 ? '' : 's'} so far.
-                </p>
-                <span className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30">
-                  <Check size={16} aria-hidden="true" /> Read
-                </span>
-              </div>
-            </Card>
+            </div>
           ) : (
-            <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                  <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> Finished reading?
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Mark it read to add {passage.wordCount} words to your total.
-                </p>
-              </div>
-              <PrimaryButton onClick={finishBook} className="w-full shrink-0 sm:w-auto">
-                Mark as read
-              </PrimaryButton>
-            </Card>
+            <ol className="mx-auto mt-9 max-w-[640px]">{sentences}</ol>
           )}
 
-          {/* Optional comprehension check — only for books that carry one. */}
-          {passage.questions.length > 0 &&
-            (showQuiz ? (
-              <div ref={quizRef} className="scroll-mt-4">
-                <Card className="p-5">
-                  <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Check your understanding</h2>
+          <div className="mx-auto mt-10 max-w-[640px] space-y-4">
+            {read ? (
+              <div className="flex flex-col items-center gap-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] p-5 text-center sm:flex-row sm:text-left">
+                <img
+                  src="/assets/reading/award.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={96}
+                  height={96}
+                  className="h-24 w-24 shrink-0 object-contain"
+                />
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-white">Book finished</h2>
+                  <p className="mt-1 text-sm text-slate-300">
+                    This book’s {passage.wordCount} words are counted in your total —{' '}
+                    {stats.wordsRead.toLocaleString()} across {stats.booksRead} book
+                    {stats.booksRead === 1 ? '' : 's'} so far.
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-300">
+                    <Check size={16} aria-hidden="true" /> Read
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Finished reading?</h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Mark it read to add {passage.wordCount} words to your total.
+                  </p>
+                </div>
+                <PrimaryButton onClick={finishBook} className="w-full shrink-0 sm:w-auto">
+                  Mark as read
+                </PrimaryButton>
+              </div>
+            )}
+
+            {passage.questions.length > 0 &&
+              (showQuiz ? (
+                <div ref={quizRef} className="scroll-mt-4 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
+                  <h2 className="mb-4 text-lg font-bold text-white">Check your understanding</h2>
                   {result ? (
                     <Celebration
                       correct={result.correct}
@@ -457,110 +422,131 @@ export function ReadingDetail() {
                   ) : (
                     <ReadingQuestionPlayer questions={passage.questions} onComplete={handleQuizComplete} />
                   )}
-                </Card>
-              </div>
-            ) : (
-              <Card className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-                    <ClipboardList size={18} className="text-slate-400" aria-hidden="true" /> Check your understanding
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                      Optional
-                    </span>
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {passage.questions.length} quick question{passage.questions.length === 1 ? '' : 's'}, if you’d like to test yourself.
-                  </p>
                 </div>
+              ) : (
+                <div className="flex flex-col items-start gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="flex items-center gap-2 text-base font-bold text-white">
+                      <ClipboardList size={17} className="text-slate-400" aria-hidden="true" /> Check your
+                      understanding
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        Optional
+                      </span>
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {passage.questions.length} quick question
+                      {passage.questions.length === 1 ? '' : 's'}, if you’d like to test yourself.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openQuiz}
+                    className="w-full shrink-0 rounded-xl border border-white/12 bg-white/[0.05] px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/10 sm:w-auto"
+                  >
+                    Take the quiz
+                  </button>
+                </div>
+              ))}
+
+            {/* Reference material, after the book rather than beside it — it used to sit in a sidebar
+                competing with the text for attention while you were trying to read. */}
+            <details className="group rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-base font-bold text-white">
+                About this book
+                <ChevronDown
+                  size={17}
+                  aria-hidden="true"
+                  className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-slate-300">{passage.description.en}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{passage.description.nl}</p>
+              {grammarPoints.length > 0 && (
+                <div className="mt-4 border-t border-white/[0.07] pt-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Grammar</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {grammarPoints.map((point) => (
+                      <Link
+                        key={point.id}
+                        to={`/grammar/${point.id}`}
+                        className="jp-text rounded-lg border border-brand-400/25 bg-brand-500/12 px-2.5 py-1 text-sm font-medium text-brand-200 transition-colors hover:bg-brand-500/20"
+                      >
+                        {point.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {passage.vocabHighlightIds.length > 0 && (
+                <div className="mt-4 border-t border-white/[0.07] pt-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                    Vocabulary · {passage.vocabHighlightIds.length}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {passage.vocabHighlightIds.map((vid) => {
+                      const word = getVocabWord(vid);
+                      if (!word) return null;
+                      return (
+                        <span
+                          key={vid}
+                          className="jp-text rounded-lg bg-white/[0.06] px-2.5 py-1 text-sm text-slate-200"
+                        >
+                          {word.japanese}{' '}
+                          <span className="text-xs text-slate-400">{word.meaning.en}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </details>
+
+            {otherPassages.length > 0 && (
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-4">
                 <button
                   type="button"
-                  onClick={openQuiz}
-                  className="w-full shrink-0 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 sm:w-auto dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  onClick={() => setShowMore((v) => !v)}
+                  aria-expanded={showMore}
+                  className="flex w-full items-center justify-between gap-3 text-base font-bold text-white"
                 >
-                  Take the quiz
+                  More books at Level {passage.tadokuLevel}
+                  <ChevronDown
+                    size={17}
+                    aria-hidden="true"
+                    className={`shrink-0 text-slate-400 transition-transform ${showMore ? 'rotate-180' : ''}`}
+                  />
                 </button>
-              </Card>
-            ))}
+                {showMore && (
+                  <ul className="mt-3 grid gap-3 sm:grid-cols-3">
+                    {otherPassages.slice(0, 6).map((r) => (
+                      <li key={r.id}>
+                        <Link to={`/reading/${r.id}`} className="group block">
+                          <BookCover book={r} onDark />
+                          <p className="jp-serif mt-2 text-sm font-semibold text-slate-100 group-hover:text-white">
+                            {r.titleJa}
+                          </p>
+                          <p className="text-xs text-slate-400">{r.title.en}</p>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Side panels */}
-        <aside className="space-y-5">
-          <Card className="p-5">
-            <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-              <BookOpen size={18} className="text-brand-500" aria-hidden="true" /> About this book
-            </h2>
-            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{passage.description.en}</p>
-            <dl className="mt-4 grid grid-cols-3 gap-4">
-              <AboutStat label="Tadoku" value={`Level ${passage.tadokuLevel}`} />
-              <AboutStat label="Words" value={String(passage.wordCount)} />
-              <AboutStat label="JLPT" value={passage.level} />
-            </dl>
-            <dl className="mt-4 border-t border-slate-100 pt-4 dark:border-white/[0.06]">
-              <AboutStat label="Grammar" value={grammarLabel} jp />
-            </dl>
-          </Card>
-
-          <Card className="p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-                <ClipboardList size={18} className="text-brand-500" aria-hidden="true" /> Vocabulary in this book
-              </h2>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                {passage.vocabHighlightIds.length}
-              </span>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {passage.vocabHighlightIds.map((vid) => {
-                const word = getVocabWord(vid);
-                if (!word) return null;
-                return (
-                  <span
-                    key={vid}
-                    className="jp-text rounded-lg bg-slate-100 px-2.5 py-1 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                  >
-                    {word.japanese} <span className="text-xs text-slate-400 dark:text-slate-500">{word.meaning.en}</span>
-                  </span>
-                );
-              })}
-              {grammarPoints.map((point) => (
-                <Link
-                  key={point.id}
-                  to={`/grammar/${point.id}`}
-                  className="jp-text rounded-lg bg-brand-50 px-2.5 py-1 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-200 hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-500/30 dark:hover:bg-brand-500/25"
-                >
-                  {point.title}
-                </Link>
-              ))}
-            </div>
-          </Card>
-
-        </aside>
+        <ReaderControls
+          prefs={prefs}
+          onChange={setPrefs}
+          opened={opened.length}
+          total={passage.sentences.length}
+          voiceAvailable={voiceAvailable}
+          readingAloud={readingAloud}
+          onReadAloud={readAloud}
+        />
       </div>
     </div>
-  );
-}
-
-function AboutStat({ label, value, jp = false }: { label: string; value: string; jp?: boolean }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</dt>
-      <dd className={`mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100 ${jp ? 'jp-text' : ''}`}>{value}</dd>
-    </div>
-  );
-}
-
-/** Little audio-bars indicator shown on the sentence that's currently being read aloud. */
-function Equalizer() {
-  return (
-    <span className="flex items-end gap-0.5" aria-hidden="true">
-      {[0, 1, 2, 3].map((i) => (
-        <span
-          key={i}
-          className="w-1 rounded-full bg-brand-500 motion-safe:animate-pulse"
-          style={{ height: `${8 + ((i % 3) + 1) * 4}px`, animationDelay: `${i * 120}ms` }}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -593,14 +579,14 @@ function OverflowMenu({ onCopy, onRestart }: { onCopy: () => void; onRestart: ()
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="More actions"
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
       >
-        <MoreHorizontal size={18} aria-hidden="true" />
+        <MoreHorizontal size={17} aria-hidden="true" />
       </button>
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+          className="absolute right-0 z-30 mt-2 w-52 overflow-hidden rounded-xl border border-white/10 bg-[#0c1428] py-1 shadow-2xl"
         >
           <button
             type="button"
@@ -610,7 +596,7 @@ function OverflowMenu({ onCopy, onRestart }: { onCopy: () => void; onRestart: ()
               setCopied(true);
               setTimeout(() => setCopied(false), 1200);
             }}
-            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-200 hover:bg-white/[0.06]"
           >
             <Copy size={15} aria-hidden="true" /> {copied ? 'Copied!' : 'Copy Japanese text'}
           </button>
@@ -621,7 +607,7 @@ function OverflowMenu({ onCopy, onRestart }: { onCopy: () => void; onRestart: ()
               onRestart();
               setOpen(false);
             }}
-            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-200 hover:bg-white/[0.06]"
           >
             <RotateCcw size={15} aria-hidden="true" /> Restart passage
           </button>
