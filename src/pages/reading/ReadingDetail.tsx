@@ -31,6 +31,7 @@ import { bookPercent, resumeSentenceIndex } from '../../lib/readingProgress';
 import { useReadingPrefs } from '../../lib/readingPrefs';
 import { isReadingSaved, toggleReadingSaved } from '../../lib/savedReadings';
 import { speakJapaneseBrowser, useJapaneseVoiceAvailable } from '../../lib/tts/browserTts';
+import type { ReadingPassage } from '../../types';
 
 /**
  * The reader.
@@ -42,6 +43,14 @@ import { speakJapaneseBrowser, useJapaneseVoiceAvailable } from '../../lib/tts/b
  */
 export function ReadingDetail() {
   const { id } = useParams<{ id: string }>();
+  const passage = id ? getReading(id) : undefined;
+  if (!passage) return <Navigate to="/reading" replace />;
+  // Keyed on the book: React Router keeps this component mounted when only the :id changes, so without
+  // it a second book inherited the first one's opened-lines count, quiz result and saved flag.
+  return <Reader key={passage.id} passage={passage} />;
+}
+
+function Reader({ passage }: { passage: ReadingPassage }) {
   const progress = useProgress();
   const voiceAvailable = useJapaneseVoiceAvailable();
   const [prefs, setPrefs] = useReadingPrefs();
@@ -49,7 +58,7 @@ export function ReadingDetail() {
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
   const [readingAloud, setReadingAloud] = useState(false);
   const [opened, setOpened] = useState<number[]>([]);
-  const [saved, setSaved] = useState(() => (id ? isReadingSaved(id) : false));
+  const [saved, setSaved] = useState(() => isReadingSaved(passage.id));
   const [showMore, setShowMore] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [result, setResult] = useState<{ correct: number; total: number } | null>(null);
@@ -58,8 +67,6 @@ export function ReadingDetail() {
   const sentenceRefs = useRef<(HTMLLIElement | null)[]>([]);
   const furthestRef = useRef(0);
   const aloudRef = useRef(false);
-
-  const passage = id ? getReading(id) : undefined;
 
   // Stop any in-flight speech when leaving the page.
   useEffect(
@@ -80,7 +87,6 @@ export function ReadingDetail() {
    * and the word tally would be counting pixels shown rather than Japanese read.
    */
   useEffect(() => {
-    if (!passage) return;
     const nodes = sentenceRefs.current.filter((node): node is HTMLLIElement => node != null);
     if (nodes.length === 0) return;
 
@@ -91,7 +97,7 @@ export function ReadingDetail() {
       const furthest = index + 1;
       if (furthest <= furthestRef.current) return;
       furthestRef.current = furthest;
-      recordReadingPosition(passage!.id, furthest, passage!.sentences.length, passage!.wordCount);
+      recordReadingPosition(passage.id, furthest, passage.sentences.length, passage.wordCount);
     }
 
     const observer = new IntersectionObserver(
@@ -129,22 +135,19 @@ export function ReadingDetail() {
 
   // Re-opening a part-read book drops you back where you stopped, one sentence early for context.
   useEffect(() => {
-    if (!passage) return;
     const index = resumeSentenceIndex(getProgressSnapshot(), passage);
     if (index <= 0) return;
     const node = sentenceRefs.current[index];
     if (!node) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     node.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
-    // Book id only: re-running this on every progress tick would yank the page around mid-read.
+    // Mount only: re-running this on every progress tick would yank the page around mid-read, and the
+    // component is remounted per book anyway.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [passage?.id]);
+  }, []);
 
   const grammarPoints = useMemo(
-    () =>
-      passage
-        ? passage.grammarHighlightIds.map(getGrammarPoint).filter((g): g is NonNullable<typeof g> => !!g)
-        : [],
+    () => passage.grammarHighlightIds.map(getGrammarPoint).filter((g): g is NonNullable<typeof g> => !!g),
     [passage],
   );
 
@@ -158,7 +161,7 @@ export function ReadingDetail() {
   /** Reads the passage straight through, so a learner can listen and follow the text at the same time. */
   const speakFrom = useCallback(
     (index: number) => {
-      if (!passage || !aloudRef.current) return;
+      if (!aloudRef.current) return;
       if (index >= passage.sentences.length) {
         stopAloud();
         return;
@@ -171,8 +174,6 @@ export function ReadingDetail() {
     },
     [passage, stopAloud],
   );
-
-  if (!passage) return <Navigate to="/reading" replace />;
 
   const read = progress.completedReadingIds.includes(passage.id);
   const stats = readingStats(progress.completedReadingIds);
@@ -191,7 +192,7 @@ export function ReadingDetail() {
       setPlayingIndex(null);
       return;
     }
-    speakJapaneseBrowser(passage!.sentences[index].kana, 1, {
+    speakJapaneseBrowser(passage.sentences[index].kana, 1, {
       onStart: () => setPlayingIndex(index),
       onEnd: () => setPlayingIndex((cur) => (cur === index ? null : cur)),
       onError: () => setPlayingIndex((cur) => (cur === index ? null : cur)),
@@ -213,7 +214,7 @@ export function ReadingDetail() {
   }
 
   function toggleSaved() {
-    setSaved(toggleReadingSaved(passage!.id));
+    setSaved(toggleReadingSaved(passage.id));
   }
 
   function openQuiz() {
@@ -224,13 +225,13 @@ export function ReadingDetail() {
   function handleQuizComplete(correct: number, total: number) {
     setResult({ correct, total });
     finishBook();
-    recordQuizResult({ quizId: `reading-${passage!.id}`, skill: 'reading', level: progress.level, correct, total });
+    recordQuizResult({ quizId: `reading-${passage.id}`, skill: 'reading', level: progress.level, correct, total });
   }
 
   // Extensive reading: finishing a book is the goal, not passing a quiz. Closing the book also closes
   // out its position, so any sentences skipped past still count toward the day's words exactly once.
   function finishBook() {
-    const book = passage!;
+    const book = passage;
     markReadingCompleted(book.id);
     // A finished book re-enters the rotation on its own interval — extensive reading rewards re-reading
     // at a comfortable level, so "due again" is a genuine suggestion here, not a chore.
@@ -241,7 +242,7 @@ export function ReadingDetail() {
 
   function copyText() {
     navigator.clipboard?.writeText(
-      passage!.sentences.map((s) => s.segments.map((seg) => seg.text).join('')).join('\n'),
+      passage.sentences.map((s) => s.segments.map((seg) => seg.text).join('')).join('\n'),
     );
   }
 

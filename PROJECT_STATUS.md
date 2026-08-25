@@ -37,7 +37,10 @@ finished. Read books get a folded corner, in-progress books a bar across the cov
 part-way through now sits above the shelf as a card with its own cover instead of a button label in the
 banner.
 
-**One bug worth naming**: the first pass used `text-slate-800 dark:text-slate-100` on the passage, which is
+**Two bugs worth naming.** The page is now a thin wrapper that reads the `:id` and renders a `<Reader>`
+keyed on the book — React Router keeps the component mounted when only the param changes, so following
+"More books at this level" carried the previous book's opened-lines count, quiz result and saved flag
+across. (That one predates this rewrite; the counter just made it visible.) And the first pass used `text-slate-800 dark:text-slate-100` on the passage, which is
 wrong on a card that is dark in *both* themes — in light mode the Japanese rendered dark-on-navy and was
 effectively invisible. Fixed colours now, same as the grammar screens, and `BookCover` takes `onDark` for
 the same reason. The control bar also went icon-only under `sm`, where labels wrapped it onto three rows
