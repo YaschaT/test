@@ -23,7 +23,6 @@ export function ReadingList() {
   const completed = progress.completedReadingIds;
   // Opens on the learner's own level rather than always N5, like every other module page.
   const [level, setLevel] = useState<JlptLevel>(progress.level);
-  const [shelf, setShelf] = useState<TadokuLevel | 'all'>('all');
 
   const doneSet = useMemo(() => new Set(completed), [completed]);
   const next = useMemo(() => pickNextRead(progress, level), [progress, level]);
@@ -35,25 +34,20 @@ export function ReadingList() {
   );
 
   /**
-   * Only the shelves that actually hold a book at this JLPT level get a chip. The two filters are
-   * near-perfectly correlated (N5 books are L0–L1, N4 books are L2…), so offering every shelf at every
-   * level would mostly offer combinations that resolve to an empty page.
+   * The shelves this level actually has books on. Tadoku level and JLPT level are near-perfectly
+   * correlated (N5 books are L0–L1, N4 books are L2…), so an empty shelf would be the normal case if
+   * every level rendered all six.
    */
   const shelves = useMemo(
-    () => TADOKU_LEVELS.filter((lvl) => booksAtLevel.some((book) => book.tadokuLevel === lvl)),
-    [booksAtLevel],
-  );
-
-  // Switching JLPT level can strand the chip on a shelf that doesn't exist there. Resolved during
-  // render rather than corrected in an effect, so the page never paints an empty shelf for a frame.
-  const activeShelf = shelf !== 'all' && shelves.includes(shelf) ? shelf : 'all';
-
-  const visible = useMemo(
     () =>
-      booksAtLevel
-        .filter((book) => activeShelf === 'all' || book.tadokuLevel === activeShelf)
-        .sort((a, b) => a.tadokuLevel - b.tadokuLevel || a.wordCount - b.wordCount),
-    [booksAtLevel, activeShelf],
+      TADOKU_LEVELS.filter((lvl) => booksAtLevel.some((book) => book.tadokuLevel === lvl)).map((lvl) => ({
+        level: lvl,
+        // Shortest first, so a shelf reads left to right from easiest to hardest.
+        books: booksAtLevel
+          .filter((book) => book.tadokuLevel === lvl)
+          .sort((a, b) => a.wordCount - b.wordCount),
+      })),
+    [booksAtLevel],
   );
 
   return (
@@ -118,83 +112,111 @@ export function ReadingList() {
         </Link>
       )}
 
-      {/* Shelf filter */}
-      <div className="flex flex-wrap gap-2">
-        <FilterChip active={activeShelf === 'all'} onClick={() => setShelf('all')}>
-          All
-        </FilterChip>
-        {shelves.map((lvl) => (
-          <FilterChip key={lvl} active={activeShelf === lvl} onClick={() => setShelf(lvl)}>
-            L{lvl} {TADOKU_LEVEL_INFO[lvl].short}
-          </FilterChip>
+      {/* The shelves. Grouping by Tadoku level *is* the filter now — the chip row that used to sit here
+          filtered the same axis the shelves already separate, so it was a second control for one job. */}
+      <div className="space-y-7">
+        {shelves.map(({ level: shelfLevel, books }) => (
+          <Shelf
+            key={shelfLevel}
+            level={shelfLevel}
+            books={books}
+            doneSet={doneSet}
+            percentFor={(book) => bookPercent(progress, book)}
+          />
         ))}
       </div>
 
-      <section>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-          {activeShelf === 'all'
-            ? `${level} books`
-            : `Level ${activeShelf} — ${TADOKU_LEVEL_INFO[activeShelf].name.en}`}
-        </h2>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-          {activeShelf === 'all'
-            ? `${visible.length} book${visible.length === 1 ? '' : 's'} graded for ${level}, shortest first.`
-            : TADOKU_LEVEL_INFO[activeShelf].blurb.en}
-          {' · '}
-          <span className="font-semibold text-slate-700 tabular-nums dark:text-slate-200">
-            {stats.booksRead} of {stats.totalBooks} read
-          </span>
-          {stats.wordsRead > 0 && `, ${stats.wordsRead.toLocaleString()} words`}
-        </p>
-
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-          {visible.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              done={doneSet.has(book.id)}
-              percent={bookPercent(progress, book)}
-            />
-          ))}
-        </div>
-      </section>
+      <p className="px-1 text-sm text-slate-500 dark:text-slate-400">
+        <span className="font-semibold text-slate-700 tabular-nums dark:text-slate-200">
+          {stats.booksRead} of {stats.totalBooks} read
+        </span>
+        {stats.wordsRead > 0 && ` · ${stats.wordsRead.toLocaleString()} Japanese words so far`}
+      </p>
 
       <GoldenRules />
     </div>
   );
 }
 
-// ── Book card ─────────────────────────────────────────────────────────────────
-function BookCard({ book, done, percent }: { book: ReadingPassage; done: boolean; percent: number }) {
+// ── A shelf ───────────────────────────────────────────────────────────────────
+/**
+ * One Tadoku level, as a shelf.
+ *
+ * The books sit in a case with a heavier bottom edge — the board they are resting on — and the row
+ * scrolls sideways when the shelf holds more than fits. That is the honest cost of the metaphor: a grid
+ * shows every book at once and a shelf does not, so each one says how many it holds and how many of
+ * those you have read, and the count is what tells you there is more to the right.
+ */
+function Shelf({
+  level,
+  books,
+  doneSet,
+  percentFor,
+}: {
+  level: TadokuLevel;
+  books: ReadingPassage[];
+  doneSet: Set<string>;
+  percentFor: (book: ReadingPassage) => number;
+}) {
+  const info = TADOKU_LEVEL_INFO[level];
+  const read = books.filter((book) => doneSet.has(book.id)).length;
+
+  return (
+    <section>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-1">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          <span className="text-slate-400 tabular-nums dark:text-slate-500">L{level}</span> {info.name.en}
+        </h2>
+        <p className="text-sm text-slate-500 tabular-nums dark:text-slate-400">
+          {books.length} book{books.length === 1 ? '' : 's'}
+          {read > 0 && ` · ${read} read`}
+        </p>
+      </div>
+      <p className="mt-0.5 px-1 text-sm text-slate-500 dark:text-slate-400">{info.blurb.en}</p>
+
+      <div className="mt-3 rounded-2xl border border-slate-200 border-b-slate-300 bg-slate-50/70 p-3 [border-bottom-width:3px] sm:p-4 dark:border-hairline dark:border-b-white/25 dark:bg-white/[0.03]">
+        {/* Scrolls with the scrollbar visible rather than hidden: on a shelf that overflows, the bar is
+            the only thing telling you the row continues. */}
+        <ul className="flex gap-3 overflow-x-auto pb-1 sm:gap-4">
+          {books.map((book) => (
+            <ShelfBook
+              key={book.id}
+              book={book}
+              done={doneSet.has(book.id)}
+              percent={percentFor(book)}
+            />
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function ShelfBook({ book, done, percent }: { book: ReadingPassage; done: boolean; percent: number }) {
   const [saved, setSaved] = useState(() => getSavedReadingIds().includes(book.id));
   const started = percent > 0 && percent < 1;
 
   return (
-    <div className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
+    <li className="group relative w-[142px] shrink-0 sm:w-[164px]">
       <Link
         to={`/reading/${book.id}`}
-        className="flex flex-1 flex-col rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+        className="block rounded-xl outline-none transition-transform duration-200 ease-out hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
       >
-        {/* One cover treatment for the whole shelf: painted art where a book has it, the book's own
-            title set on its level tint where it doesn't. See BookCover. */}
-        <BookCover book={book} state={done ? 'read' : started ? 'reading' : 'unread'} percent={percent} />
-
-        <div className="flex flex-1 flex-col px-1 pt-2.5">
-          <p className="jp-serif line-clamp-2 font-semibold leading-snug text-slate-900 dark:text-white">
-            {book.titleJa}
-          </p>
-          <p className="mt-0.5 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">{book.title.en}</p>
-          <p className="mt-auto pt-2 flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-            <span className="tabular-nums">{book.wordCount} words</span>
-            <span className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="tabular-nums">~{readingMinutes(book.wordCount)} min</span>
-          </p>
-          {started && (
-            <p className="mt-1.5 text-[11px] font-semibold text-brand-600 tabular-nums dark:text-brand-300">
-              {Math.round(percent * 100)}% read
-            </p>
-          )}
-        </div>
+        {/* The drop shadow is what makes a cover read as standing on the board rather than printed on it. */}
+        <BookCover
+          book={book}
+          state={done ? 'read' : started ? 'reading' : 'unread'}
+          percent={percent}
+          className="shadow-[0_6px_10px_-6px_rgba(15,23,42,0.45)] dark:shadow-[0_8px_14px_-8px_rgba(0,0,0,0.9)]"
+        />
+        <p className="jp-serif mt-2.5 line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-white">
+          {book.titleJa}
+        </p>
+        <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">{book.title.en}</p>
+        <p className="mt-1 text-[11px] text-slate-400 tabular-nums dark:text-slate-500">
+          {book.wordCount} words · ~{readingMinutes(book.wordCount)} min
+          {started && <span className="text-brand-600 dark:text-brand-300"> · {Math.round(percent * 100)}%</span>}
+        </p>
       </Link>
 
       {/* Outside the Link so saving a book doesn't also open it. */}
@@ -203,15 +225,15 @@ function BookCard({ book, done, percent }: { book: ReadingPassage; done: boolean
         onClick={() => setSaved(toggleReadingSaved(book.id))}
         aria-pressed={saved}
         aria-label={saved ? `Remove ${book.title.en} from saved` : `Save ${book.title.en}`}
-        className={`absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
+        className={`absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
           saved
             ? 'bg-brand-600 text-white'
             : 'bg-black/35 text-white/80 opacity-0 hover:bg-black/55 hover:text-white focus-visible:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100'
         }`}
       >
-        <Bookmark size={15} className={saved ? 'fill-current' : ''} aria-hidden="true" />
+        <Bookmark size={14} className={saved ? 'fill-current' : ''} aria-hidden="true" />
       </button>
-    </div>
+    </li>
   );
 }
 
@@ -233,30 +255,5 @@ function GoldenRules() {
         </div>
       ))}
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-        active
-          ? 'bg-brand-600 text-white shadow-sm'
-          : 'border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-      }`}
-    >
-      {children}
-    </button>
   );
 }

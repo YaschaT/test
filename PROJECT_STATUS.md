@@ -36,7 +36,12 @@ card, a chrome bar at the top, a sticky control bar at the bottom — carrying a
 Everything the old reader did survives: position tracking with the 1.5s dwell, resume-where-you-stopped,
 save, copy, restart, mark-as-read, the optional comprehension quiz, and the SRS re-entry on finishing.
 
-**The library** keeps its layout and gains a real shelf. `BookCover` is one shared component: painted art
+**The library is shelves now.** Each Tadoku level is its own shelf: a labelled case with a heavier
+bottom edge — the board — holding a row of covers that stand on it with a drop shadow, scrolling sideways
+when the shelf holds more than fits. That is the honest cost of the metaphor (a grid shows everything at
+once and a shelf does not), so each shelf says how many books it holds and how many of those are read.
+The Tadoku chip row is gone with it: it filtered the exact axis the shelves already separate, so it was a
+second control doing one job. The JLPT tabs still scope which books are on the shelves at all. `BookCover` is one shared component: painted art
 where a book has it, and where it doesn't, the book's own Japanese title set in the book face on its level
 tint — 4 of 32 books have art, and the emoji-in-a-box fallback was what made the shelf read as half
 finished. Read books get a folded corner, in-progress books a bar across the cover, and the book you are
