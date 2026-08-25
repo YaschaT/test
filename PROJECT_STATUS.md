@@ -36,11 +36,14 @@ card, a chrome bar at the top, a sticky control bar at the bottom — carrying a
 Everything the old reader did survives: position tracking with the 1.5s dwell, resume-where-you-stopped,
 save, copy, restart, mark-as-read, the optional comprehension quiz, and the SRS re-entry on finishing.
 
-**The library is the design you drew.** No category banner: the page opens on "Your library", with the
+**The library is the design you drew, with the banner kept.** The category banner is back at the top, in
+the position and at the size every other section wears it (measured against Kanji: same left, width and
+height), carrying the section's ring, counts, milestone and its "Continue reading" action. Under it the
+page is the drawn design: "Your library" as the section head, with the
 three rules of extensive reading as its one-line subtitle (they were three cards at the bottom, read
-last) and the collection count top-right — `2 of 32 read` over the running word total. Below it the book
-you are mid-way through, saying *which line you stopped on* rather than a percentage, because "line 3 of
-7" is a place you can picture going back to.
+last) and the collection count on the right — `2 of 32 read` over the running word total. Between the two
+sits the book you are mid-way through, saying *which line you stopped on* rather than a percentage,
+because "line 3 of 7" is a place you can picture going back to.
 
 **Covers are generated, not sourced.** 28 of the 32 books have no painted art, and one illustration per
 book does not scale — every new book would be blocked on an asset. So the generated cover is a real cover

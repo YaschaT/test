@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Bookmark } from 'lucide-react';
+import { CategoryBanner } from '../../components/learning/CategoryBanner';
 import { BookCover } from '../../components/reading/BookCover';
 import { LEVEL_DOT } from '../../components/reading/levelTint';
 import { READINGS, readingStats, TADOKU_LEVEL_INFO } from '../../data/readings';
@@ -42,12 +43,29 @@ export function ReadingList() {
 
   return (
     <div className="w-full">
-      <header className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
+      {/* The same banner every category wears, in the same place — this page is not the exception. */}
+      <CategoryBanner
+        category="reading"
+        title="Reading"
+        subtitle="Read stories, discover meaning in context."
+        action={
+          next
+            ? {
+                label: next.kind === 'resume' ? 'Continue reading' : 'Start reading',
+                to: `/reading/${next.passage.id}`,
+              }
+            : undefined
+        }
+      />
+
+      {next && <KeepReading pick={next} progress={progress} />}
+
+      <header className="mt-8 flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
         <div className="min-w-0">
-          <h1 className="font-display text-3xl font-bold tracking-[-0.01em] text-slate-900 dark:text-white">
+          <h2 className="font-display text-2xl font-bold tracking-[-0.01em] text-slate-900 dark:text-white">
             Your library
-          </h1>
-          <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">
+          </h2>
+          <p className="mt-1 text-[15px] text-slate-500 dark:text-slate-400">
             No dictionary. Guess from context. Bored? Pick another.
           </p>
         </div>
@@ -64,9 +82,7 @@ export function ReadingList() {
         </div>
       </header>
 
-      {next && <KeepReading pick={next} progress={progress} />}
-
-      <div className="mt-9 space-y-9">
+      <div className="mt-6 space-y-9">
         {shelves.map(({ level, books }) => (
           <Shelf
             key={level}
