@@ -18,10 +18,15 @@ interface BookCoverProps {
 /**
  * A book's cover.
  *
- * Four of the thirty-two books have painted art; the rest are generated (see coverArt.ts). Both are
- * pulled into the same family here: the generated cover is composed from the book's level hue, and the
- * painted ones get a wash of that same hue so a shelf reads as one set rather than four illustrations
- * sitting next to twenty-eight typographic cards.
+ * Every book currently uses a generated cover (see coverArt.ts). Four books used to carry painted
+ * illustrations, and they were retired rather than filtered: the artwork is a bright, soft-3D direction
+ * and the shelf is flat and typographic, so four of them among twenty-eight generated covers read as two
+ * products. The files are still in `public/assets/reading/covers/`.
+ *
+ * The `cover` branch below is kept, because art *should* be able to come back — but only art drawn for
+ * this system: flat, in the level's hue family, and made for the whole library rather than a handful of
+ * books. The wash and the dark-mode dimming here are what a stray cover would need to sit in the shelf
+ * at all, not a licence to mix directions again.
  */
 export function BookCover({
   book,

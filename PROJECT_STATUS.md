@@ -51,10 +51,12 @@ always in the half the title is not, and a head-set title starts below the level
 having, but not at the cost of setting type over the one shape on the cover. Sized in container units, so
 one component works at 150px on a shelf and 224px on the keep-reading card.
 
-The four painted covers get a wash of their level's hue and come down in brightness in dark mode. It
-narrows the gap and does not close it: they are a different art direction, and no filter reconciles a
-bright illustration with a flat typographic system. Open question for the user — retire them, or move
-them into the reader where they would be the only image on screen.
+The four painted covers were **retired** rather than filtered. A wash of the level's hue plus dark-mode
+dimming narrowed the gap and never closed it: bright soft-3D illustration and a flat typographic system
+are two art directions, and no CSS filter argues one into the other — four of them among twenty-eight
+generated covers read as two products. The `.webp` files stay in `public/assets/reading/covers/` and the
+render branch stays in `BookCover`, so art can come back — but only art drawn for this system, flat and in
+the level hue family, and for the whole library rather than a handful of books.
 
 Shelves group the **whole** library by Tadoku level — the JLPT tabs are gone, since for reading Tadoku
 *is* the difficulty axis and the two were separate controls filtering nearly the same thing. That is also

@@ -41,7 +41,6 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     genre: 'Greetings',
     title: { en: 'Hello, Fox!', nl: 'Hallo, Vos!' },
     titleJa: 'こんにちは、きつねさん！',
-    cover: '/assets/reading/covers/reading-l0-01-hello-fox.webp',
     description: { en: 'A tiny first hello.', nl: 'Een klein eerste hallo.' },
     difficulty: 'easy',
     sentences: [
@@ -103,7 +102,6 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     genre: 'Animals',
     title: { en: 'My Cat', nl: 'Mijn Kat' },
     titleJa: 'ねこの まいにち',
-    cover: '/assets/reading/covers/reading-l0-03-my-cats-day.webp',
     description: { en: 'A little cat named Tama.', nl: 'Een katje dat Tama heet.' },
     difficulty: 'easy',
     sentences: [
@@ -205,7 +203,6 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     genre: 'Daily life',
     title: { en: 'Good Morning', nl: 'Goedemorgen' },
     titleJa: 'おはよう！',
-    cover: '/assets/reading/covers/reading-l0-02-good-morning.webp',
     description: { en: 'A short morning routine.', nl: 'Een korte ochtendroutine.' },
     difficulty: 'easy',
     sentences: [
@@ -238,7 +235,6 @@ export const READINGS_EXTRA: ReadingPassage[] = [
     level: 'N5',
     tadokuLevel: 1,
     coverEmoji: '🍙',
-    cover: '/assets/reading/covers/reading-l1-01-onigiri-picnic.webp',
     wordCount: 34,
     genre: 'Daily life',
     title: { en: 'The Onigiri Picnic', nl: 'De Onigiri-picknick' },
