@@ -11,12 +11,12 @@ export const LEVEL_DOT: Record<number, string> = {
   5: 'bg-violet-500',
 };
 
-/** The solid field behind a typographic cover — deep enough in dark mode to carry white serif type. */
+/** The field a generated cover's title sits on: the level's hue at 20%, per the design. */
 export const LEVEL_WASH: Record<number, string> = {
-  0: 'bg-sky-100 dark:bg-sky-950',
-  1: 'bg-emerald-100 dark:bg-emerald-950',
-  2: 'bg-indigo-100 dark:bg-indigo-950',
-  3: 'bg-amber-100 dark:bg-amber-950',
-  4: 'bg-rose-100 dark:bg-rose-950',
-  5: 'bg-violet-100 dark:bg-violet-950',
+  0: 'bg-sky-500/20',
+  1: 'bg-emerald-500/20',
+  2: 'bg-indigo-500/20',
+  3: 'bg-amber-500/20',
+  4: 'bg-rose-500/20',
+  5: 'bg-violet-500/20',
 };

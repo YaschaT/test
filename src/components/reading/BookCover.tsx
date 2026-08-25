@@ -1,5 +1,4 @@
 import { Check } from 'lucide-react';
-import { coverComposition } from './coverArt';
 import { LEVEL_DOT, LEVEL_WASH } from './levelTint';
 import type { ReadingPassage } from '../../types';
 
@@ -86,7 +85,7 @@ export function BookCover({
       )}
 
       {state === 'reading' && (
-        <span className="absolute inset-x-0 bottom-0 block h-1 bg-black/40">
+        <span className="absolute inset-x-0 bottom-0 block h-[3px] bg-black/35">
           <span
             className="block h-full bg-brand-500"
             style={{ width: `${Math.max(4, Math.round(percent * 100))}%` }}
@@ -99,44 +98,25 @@ export function BookCover({
 }
 
 /**
- * A cover drawn from the book itself: its level's hue as the ground, one soft disc placed by its id, and
- * its Japanese title in the book face. Sized in container units so the same cover works at every scale
- * it is used — 150px on a shelf, 224px on the keep-reading card.
+ * The generated cover, exactly as drawn: the title centred on its level's hue at 20%, and nothing else.
+ * An earlier pass added a horizon disc placed by a hash of the book id; the design had already solved
+ * the same problem more quietly, and with the painted covers retired there is no incoherence left for a
+ * graphic to fix.
  */
 function GeneratedCover({ book, onDark }: { book: ReadingPassage; onDark: boolean }) {
-  const { discX, discY, discSize, titleLow } = coverComposition(book.id);
-  const accent = LEVEL_DOT[book.tadokuLevel] ?? LEVEL_DOT[0];
-
   return (
     <div
-      className={`relative aspect-[64/45] w-full overflow-hidden [container-type:inline-size] ${
+      className={`flex aspect-[64/45] w-full items-center justify-center p-3.5 ${
         LEVEL_WASH[book.tadokuLevel] ?? LEVEL_WASH[0]
       }`}
     >
-      {/* The horizon disc — the app's night-sky moon, reduced to one shape. */}
       <span
-        aria-hidden="true"
-        className={`absolute aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full opacity-25 ${accent}`}
-        style={{ left: `${discX}%`, top: `${discY}%`, width: `${discSize}%` }}
-      />
-      {/* Head-set titles start below the level badge rather than under it. */}
-      <div
-        className={`absolute inset-0 flex flex-col px-[8cqw] ${
-          titleLow ? 'justify-end pb-[8cqw] pt-[7cqw]' : 'justify-start pb-[7cqw] pt-[18cqw]'
+        className={`jp-serif text-center text-[17px] font-semibold leading-[1.5] [word-break:keep-all] [overflow-wrap:normal] ${
+          onDark ? 'text-slate-100' : 'text-slate-900 dark:text-slate-100'
         }`}
       >
-        <p
-          className={`jp-serif line-clamp-3 max-w-[86%] text-[10cqw] font-semibold leading-[1.45] [word-break:keep-all] ${
-            onDark ? 'text-white' : 'text-slate-900 dark:text-white'
-          }`}
-        >
-          {book.titleJa}
-        </p>
-        <span
-          aria-hidden="true"
-          className={`mt-[4cqw] h-[1.5cqw] w-[16cqw] shrink-0 rounded-full opacity-70 ${accent}`}
-        />
-      </div>
+        {book.titleJa}
+      </span>
     </div>
   );
 }

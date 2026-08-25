@@ -45,14 +45,22 @@ last) and the collection count on the right — `2 of 32 read` over the running 
 sits the book you are mid-way through, saying *which line you stopped on* rather than a percentage,
 because "line 3 of 7" is a place you can picture going back to.
 
+**Measured against the published canvas, not from memory.** The reading design was drawn in an earlier
+session and published as the "Kotobox Reading Redesign" artifact — six artboards (Reader A/B/C, Library
+A/B, Pieces). This pass read it back with the canvas extractor and matched the shipped page to
+`LibraryA.dc.html` value by value: 150px covers on an 18px row, level dot 9×9 at 2px radius, `Level N`
+at 17px Baloo 2 with its short name at 13px and the count at 12.5px, the header at 30px with the count
+block right-aligned to the baseline, and the resume card at 20px radius / 18px padding with a 190px
+cover. Two deliberate deviations remain, both asked for: the category banner is present (the drawing has
+none) and the painted covers are retired (the drawing keeps four).
+
 **Covers are generated, not sourced.** 28 of the 32 books have no painted art, and one illustration per
 book does not scale — every new book would be blocked on an asset. So the generated cover is a real cover
 rather than a fallback (`coverArt.ts`): the level hue as the ground, one soft disc for a horizon, and the
-title in the book face. The disc's size and placement come from a hash of the book's own id, so a shelf
-has rhythm instead of the same rectangle 28 times, and the same book always looks the same. The disc is
-always in the half the title is not, and a head-set title starts below the level badge — variety is worth
-having, but not at the cost of setting type over the one shape on the cover. Sized in container units, so
-one component works at 150px on a shelf and 224px on the keep-reading card.
+title in the book face. It is the title centred on the level's hue at 20%, and nothing else — as drawn. An
+interim pass added a horizon disc placed by a hash of the book id to give the shelf rhythm; the canvas
+had already answered that more quietly, and with the paintings retired there was no incoherence left for
+a graphic to fix, so the disc came out.
 
 The four painted covers were **retired** rather than filtered. A wash of the level's hue plus dark-mode
 dimming narrowed the gap and never closed it: bright soft-3D illustration and a flat typographic system

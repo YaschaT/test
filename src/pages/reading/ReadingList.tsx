@@ -60,29 +60,27 @@ export function ReadingList() {
 
       {next && <KeepReading pick={next} progress={progress} />}
 
-      <header className="mt-8 flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
+      <header className="mt-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <h2 className="font-display text-2xl font-bold tracking-[-0.01em] text-slate-900 dark:text-white">
+          <h2 className="font-display text-[30px] font-bold leading-none tracking-[-0.01em] text-slate-900 dark:text-slate-100">
             Your library
           </h2>
-          <p className="mt-1 text-[15px] text-slate-500 dark:text-slate-400">
+          <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">
             No dictionary. Guess from context. Bored? Pick another.
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-slate-500 dark:text-slate-400">
-            <span className="font-display text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
-              {stats.booksRead}
-            </span>{' '}
-            <span className="text-sm font-semibold">of {stats.totalBooks} read</span>
+          <p className="font-display text-[26px] font-bold leading-none text-slate-900 tabular-nums dark:text-white">
+            {stats.booksRead}{' '}
+            <span className="text-[15px] font-bold text-slate-500">of {stats.totalBooks} read</span>
           </p>
-          <p className="mt-0.5 text-sm text-slate-500 tabular-nums dark:text-slate-400">
+          <p className="mt-0.5 text-[12.5px] text-slate-500 tabular-nums">
             {stats.wordsRead.toLocaleString()} Japanese words so far
           </p>
         </div>
       </header>
 
-      <div className="mt-6 space-y-9">
+      <div className="mt-6 space-y-[34px]">
         {shelves.map(({ level, books }) => (
           <Shelf
             key={level}
@@ -117,31 +115,31 @@ function KeepReading({
   return (
     <Link
       to={`/reading/${pick.passage.id}`}
-      className="group mt-6 flex items-center gap-5 rounded-2xl border border-slate-200 bg-white p-4 transition-colors hover:border-brand-400/60 sm:gap-7 sm:p-5 dark:border-hairline dark:bg-ink-900 dark:hover:border-brand-400/50"
+      className="group mt-6 flex items-center gap-5 rounded-[20px] border border-slate-200 bg-white p-[18px] transition-colors hover:border-brand-400/60 sm:gap-[22px] dark:border-white/[0.08] dark:bg-ink-900 dark:hover:border-brand-400/50"
     >
       <BookCover
         book={pick.passage}
         state={pick.kind === 'resume' ? 'reading' : 'unread'}
         percent={pick.percent}
-        className="w-40 shrink-0 sm:w-56"
+        className="w-36 shrink-0 sm:w-[190px]"
       />
       <span className="min-w-0 flex-1">
         <span className="block text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600 dark:text-brand-300">
           {resuming ? 'Keep reading' : 'Start here'}
         </span>
-        <span className="jp-serif mt-2 block text-xl font-semibold text-slate-900 sm:text-[28px] dark:text-white">
+        <span className="jp-serif mt-2 block text-xl font-semibold text-slate-900 sm:text-2xl dark:text-white">
           {pick.passage.titleJa}
         </span>
-        <span className="mt-1.5 block text-[15px] text-slate-500 dark:text-slate-400">
+        <span className="mt-1 block text-sm text-slate-500 dark:text-slate-400">
           {pick.passage.title.en} · L{pick.passage.tadokuLevel} · {pick.passage.wordCount} words
         </span>
         {resuming && (
-          <span className="mt-2.5 block text-[15px] text-slate-600 dark:text-slate-300">
+          <span className="mt-3 block text-[13px] text-slate-600 dark:text-slate-300">
             You stopped on line {position.sentencesRead} of {position.totalSentences}.
           </span>
         )}
       </span>
-      <span className="hidden shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition-[filter] group-hover:brightness-110 sm:inline-flex">
+      <span className="hidden shrink-0 items-center gap-[9px] rounded-xl bg-gradient-to-r from-[#4c6ef0] to-[#3a54d6] px-[22px] py-3.5 text-[15px] font-bold text-white shadow-[0_8px_20px_-8px_rgba(58,84,214,0.8)] transition-[filter] group-hover:brightness-110 sm:inline-flex">
         {resuming ? 'Continue' : 'Open'}
         <ArrowRight size={17} aria-hidden="true" />
       </span>
@@ -166,19 +164,19 @@ function Shelf({
   return (
     <section>
       {/* The rule runs from the label to the count, which is what makes the row read as one shelf. */}
-      <div className="flex items-center gap-3">
-        <span aria-hidden="true" className={`h-2.5 w-2.5 shrink-0 rounded-[3px] ${LEVEL_DOT[level]}`} />
-        <h2 className="font-display shrink-0 text-lg font-bold text-slate-900 dark:text-white">
+      <div className="flex items-baseline gap-3">
+        <span aria-hidden="true" className={`h-[9px] w-[9px] shrink-0 rounded-[2px] ${LEVEL_DOT[level]}`} />
+        <h2 className="font-display shrink-0 text-[17px] font-bold text-slate-900 dark:text-slate-100">
           Level {level}
         </h2>
-        <span className="shrink-0 text-sm text-slate-500 dark:text-slate-400">{info.short}</span>
-        <span aria-hidden="true" className="h-px min-w-6 flex-1 bg-slate-200 dark:bg-white/10" />
-        <span className="shrink-0 text-sm text-slate-500 tabular-nums dark:text-slate-400">
+        <span className="shrink-0 text-[13px] text-slate-500">{info.short}</span>
+        <span aria-hidden="true" className="h-px min-w-6 flex-1 bg-slate-200 dark:bg-white/[0.07]" />
+        <span className="shrink-0 text-[12.5px] text-slate-500 tabular-nums">
           {books.length} book{books.length === 1 ? '' : 's'}
         </span>
       </div>
 
-      <ul className="mt-4 flex gap-5 overflow-x-auto pb-1">
+      <ul className="mt-3.5 flex gap-[18px] overflow-x-auto pb-1">
         {books.map((book) => (
           <ShelfBook
             key={book.id}
@@ -197,7 +195,7 @@ function ShelfBook({ book, done, percent }: { book: ReadingPassage; done: boolea
   const started = percent > 0 && percent < 1;
 
   return (
-    <li className="group relative w-[164px] shrink-0 sm:w-[184px]">
+    <li className="group relative w-[150px] shrink-0">
       <Link
         to={`/reading/${book.id}`}
         className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
@@ -208,15 +206,15 @@ function ShelfBook({ book, done, percent }: { book: ReadingPassage; done: boolea
           percent={percent}
           className="transition-transform duration-200 ease-out group-hover:-translate-y-1"
         />
-        <p className="jp-serif mt-3 line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 dark:text-white">
+        <p className="jp-serif mt-[9px] line-clamp-2 text-sm font-semibold leading-[1.45] text-slate-900 dark:text-slate-100">
           {book.titleJa}
         </p>
-        <p className="mt-0.5 line-clamp-1 text-[13px] text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 line-clamp-1 text-[12.5px] text-slate-500 dark:text-slate-400">
           {book.title.en}
         </p>
         {/* Word count only: how far in you are is the bar across the cover, and saying it twice made the
             caption busier than every other book's without telling you anything new. */}
-        <p className="mt-1 text-[13px] text-slate-400 tabular-nums dark:text-slate-500">
+        <p className="mt-1 text-[11px] text-slate-400 tabular-nums dark:text-slate-500">
           {book.wordCount} words
         </p>
       </Link>
