@@ -42,6 +42,20 @@ last) and the collection count top-right — `2 of 32 read` over the running wor
 you are mid-way through, saying *which line you stopped on* rather than a percentage, because "line 3 of
 7" is a place you can picture going back to.
 
+**Covers are generated, not sourced.** 28 of the 32 books have no painted art, and one illustration per
+book does not scale — every new book would be blocked on an asset. So the generated cover is a real cover
+rather than a fallback (`coverArt.ts`): the level hue as the ground, one soft disc for a horizon, and the
+title in the book face. The disc's size and placement come from a hash of the book's own id, so a shelf
+has rhythm instead of the same rectangle 28 times, and the same book always looks the same. The disc is
+always in the half the title is not, and a head-set title starts below the level badge — variety is worth
+having, but not at the cost of setting type over the one shape on the cover. Sized in container units, so
+one component works at 150px on a shelf and 224px on the keep-reading card.
+
+The four painted covers get a wash of their level's hue and come down in brightness in dark mode. It
+narrows the gap and does not close it: they are a different art direction, and no filter reconciles a
+bright illustration with a flat typographic system. Open question for the user — retire them, or move
+them into the reader where they would be the only image on screen.
+
 Shelves group the **whole** library by Tadoku level — the JLPT tabs are gone, since for reading Tadoku
 *is* the difficulty axis and the two were separate controls filtering nearly the same thing. That is also
 what makes "of 32" mean something. Each shelf heading is a level dot, `Level N`, its short name, a rule
