@@ -45,15 +45,21 @@ export function ReaderSentence({
   innerRef,
 }: ReaderSentenceProps) {
   const revealed = meaning === 'shown' || (meaning === 'hidden' && opened);
-  const canOpen = meaning === 'hidden' && !opened;
+  // Tategaki has no inline slot for a translation, so every line stays tappable there whatever the mode
+  // is — the tap is what puts it in the slab under the passage. Without this, Dimmed and Shown showed a
+  // vertical reader no meanings at all.
+  const canOpen = vertical || (meaning === 'hidden' && !opened);
 
   const japanese = (
     <JapaneseText
       segments={sentence.segments}
       showFurigana={furigana}
-      className={`jp-serif text-[21px] leading-[2.1] sm:text-[22px] ${
-        playing ? 'text-brand-200' : 'text-slate-100'
-      }`}
+      className={`jp-serif ${
+        // Tategaki has the room a horizontal line does not: the columns run down the pane and it is the
+        // page's *width* they spend, so the text can be set at something closer to a real book's size.
+        // In vertical writing mode line-height is what sets the gap between columns, not between lines.
+        vertical ? 'text-[30px] leading-[1.9] sm:text-[34px]' : 'text-[21px] leading-[2.1] sm:text-[22px]'
+      } ${playing ? 'text-brand-200' : 'text-slate-100'}`}
     />
   );
 

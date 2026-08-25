@@ -19,10 +19,16 @@ card, a chrome bar at the top, a sticky control bar at the bottom — carrying a
   `hidden` (default — tap a line to open it, and the bar counts how many you needed), `dim` (on screen but
   quiet, brightening on the line you are on), `shown` (the old behaviour, for people studying rather than
   reading).
-- **Tategaki.** A vertical toggle sets the passage top-to-bottom, right-to-left. The `<ol>` is deliberately
+- **Tategaki.** A vertical toggle sets the passage top-to-bottom, right-to-left, at 34px (30px on a
+  phone) — vertical columns spend the page's *width*, so the text can be set at something near a real
+  book's size rather than borrowing the horizontal reader's. The `<ol>` is deliberately
   *not* a flex container: in `vertical-rl` a block's children already stack along the block axis, which
   runs right to left — the column order a real book has. Flex would run the passage downwards instead.
-  Meanings move to one slab under the passage, since tategaki has nowhere to put them inline.
+  Meanings move to one slab under the passage, since tategaki has nowhere to put them inline — and every
+  line stays tappable there in all three modes, because the tap is the only way to fill that slab.
+  The column box is capped well short of the viewport (46vh/520px, 34vh/320px on a phone): it is a fixed
+  height, so anything taller hid the end of every column behind the sticky control bar, and the end of a
+  column is the end of a sentence.
 - **Read aloud** now plays the whole passage straight through, not only one sentence at a time.
 - Reference material (about, vocabulary, grammar, other books at this level) moved out of the sidebar,
   where it competed with the text, into collapsibles after the book.

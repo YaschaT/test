@@ -341,10 +341,17 @@ function Reader({ passage }: { passage: ReadingPassage }) {
               {/* The passage sizes itself to its own columns — in vertical writing mode a block's width
                   is content-determined — so a flex wrapper is what centres it in the pane. It is not a
                   flex container itself: in vertical-rl the children already stack along the block axis,
-                  which runs right to left, and that is exactly the column order a Japanese book has. */}
+                  which runs right to left, and that is exactly the column order a Japanese book has.
+
+                  The height is capped well short of the viewport on purpose. The column box is a fixed
+                  height, so anything taller than the space between the title and the sticky control bar
+                  hides the end of every column behind it — and the end of a column is the end of a
+                  sentence. Shorter columns simply spill into more of them, which is how a book works.
+                  The phone cap is tighter again, because the control bar is taller when its labels
+                  collapse to icons and it takes more of the screen with it. */}
               <div className="flex justify-center">
                 <ol
-                  className="jp-serif h-[min(58vh,560px)] max-w-full overflow-x-auto [writing-mode:vertical-rl] [&>li]:ml-7 [&>li:first-child]:ml-0"
+                  className="jp-serif h-[min(34vh,320px)] max-w-full overflow-x-auto [writing-mode:vertical-rl] sm:h-[min(46vh,520px)] [&>li]:ml-7 sm:[&>li]:ml-9 [&>li:first-child]:ml-0"
                   style={{ letterSpacing: '0.04em' }}
                 >
                   {sentences}
@@ -360,8 +367,8 @@ function Reader({ passage }: { passage: ReadingPassage }) {
                   </div>
                 ) : (
                   <p className="text-sm text-slate-500">
-                    Tap a line to open its meaning here. Vertical text reads top to bottom, starting on the
-                    right.
+                    Tap any line to read its meaning here. Vertical text runs top to bottom, starting on
+                    the right.
                   </p>
                 )}
               </div>
