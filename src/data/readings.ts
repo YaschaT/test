@@ -981,7 +981,7 @@ export const TADOKU_LEVEL_INFO: Record<
 > = {
   0: {
     name: { en: 'First words', nl: 'Eerste woorden' },
-    short: 'Kana',
+    short: 'Kana only',
     blurb: { en: 'Tiny all-kana books.', nl: 'Piepkleine boekjes in kana.' },
   },
   1: {

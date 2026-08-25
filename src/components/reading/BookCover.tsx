@@ -1,17 +1,8 @@
 import { Check } from 'lucide-react';
+import { LEVEL_DOT, LEVEL_WASH } from './levelTint';
 import type { ReadingPassage } from '../../types';
 
 export type BookState = 'unread' | 'reading' | 'read';
-
-/** The shelf tint per Tadoku level — the same six the list has always used. */
-const TINT: Record<number, { accent: string; wash: string }> = {
-  0: { accent: 'bg-sky-500', wash: 'bg-sky-500/15 dark:bg-sky-500/20' },
-  1: { accent: 'bg-emerald-500', wash: 'bg-emerald-500/15 dark:bg-emerald-500/20' },
-  2: { accent: 'bg-indigo-500', wash: 'bg-indigo-500/15 dark:bg-indigo-500/20' },
-  3: { accent: 'bg-amber-500', wash: 'bg-amber-500/15 dark:bg-amber-500/20' },
-  4: { accent: 'bg-rose-500', wash: 'bg-rose-500/15 dark:bg-rose-500/20' },
-  5: { accent: 'bg-violet-500', wash: 'bg-violet-500/15 dark:bg-violet-500/20' },
-};
 
 interface BookCoverProps {
   book: ReadingPassage;
@@ -38,8 +29,6 @@ export function BookCover({
   onDark = false,
   className = '',
 }: BookCoverProps) {
-  const tint = TINT[book.tadokuLevel] ?? TINT[0];
-
   return (
     <div className={`relative overflow-hidden rounded-xl ${className}`}>
       {book.cover ? (
@@ -53,10 +42,10 @@ export function BookCover({
           className="aspect-[64/45] w-full bg-slate-100 object-cover dark:bg-slate-800"
         />
       ) : (
-        <div className={`flex aspect-[64/45] w-full items-center justify-center px-3 ${tint.wash}`}>
+        <div className={`flex aspect-[64/45] w-full items-center justify-center px-3 ${LEVEL_WASH[book.tadokuLevel] ?? LEVEL_WASH[0]}`}>
           {/* keep-all: without it a Japanese title breaks mid-word, e.g. くだものがす / き. */}
           <span
-            className={`jp-serif text-center text-base font-semibold leading-snug [word-break:keep-all] ${
+            className={`jp-serif text-center text-[17px] font-semibold leading-[1.5] [word-break:keep-all] ${
               onDark ? 'text-white' : 'text-slate-800 dark:text-white'
             }`}
           >
@@ -66,7 +55,7 @@ export function BookCover({
       )}
 
       <span
-        className={`absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm ${tint.accent}`}
+        className={`absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm ${LEVEL_DOT[book.tadokuLevel] ?? LEVEL_DOT[0]}`}
       >
         L{book.tadokuLevel}
       </span>
@@ -76,13 +65,13 @@ export function BookCover({
         <>
           <span
             aria-hidden="true"
-            className="absolute right-0 top-0 h-0 w-0 border-y-[17px] border-l-[17px] border-r-[17px] border-transparent border-r-emerald-500 border-t-emerald-500"
+            className="absolute right-0 top-0 h-0 w-0 border-l-[34px] border-t-[34px] border-l-transparent border-t-emerald-500"
           />
           <Check
-            size={12}
+            size={13}
             strokeWidth={3}
             aria-hidden="true"
-            className="absolute right-1 top-1 text-white"
+            className="absolute right-1.5 top-1 text-white"
           />
           <span className="sr-only">Read</span>
         </>

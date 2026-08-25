@@ -36,7 +36,20 @@ card, a chrome bar at the top, a sticky control bar at the bottom — carrying a
 Everything the old reader did survives: position tracking with the 1.5s dwell, resume-where-you-stopped,
 save, copy, restart, mark-as-read, the optional comprehension quiz, and the SRS re-entry on finishing.
 
-**The library is shelves now.** Each Tadoku level is its own shelf: a labelled case with a heavier
+**The library is the design you drew.** No category banner: the page opens on "Your library", with the
+three rules of extensive reading as its one-line subtitle (they were three cards at the bottom, read
+last) and the collection count top-right — `2 of 32 read` over the running word total. Below it the book
+you are mid-way through, saying *which line you stopped on* rather than a percentage, because "line 3 of
+7" is a place you can picture going back to.
+
+Shelves group the **whole** library by Tadoku level — the JLPT tabs are gone, since for reading Tadoku
+*is* the difficulty axis and the two were separate controls filtering nearly the same thing. That is also
+what makes "of 32" mean something. Each shelf heading is a level dot, `Level N`, its short name, a rule
+out to the count. Covers carry the same hue as the dot, so a book is placeable at a glance; a read one
+folds a green corner, a half-read one wears a bar, and the caption says the word count only — how far in
+you are is the bar, and saying it twice told you nothing new.
+
+**Earlier the same day**, before that reference existed: Each Tadoku level is its own shelf: a labelled case with a heavier
 bottom edge — the board — holding a row of covers that stand on it with a drop shadow, scrolling sideways
 when the shelf holds more than fits. That is the honest cost of the metaphor (a grid shows everything at
 once and a shelf does not), so each shelf says how many books it holds and how many of those are read.
