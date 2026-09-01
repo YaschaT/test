@@ -42,6 +42,43 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: '2026-09-01',
+    sections: ['/path'],
+    tier: 'feature',
+    title: { en: 'The path, as a path', nl: 'Het pad, als een pad' },
+    changes: [
+      {
+        kind: 'new',
+        text: {
+          en: 'The week you are actually on now sits at the top of the page, with a row per skill that opens the exact grammar point, kanji, word or story its gate is still waiting for.',
+          nl: 'De week waar je echt mee bezig bent staat nu bovenaan de pagina, met per vaardigheid een regel die precies het grammaticapunt, de kanji, het woord of het verhaal opent waar de poort nog op wacht.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          en: 'The twenty-two weeks are one line you can follow instead of a grid of cards: each week is a row with a single progress meter, the levels are stations along it, and the N3 stretch branches off and rejoins.',
+          nl: 'De tweeëntwintig weken zijn nu één lijn die je kunt volgen in plaats van een raster met kaarten: elke week is een regel met één voortgangsmeter, de niveaus zijn haltes onderweg, en de N3-stretch takt af en komt weer terug.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          en: 'Open a week and it gets a panel of its own — objectives, both languages, every gate criterion with your number next to it, and the checkpoint.',
+          nl: 'Open een week en die krijgt een eigen paneel — leerdoelen, beide talen, elk poortcriterium met jouw getal ernaast, en de checkpoint.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          en: 'Only the level you are working on stays open, and you can set your day to the core 75–90 minutes or the full 105–150 with the stretch.',
+          nl: 'Alleen het niveau waar je mee bezig bent blijft open, en je kunt je dag instellen op de kern van 75–90 minuten of de volle 105–150 met de stretch.',
+        },
+      },
+    ],
+    cta: { label: { en: 'See your route', nl: 'Bekijk je route' }, to: '/path' },
+  },
+  {
     id: '2026-08-25',
     sections: ['/reading'],
     tier: 'major',
